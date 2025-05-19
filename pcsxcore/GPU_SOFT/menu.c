@@ -5,7 +5,6 @@
     copyright            : (C) 2001 by Pete Bernert
     email                : BlackDove@addcom.de
  ***************************************************************************/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -15,37 +14,6 @@
  *   additional informations.                                              *
  *                                                                         *
  ***************************************************************************/
-
-//*************************************************************************// 
-// History of changes:
-//
-// 2005/04/15 - Pete
-// - Changed user frame limit to floating point value
-//
-// 2003/07/27 - Pete
-// - Added pad core flags display
-//
-// 2002/12/14 - Pete
-// - Added dithering menu item
-//                                    
-// 2002/05/25 - Pete
-// - Added menu support for linuzappz's fast forward skipping
-//
-// 2002/01/13 - linuzappz
-// - Added timing for the szDebugText (to 2 secs)
-//
-// 2001/12/22 - syo
-// - modified for "transparent menu" 
-//   (Pete: added 'V' display for WaitVBlank)
-//
-// 2001/11/09 - Darko Matesic
-// - added recording status 
-//   (Pete: added terminate zero to the menu buffer ;)
-//
-// 2001/10/28 - Pete  
-// - generic cleanup for the Peops release
-//
-//*************************************************************************// 
 
 #define _IN_MENU
 
@@ -213,8 +181,4 @@ void SwitchDispMenu(int iStep)                         // SWITCH DISP MENU
 
  BuildDispMenu(0);                                     // update info
 }
-
-///////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////
 

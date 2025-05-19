@@ -5,7 +5,6 @@
     copyright            : (C) 2002 by Pete Bernert
     email                : BlackDove@addcom.de
  ***************************************************************************/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -15,29 +14,6 @@
  *   additional informations.                                              *
  *                                                                         *
  ***************************************************************************/
-
-//*************************************************************************//
-// History of changes:
-//
-// 2003/06/07 - Pete
-// - added Linux NOTHREADLIB define
-//
-// 2003/02/28 - Pete
-// - added option for kode54's interpolation and linuzappz's mono mode
-//
-// 2003/01/19 - Pete
-// - added Neill's reverb
-//
-// 2002/08/04 - Pete
-// - small linux bug fix: now the cfg file can be in the main emu directory as well
-//
-// 2002/06/08 - linuzappz
-// - Added combo str for SPUasync, and MAXMODE is now defined as 2
-//
-// 2002/05/15 - Pete
-// - generic cleanup for the Peops release
-//
-//*************************************************************************//
 
 #include "stdafx.h"
 
@@ -75,7 +51,7 @@ void ReadConfigFile(void)
 void ReadConfig(void)             
 {
 #ifndef __GX__
- iVolume=3; 
+ iVolume=2; 
 #endif //!__GX__
  iUseXA=1; 
  iXAPitch=0;

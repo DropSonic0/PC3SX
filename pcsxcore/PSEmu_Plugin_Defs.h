@@ -16,6 +16,7 @@ extern "C" {
 #define PSE_LT_SPU					4
 #define PSE_LT_PAD					8
 #define PSE_LT_NET					16
+#define PSE_LT_SIO1					32
 
 // DLL function return codes
 #define PSE_ERR_SUCCESS				0	// every function in DLL if completed sucessfully should return this value
@@ -54,9 +55,9 @@ extern "C" {
 
 typedef struct
 {
-	uint32_t	flags;
-	uint32_t	status;
- 	void*	window;
+	unsigned long	flags;
+	unsigned long	status;
+	HWND			window;
 	unsigned char reserved[100];
 } gpuQueryS;
 
@@ -126,7 +127,7 @@ typedef struct
 /*
 
   functions that must be exported from PAD Plugin
-
+  
   long	PADinit(long flags);	// called only once when PSEmu Starts
   void	PADshutdown(void);		// called when PSEmu exits
   long	PADopen(PadInitS *);	// called when PSEmu is running program
@@ -136,8 +137,8 @@ typedef struct
   long  PADtest(void);			// called from Configure Dialog and after PADopen();
   long	PADquery(void);
 
-  unsigned char PADstartPoll(int);
-  unsigned char PADpoll(unsigned char);
+  long	PADreadPort1(PadDataS *);
+  long	PADreadPort2(PadDataS *);
 
 */
 
@@ -198,7 +199,7 @@ typedef struct
 	unsigned short buttonStatus;
 	
 	// for analog pad fill those next 4 bytes
-	// values are analog in range 0-255 where 128 is center position
+	// values are analog in range 0-255 where 127 is center position
 	unsigned char rightJoyX, rightJoyY, leftJoyX, leftJoyY;
 
 	// for mouse fill those next 2 bytes

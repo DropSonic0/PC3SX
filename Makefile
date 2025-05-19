@@ -31,7 +31,7 @@ PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.
 	./pcsxcore/misc.c	\
 	./pcsxcore/GPU_SOFT/cfg.c \
 	./pcsxcore/GPU_SOFT/Gudraw.c \
-	./pcsxcore/GPU_SOFT/fps.c \
+        ./pcsxcore/GPU_SOFT/fps.c \
 	./pcsxcore/GPU_SOFT/gpu.c \
 	./pcsxcore/GPU_SOFT/menu.c \
 	./pcsxcore/GPU_SOFT/prim.c \
@@ -51,6 +51,7 @@ PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.
 	./pcsxcore/PlugPAD.c \
 	./pcsxcore/PlugCD.c \
 	./pcsxcore/dfsound/adsr.c \
+        ./pcsxcore/dfsound/externals.c \
 	./pcsxcore/dfsound/xa.c \
 	./pcsxcore/dfsound/spu.c \
 	./pcsxcore/dfsound/dma.c \

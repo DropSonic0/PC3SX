@@ -5,7 +5,6 @@
     copyright            : (C) 2002 by Pete Bernert
     email                : BlackDove@addcom.de
  ***************************************************************************/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -15,23 +14,6 @@
  *   additional informations.                                              *
  *                                                                         *
  ***************************************************************************/
-
-//*************************************************************************//
-// History of changes:
-//
-// 2003/01/19 - Pete
-// - added Neill's reverb (see at the end of file)
-//
-// 2002/12/26 - Pete
-// - adjusted reverb handling
-//
-// 2002/08/14 - Pete
-// - added extra reverb
-//
-// 2002/05/15 - Pete
-// - generic cleanup for the Peops release
-//
-//*************************************************************************//
 
 #include "stdafx.h"
 #include "swap.h"
@@ -111,6 +93,24 @@ INLINE void InitREVERB(void)
 ////////////////////////////////////////////////////////////////////////
 // STORE REVERB
 ////////////////////////////////////////////////////////////////////////
+
+INLINE void StoreREVERB_CD(SPUCHAN * pChannel,int ns)
+{
+ if(iUseReverb==0) return;
+ else
+ if(iUseReverb==2) // -------------------------------- // Neil's reverb
+  {
+   const int iRxl=(pChannel->sval*pChannel->iLeftVolume)>>14;
+   const int iRxr=(pChannel->sval*pChannel->iRightVolume)>>14;
+
+   ns<<=1;
+
+   // -> we mix all active reverb channels into an extra buffer
+	 *(sRVBStart+ns)   += CLAMP16( *(sRVBStart+ns+0) + ( iRxl ) );
+   *(sRVBStart+ns+1) += CLAMP16( *(sRVBStart+ns+1) + ( iRxr ) );
+  }
+}
+
 
 INLINE void StoreREVERB(SPUCHAN * pChannel,int ns)
 {
@@ -260,9 +260,16 @@ INLINE int MixREVERBLeft(int ns)
       }
      else                                              // -> reverb off
       {
-       rvb.iLastRVBLeft=rvb.iLastRVBRight=rvb.iRVBLeft=rvb.iRVBRight=0;
-      }
+			 // Vib Ribbon - grab current reverb sample (cdda data)
+			 // - mono data
 
+			 rvb.iRVBLeft = (short) spuMem[ rvb.CurrAddr ];
+			 rvb.iRVBRight = rvb.iRVBLeft;
+			 rvb.iLastRVBLeft  = (rvb.iRVBLeft  * rvb.VolLeft)  / 0x4000;
+			 rvb.iLastRVBRight = (rvb.iRVBRight * rvb.VolRight) / 0x4000;
+
+			 //rvb.iLastRVBLeft=rvb.iLastRVBRight=rvb.iRVBLeft=rvb.iRVBRight=0;
+      }
      rvb.CurrAddr++;
      if(rvb.CurrAddr>0x3ffff) rvb.CurrAddr=rvb.StartAddr;
     }

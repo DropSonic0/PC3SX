@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
  ***************************************************************************/
 
 /*
@@ -28,9 +27,8 @@
 #include "CdRom.h"
 #include "Mdec.h"
 
-R3000Acpu *psxCpu = NULL;
+R3000Acpu *psxCpu;
 psxRegisters psxRegs;
-
 
 int psxInit() {
 
@@ -40,7 +38,8 @@ int psxInit() {
 #if defined(__x86_64__) || defined(__i386__) || defined(__sh__) || defined(__ppc__) || defined(__BIGENDIAN__)
 	if (!Config.Cpu) psxCpu = &psxRec;
 #endif
-	Log=0;
+
+	Log = 0;
 
 	if (psxMemInit() == -1) return -1;
 
@@ -48,10 +47,8 @@ int psxInit() {
 }
 
 void psxReset() {
-	SysPrintf("psxCpu->Reset()\n");
 	psxCpu->Reset();
-	
-	SysPrintf("psxMemReset()\n");
+
 	psxMemReset();
 
 	memset(&psxRegs, 0, sizeof(psxRegs));
@@ -61,20 +58,16 @@ void psxReset() {
 	psxRegs.CP0.r[12] = 0x10900000; // COP0 enabled | BEV = 1 | TS = 1
 	psxRegs.CP0.r[15] = 0x00000002; // PRevID = Revision ID, same as R3000A
 
-	SysPrintf("psxHwReset()\n");
 	psxHwReset();
-	SysPrintf("psxBiosInit()\n");
 	psxBiosInit();
-	
-	if(!Config.HLE) {
-		SysPrintf("psxExecuteBios()\n");
+
+	if (!Config.HLE)
 		psxExecuteBios();
-	}
 
 #ifdef EMU_LOG
 	EMU_LOG("*BIOS END*\n");
 #endif
-	Log=0;
+	Log = 0;
 }
 
 void psxShutdown() {
@@ -93,8 +86,8 @@ void psxException(u32 code, u32 bd) {
 #ifdef PSXCPU_LOG
 		PSXCPU_LOG("bd set!!!\n");
 #endif
-		SysPrintf("bd set!!!\n");
-		psxRegs.CP0.n.Cause|= 0x80000000;
+		printf("bd set!!!\n");
+		psxRegs.CP0.n.Cause |= 0x80000000;
 		psxRegs.CP0.n.EPC = (psxRegs.pc - 4);
 	} else
 		psxRegs.CP0.n.EPC = (psxRegs.pc);
@@ -166,7 +159,7 @@ void psxTestHWInts() {
 #ifdef PSXCPU_LOG
 			PSXCPU_LOG("Interrupt: %x %x\n", psxHu32(0x1070), psxHu32(0x1074));
 #endif
-//			SysPrintf("Interrupt (%x): %x %x\n", psxRegs.cycle, psxHu32(0x1070), psxHu32(0x1074));
+//			printf("Interrupt (%x): %x %x\n", psxRegs.cycle, psxHu32(0x1070), psxHu32(0x1074));
 			psxException(0x400, 0);
 		}
 	}
@@ -177,27 +170,35 @@ void psxJumpTest() {
 		u32 call = psxRegs.GPR.n.t1 & 0xff;
 		switch (psxRegs.pc & 0x1fffff) {
 			case 0xa0:
-#ifdef PSXBIOS_LOG
-				if (call != 0x28 && call != 0xe) {
-					PSXBIOS_LOG("Bios call a0: %s (%x) %x,%x,%x,%x\n", biosA0n[call], call, psxRegs.GPR.n.a0, psxRegs.GPR.n.a1, psxRegs.GPR.n.a2, psxRegs.GPR.n.a3); }
-#endif
 				if (biosA0[call])
 					biosA0[call]();
+				else if (call != 0x28 && call != 0xe) {
+#ifdef PSXBIOS_LOG
+					PSXBIOS_LOG("Bios call a0: %s (%x) %x,%x,%x,%x\n", biosA0n[call], call,
+							psxRegs.GPR.n.a0, psxRegs.GPR.n.a1, psxRegs.GPR.n.a2, psxRegs.GPR.n.a3);
+#endif
+			}
 				break;
 			case 0xb0:
-#ifdef PSXBIOS_LOG
-				if (call != 0x17 && call != 0xb) {
-					PSXBIOS_LOG("Bios call b0: %s (%x) %x,%x,%x,%x\n", biosB0n[call], call, psxRegs.GPR.n.a0, psxRegs.GPR.n.a1, psxRegs.GPR.n.a2, psxRegs.GPR.n.a3); }
-#endif
 				if (biosB0[call])
 					biosB0[call]();
+                else if (call != 0x17 && call != 0xb) {
+#ifdef PSXBIOS_LOG
+					PSXBIOS_LOG("Bios call b0: %s (%x) %x,%x,%x,%x\n", biosB0n[call], call,
+							psxRegs.GPR.n.a0, psxRegs.GPR.n.a1, psxRegs.GPR.n.a2, psxRegs.GPR.n.a3);
+#endif
+			}
 				break;
 			case 0xc0:
+			if (biosC0[call])
+				biosC0[call]();
+            else {
 #ifdef PSXBIOS_LOG
-				PSXBIOS_LOG("Bios call c0: %s (%x) %x,%x,%x,%x\n", biosC0n[call], call, psxRegs.GPR.n.a0, psxRegs.GPR.n.a1, psxRegs.GPR.n.a2, psxRegs.GPR.n.a3);
+					PSXBIOS_LOG("Bios call c0: %s (%x) %x,%x,%x,%x\n", biosC0n[call], call,
+							psxRegs.GPR.n.a0, psxRegs.GPR.n.a1, psxRegs.GPR.n.a2, psxRegs.GPR.n.a3);
 #endif
-				if (biosC0[call])
-					biosC0[call]();
+			}
+
 				break;
 		}
 	}

@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
  ***************************************************************************/
 
 /* 
@@ -29,7 +28,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 //#include "config.h"
 
 /* System includes */
@@ -42,6 +40,7 @@ extern "C" {
 #include <time.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <assert.h>
 #include "zlib/zlib.h"
 
 #define MAXPATHLEN 512
@@ -61,17 +60,24 @@ typedef uintptr_t uptr;
 
 typedef uint8_t boolean;
 
-/* Local includes */
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+// Local includes
 #include "system.h"
 #include "debug.h"
 
-/* Ryan TODO WTF is this? */
 #if defined (__LINUX__) || defined (__MACOSX__)|| defined (__ppc__)
 #define strnicmp strncasecmp
 #endif
 #define __inline inline
 
-/* Enables NLS/internationalization if active */
+// Enables NLS/internationalization if active
 #ifdef ENABLE_NLS
 
 #include <libintl.h>
@@ -97,18 +103,20 @@ void __Log(char *fmt, ...);
 void __Log(char *fmt, ...);
 
 typedef struct {
-	char Gpu[MAXPATHLEN];
-	char Spu[MAXPATHLEN];
-	char Cdr[MAXPATHLEN];
-	char Pad1[MAXPATHLEN];
-	char Pad2[MAXPATHLEN];
-	char Net[MAXPATHLEN];
-    char Sio1[MAXPATHLEN];
-	char Mcd1[MAXPATHLEN];
-	char Mcd2[MAXPATHLEN];
-	char Bios[MAXPATHLEN];
+	char Gpu[256];
+	char Spu[256];
+	char Cdr[256];
+	char Pad1[256];
+	char Pad2[256];
+	char Net[256];
+	char Sio1[256];
+	char Mcd1[256];
+	char Mcd2[256];
+	char Bios[256];
 	char BiosDir[MAXPATHLEN];
 	char PluginsDir[MAXPATHLEN];
+	char PatchesDir[MAXPATHLEN];
+	char IsoImgDir[MAXPATHLEN];
 	long Debug;
 	long Xa;
 	long Sio;
@@ -124,6 +132,8 @@ typedef struct {
 	long RCntFix;
 	long UseNet;
 	long VSyncWA;
+	long PsxStock;
+	long PsxClock;
 } PcsxConfig;
 
 PcsxConfig Config;
@@ -143,14 +153,7 @@ extern int NetOpened;
 
 // Make the timing events trigger faster as we are currently assuming everything
 // takes one cycle, which is not the case on real hardware.
-// FIXME: Count the proper cycle and get rid of this.
-// PCSX4ALL team notes about cpu BIAS
-// The higher values are faster as the CPU is underclocked but if the game needs more CPU power the game will be slowed down.
-// Lower values can be selected for compatibility but the emulator will be very slow.
-
-//#define BIAS	2 //standart pcsx reloaded value.stable.(tekken 2,3, front mission 3,and heavy cpu intensive games works very well(correct speed) with this value).
-//#define BIAS	3 //should be ok for the majority of the games. If the game needs more CPU power(tekken 2,3, front mission 3,etc)the game will be slowed down.
-//#define BIAS  4 //can be used with some 2D games to gain speed.
+// FIXME: Count the proper cycle and get rid of this
 #define BIAS	2
 #define PSXCLK	33868800	/* 33.8688 MHz */
 
@@ -164,15 +167,16 @@ enum {
 	CPU_INTERPRETER
 }; // CPU Types
 
+enum {
+	CDDA_ENABLED_LE = 0,
+	CDDA_DISABLED,
+	CDDA_ENABLED_BE
+}; // CDDA Types
+
 int EmuInit();
 void EmuReset();
 void EmuShutdown();
 void EmuUpdate();
-
-#if 0
-#define malloc	balloc
-#define free	bfree
-#endif
 
 #ifdef __cplusplus
 }

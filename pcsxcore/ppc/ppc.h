@@ -7,6 +7,10 @@
 #ifndef __PPC_H__
 #define __PPC_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // include basic types
 #include "../PsxCommon.h"
 #include "ppc_mnemonics.h"
@@ -39,7 +43,10 @@ u16 dynMemRead16(u32 mem);
 u32 dynMemRead32(u32 mem);
 void dynMemWrite32(u32 mem, u32 val);
 
-#endif /* __PPC_H__ */
+#ifdef __cplusplus
+}
+#endif
+#endif
 
 
 

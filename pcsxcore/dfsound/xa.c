@@ -5,7 +5,6 @@
     copyright            : (C) 2002 by Pete Bernert
     email                : BlackDove@addcom.de
  ***************************************************************************/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -16,22 +15,10 @@
  *                                                                         *
  ***************************************************************************/
 
-//*************************************************************************//
-// History of changes:
-//
-// 2003/02/18 - kode54
-// - added gaussian interpolation
-//
-// 2002/05/15 - Pete
-// - generic cleanup for the Peops release
-//
-//*************************************************************************//
-
 #include "stdafx.h"
 
 #define _IN_XA
-
-#define XA_HACK
+#include <stdint.h>
 
 // will be included from spu.c
 #ifdef _IN_SPU
@@ -46,8 +33,14 @@ unsigned long * XAFeed  = NULL;
 unsigned long * XAPlay  = NULL;
 unsigned long   XAStart[44100*4] __attribute__((aligned(32)));
 unsigned long * XAEnd   = NULL;
+
 unsigned long   XARepeat  = 0;
 unsigned long   XALastVal = 0;
+
+unsigned long * CDDAFeed  = NULL;
+unsigned long * CDDAPlay  = NULL;
+unsigned long * CDDAStart = NULL;
+unsigned long * CDDAEnd   = NULL;
 
 int             iLeftXAVol  = 32767;
 int             iRightXAVol = 32767;
@@ -60,13 +53,21 @@ static int gauss_window[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 #define gvalr0 gauss_window[4+gauss_ptr]
 #define gvalr(x) gauss_window[4+((gauss_ptr+x)&3)]
 
+long cdxa_dbuf_ptr;
+
 ////////////////////////////////////////////////////////////////////////
-// MIX XA 
+// MIX XA & CDDA
 ////////////////////////////////////////////////////////////////////////
+
+static int lastxa_lc, lastxa_rc;
+static int lastcd_lc, lastcd_rc;
 
 INLINE void MixXA(void)
 {
 	int i;
+	unsigned long cdda_l = 0;
+    int decoded_xa;
+    int decoded_cdda;
 	unsigned long XALastVal = 0;
 	int leftvol =iLeftXAVol;
 	int rightvol=iRightXAVol;

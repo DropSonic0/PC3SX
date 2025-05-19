@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
  ***************************************************************************/
 
 /* 
@@ -24,14 +23,26 @@
 
 #include "PsxCommon.h"
 
-char ostr[256];
+char ostr[512];
 
 // Names of registers
-static char *disRNameGPR[] = {
-	"r0", "at", "v0", "v1", "a0", "a1","a2", "a3",
-	"t0", "t1", "t2", "t3", "t4", "t5","t6", "t7",
-	"s0", "s1", "s2", "s3", "s4", "s5","s6", "s7",
-	"t8", "t9", "k0", "k1", "gp", "sp","fp", "ra"};
+char *disRNameGPR[] = {
+	"r0", "at", "v0", "v1", "a0", "a1", "a2", "a3",
+	"t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
+	"s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+	"t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"};
+
+char *disRNameCP2D[] = {
+	"VXY0", "VZ0", "VXY1", "VZ1", "VXY2", "VZ2", "RGB", "OTZ",
+	"IR0", "IR1", "IR2", "IR3", "SXY0", "SXY1", "SXY2", "SXYP",
+	"SZ0", "SZ1", "SZ2", "SZ3", "RGB0", "RGB1", "RGB2", "RES1",
+	"MAC0", "MAC1", "MAC2", "MAC3", "IRGB", "ORGB", "LZCS", "LZCR"};
+
+char *disRNameCP2C[] = {
+	"R11R12", "R13R21", "R22R23", "R31R32", "R33", "TRX", "TRY", "TRZ",
+	"L11L12", "L13L21", "L22L23", "L31L32", "L33", "RBK", "BBK", "GBK",
+	"LR1LR2", "LR3LG1", "LG2LG3", "LB1LB2", "LB3", "RFC", "GFC", "BFC",
+	"OFX", "OFY", "H", "DQA", "DQB", "ZSF3", "ZSF4", "FLAG"};
 
 char *disRNameCP0[] = {
 	"Index"     , "Random"    , "EntryLo0", "EntryLo1", "Context" , "PageMask"  , "Wired"     , "*Check me*",
@@ -77,6 +88,8 @@ typedef char* (*TdisR3000AF)(u32 code, u32 pc);
 #define dName(i)	sprintf(ostr, "%s %-7s,", ostr, i)
 #define dGPR(i)		sprintf(ostr, "%s %08x (%s),", ostr, psxRegs.GPR.r[i], disRNameGPR[i])
 #define dCP0(i)		sprintf(ostr, "%s %08x (%s),", ostr, psxRegs.CP0.r[i], disRNameCP0[i])
+#define dCP2D(i)	sprintf(ostr, "%s %08x (%s),", ostr, psxRegs.CP2D.r[i], disRNameCP2D[i])
+#define dCP2C(i)	sprintf(ostr, "%s %08x (%s),", ostr, psxRegs.CP2C.r[i], disRNameCP2C[i])
 #define dHI()		sprintf(ostr, "%s %08x (%s),", ostr, psxRegs.GPR.n.hi, "hi")
 #define dLO()		sprintf(ostr, "%s %08x (%s),", ostr, psxRegs.GPR.n.lo, "lo")
 #define dImm()		sprintf(ostr, "%s %08x (%08x),", ostr, _Im_, _Im_)
@@ -204,8 +217,8 @@ MakeDisF(disNCCT ,		dName("NCCT"))
 
 MakeDisF(disMFC2,		dName("MFC2"); dGPR(_Rt_);)
 MakeDisF(disCFC2,		dName("CFC2"); dGPR(_Rt_);)
-MakeDisF(disMTC2,		dName("MTC2"); dGPR(_Rt_);)
-MakeDisF(disCTC2,		dName("CTC2"); dGPR(_Rt_);)
+MakeDisF(disMTC2,		dName("MTC2"); dGPR(_Rd_);)
+MakeDisF(disCTC2,		dName("CTC2"); dGPR(_Rd_);)
 
 /*********************************************************
 * Register branch logic                                  *
@@ -239,13 +252,13 @@ MakeDisF(disLHU,		dName("LHU");   dGPR(_Rt_);  dOfB();)
 MakeDisF(disLW,			dName("LW");    dGPR(_Rt_);  dOfB();)
 MakeDisF(disLWL,		dName("LWL");   dGPR(_Rt_);  dOfB();)
 MakeDisF(disLWR,		dName("LWR");   dGPR(_Rt_);  dOfB();)
-MakeDisF(disLWC2,		dName("LWC2");  dGPR(_Rt_);  dOfB();)
+MakeDisF(disLWC2,		dName("LWC2");  dCP2D(_Rt_);  dOfB();)
 MakeDisF(disSB,			dName("SB");    dGPR(_Rt_);  dOfB();)
 MakeDisF(disSH,			dName("SH");    dGPR(_Rt_);  dOfB();)
 MakeDisF(disSW,			dName("SW");    dGPR(_Rt_);  dOfB();)
 MakeDisF(disSWL,		dName("SWL");   dGPR(_Rt_);  dOfB();)
 MakeDisF(disSWR,		dName("SWR");   dGPR(_Rt_);  dOfB();)
-MakeDisF(disSWC2,		dName("SWC2");  dGPR(_Rt_);  dOfB();)
+MakeDisF(disSWC2,		dName("SWC2");  dCP2D(_Rt_);  dOfB();)
 
 /*********************************************************
 * Moves between GPR and COPx                             *

@@ -5,7 +5,6 @@
     copyright            : (C) 2002 by Pete Bernert
     email                : BlackDove@addcom.de
  ***************************************************************************/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -15,23 +14,6 @@
  *   additional informations.                                              *
  *                                                                         *
  ***************************************************************************/
-
-//*************************************************************************//
-// History of changes:
-//
-// 2004/09/18 - Pete
-// - corrected LDChen ADSRX values after save state loading
-//
-// 2003/03/20 - Pete
-// - fix to prevent the new interpolations from crashing when loading a save state
-//
-// 2003/01/06 - Pete
-// - small changes for version 1.3 adsr save state loading      
-//
-// 2002/05/15 - Pete
-// - generic cleanup for the Peops release
-//
-//*************************************************************************//
 
 #include "stdafx.h"
 
@@ -60,9 +42,9 @@ typedef struct
 {
  unsigned short  spuIrq;
  unsigned long   pSpuIrq;
- unsigned long   dummy0;
- unsigned long   dummy1;
- unsigned long   dummy2;
+ unsigned long   spuAddr;
+ unsigned long   bIrqHit;
+ unsigned long   decoded_ptr;
  unsigned long   dummy3;
 
  SPUCHAN  s_chan[MAXCHAN];   
@@ -74,6 +56,8 @@ typedef struct
 void LoadStateV5(SPUFreeze_t * pF);                    // newest version
 void LoadStateUnknown(SPUFreeze_t * pF);               // unknown format
 
+extern int lastns;
+
 ////////////////////////////////////////////////////////////////////////
 // SPUFREEZE: called by main emu on savestate load/save
 ////////////////////////////////////////////////////////////////////////
@@ -83,6 +67,8 @@ long CALLBACK SPU_d_freeze(unsigned long ulFreezeMode,SPUFreeze_t * pF)
  int i;SPUOSSFreeze_t * pFO;
 
  if(!pF) return 0;                                     // first check
+
+ if(!bSpuInit) return 0;
 
  if(ulFreezeMode)                                      // info or save?
   {//--------------------------------------------------//
@@ -111,6 +97,9 @@ long CALLBACK SPU_d_freeze(unsigned long ulFreezeMode,SPUFreeze_t * pF)
 
    pFO->spuIrq=spuIrq;
    if(pSpuIrq)  pFO->pSpuIrq  = (unsigned long)pSpuIrq-(unsigned long)spuMemC;
+
+   pFO->spuAddr=spuAddr;
+   if(pFO->spuAddr==0) pFO->spuAddr=0xbaadf00d;
 
    for(i=0;i<MAXCHAN;i++)
     {
@@ -148,14 +137,13 @@ long CALLBACK SPU_d_freeze(unsigned long ulFreezeMode,SPUFreeze_t * pF)
 
  xapGlobal=0;
 
- if(!strcmp(pF->szSPUName,"PBOSS") &&                  
-    pF->ulFreezeVersion==5)
-      LoadStateV5(pF);
+ if(!strcmp(pF->szSPUName,"PBOSS") && pF->ulFreezeVersion==5)
+   LoadStateV5(pF);
  else LoadStateUnknown(pF);
 
  // repair some globals
  for(i=0;i<=62;i+=2)
- SPU__writeRegister(H_Reverb+i,regArea[(H_Reverb+i-0xc00)>>1]);
+  SPU__writeRegister(H_Reverb+i,regArea[(H_Reverb+i-0xc00)>>1]);
  SPU__writeRegister(H_SPUReverbAddr,regArea[(H_SPUReverbAddr-0xc00)>>1]);
  SPU__writeRegister(H_SPUrvolL,regArea[(H_SPUrvolL-0xc00)>>1]);
  SPU__writeRegister(H_SPUrvolR,regArea[(H_SPUrvolR-0xc00)>>1]);
@@ -168,14 +156,15 @@ long CALLBACK SPU_d_freeze(unsigned long ulFreezeMode,SPUFreeze_t * pF)
  // fix to prevent new interpolations from crashing
  for(i=0;i<MAXCHAN;i++) s_chan[i].SB[28]=0;
 
- // repair LDChen's ADSR changes
- for(i=0;i<24;i++)
-  {
-   SPU__writeRegister(0x1f801c00+(i<<4)+0xc8,regArea[(i<<3)+0x64]);
-   SPU__writeRegister(0x1f801c00+(i<<4)+0xca,regArea[(i<<3)+0x65]);
-  }
-
  SetupTimer();                                         // start sound processing again
+
+ // stop load crackling
+ //cpu_cycles = 0;
+ //iCycle = 0;
+
+ XAPlay  = XAStart;
+ XAFeed  = XAStart;
+ XAEnd   = XAStart + 44100;
 
  return 1;
 }
@@ -188,8 +177,14 @@ void LoadStateV5(SPUFreeze_t * pF)
 
  pFO=(SPUOSSFreeze_t *)(pF+1);
 
- spuIrq   = pFO->spuIrq;
- if(pFO->pSpuIrq)  pSpuIrq  = pFO->pSpuIrq+spuMemC;  else pSpuIrq=0;
+ spuIrq = pFO->spuIrq;
+ if(pFO->pSpuIrq) pSpuIrq = pFO->pSpuIrq+spuMemC; else pSpuIrq=NULL;
+
+ if(pFO->spuAddr)
+  {
+   spuAddr = pFO->spuAddr;
+   if (spuAddr == 0xbaadf00d) spuAddr = 0;
+  }
 
  for(i=0;i<MAXCHAN;i++)
   {
@@ -215,9 +210,8 @@ void LoadStateUnknown(SPUFreeze_t * pF)
    s_chan[i].bNew=0;
    s_chan[i].bStop=0;
    s_chan[i].ADSR.lVolume=0;
-   s_chan[i].pLoop=spuMemC;
-   s_chan[i].pStart=spuMemC;
-   s_chan[i].pLoop=spuMemC;
+   s_chan[i].pLoop=(unsigned char *)(spuMemC+4096);
+   s_chan[i].pStart=(unsigned char *)(spuMemC+4096);
    s_chan[i].iMute=0;
    s_chan[i].iIrqDone=0;
   }

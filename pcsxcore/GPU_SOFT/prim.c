@@ -5,7 +5,6 @@
     copyright            : (C) 2001 by Pete Bernert
     email                : BlackDove@addcom.de
  ***************************************************************************/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -16,71 +15,6 @@
  *                                                                         *
  ***************************************************************************/
 
-//*************************************************************************// 
-// History of changes:
-//
-// 2004/01/31 - Pete  
-// - added zn bits and two zn cheats (TileS & move image - 2004/03/13)
-//
-// 2003/07/22 - Pete
-// - added sprite x coord wrap (skullmonkey) - new: sprite y coord wrap as well
-//
-// 2002/12/14 - Pete
-// - added dithering flag
-//
-// 2002/10/03 - Farfetch'd & Pete
-// - changed: polylines, 11 bit coords, polygon discarding, BlkFill align, mask bits
-//
-// 2002/09/19 - Farfetch'd
-// - STP: read control register is now masked correctly with 0x3
-//
-// 2002/08/16 - Pete
-// - additional mask bit handling for sprites (Alone in the Dark 4 & FF6)
-//
-// 2002/08/10 - Lewpy & E}I{
-// - correct TW coord adjustment (RRT4)
-//
-// 2002/07/22 - Pete
-// - problem with the "2002/05/19 fixed mdec mask bit problem in FF9" fixed (hopefully)
-//
-// 2002/06/04 - Lewpy
-// - new line drawing funcs
-//
-// 2002/05/19 - Pete
-// - mdec mask bit problem in FF9 fixed
-//
-// 2002/05/14 - Pete
-// - new coord check
-//
-// 2002/03/29 - Pete
-// - tex window coord adjustment - thanx to E}I{
-// - faster generic coord check - thanx to E}I{
-// - StoreImage wrap (Devilsummoner Soul Hackers)
-//
-// 2002/03/27 - Pete
-// - improved sprite texture wrapping func on _very_ big sprites
-//
-// 2002/02/23 - Pete
-// - added Lunar "ignore blending color" fix
-//
-// 2002/02/12 - Pete
-// - removed "no sprite transparency" and "black poly" fixes
-//
-// 2002/02/10 - Pete
-// - additional Load/MoveImage checks for a few FF9/BOF4 effects
-//
-// 2001/12/10 - Pete
-// - additional coord checks for Nascar and SF2 (and more...?)
-//
-// 2001/11/08 - Linuzappz
-// - BGR24to16 converted to nasm, C version still works: define __i386_ 
-//   to use the asm version 
-//
-// 2001/10/28 - Pete  
-// - generic cleanup for the Peops release
-//
-//*************************************************************************// 
-
 #define _IN_PRIMDRAW
 
 #include "externals.h"
@@ -89,26 +23,27 @@
 #include "soft.h"
 #include "swap.h"
 
-////////////////////////////////////////////////////////////////////////                                          
+////////////////////////////////////////////////////////////////////////
 // globals
 ////////////////////////////////////////////////////////////////////////
 
-BOOL           bUsingTWin=FALSE;                        
+BOOL           bUsingTWin=FALSE;
 TWin_t         TWin;
 //unsigned long  clutid;                                 // global clut
 unsigned short usMirror=0;                             // sprite mirror
 int            iDither=0;
-int32_t           drawX;
-int32_t           drawY;
-int32_t           drawW;
-int32_t           drawH;
-uint32_t  dwCfgFixes;
-uint32_t  dwActFixes=0;
+int32_t        drawX;
+int32_t        drawY;
+int32_t        drawW;
+int32_t        drawH;
+uint32_t       dwCfgFixes;
+uint32_t       dwActFixes=0;
+uint32_t       dwEmuFixes=0;
 int            iUseFixes;
 int            iUseDither=0;
 BOOL           bDoVSyncUpdate=FALSE;
 
-////////////////////////////////////////////////////////////////////////                                          
+////////////////////////////////////////////////////////////////////////
 // Some ASM color convertion by LEWPY
 ////////////////////////////////////////////////////////////////////////
 
@@ -142,7 +77,7 @@ __inline void UpdateGlobalTP(unsigned short gdata)
      GlobalTextIL    =(gdata & 0x2000) >> 13;
      GlobalTextABR = (unsigned short)((gdata >> 7) & 0x3);
      GlobalTextTP = (gdata >> 9) & 0x3;
-     if(GlobalTextTP==3) GlobalTextTP=2;             
+     if(GlobalTextTP==3) GlobalTextTP=2;
      usMirror =0;
      lGPUstatusRet = (lGPUstatusRet & 0xffffe000 ) | (gdata & 0x1fff );
 
@@ -158,25 +93,28 @@ __inline void UpdateGlobalTP(unsigned short gdata)
   }
  else GlobalTextAddrY = (gdata << 4) & 0x100;
 
- usMirror=gdata&0x3000;
-
- if(iUseDither==2)  
-  {
-   iDither=2;
-  }
- else  
-  {
-   if(gdata&200) iDither=iUseDither; else iDither=0;
-  }
-
  GlobalTextTP = (gdata >> 7) & 0x3;                    // tex mode (4,8,15)
 
  if(GlobalTextTP==3) GlobalTextTP=2;                   // seen in Wild9 :(
 
  GlobalTextABR = (gdata >> 5) & 0x3;                   // blend mode
-     
- lGPUstatusRet&=~0x07ff;                               // Clear the necessary bits
- lGPUstatusRet|=(gdata & 0x07ff);                      // set the necessary bits
+
+ lGPUstatusRet&=~0x000001ff;                           // Clear the necessary bits
+ lGPUstatusRet|=(gdata & 0x01ff);                      // set the necessary bits
+
+ switch(iUseDither)
+ {
+  case 0:
+   iDither=0;
+  break;
+  case 1:
+   if(lGPUstatusRet&0x0200) iDither=2;
+   else iDither=0;
+  break;
+  case 2:
+   iDither=2;
+  break;
+ }
 }
 
 ////////////////////////////////////////////////////////////////////////                                          
@@ -447,6 +385,11 @@ void cmdTexturePage(unsigned char * baseAddr)
 {
  uint32_t gdata = GETLE32(&((uint32_t*)baseAddr)[0]);
 
+ lGPUstatusRet&=~0x000007ff;
+ lGPUstatusRet|=(gdata & 0x07ff);
+
+ usMirror=(unsigned short)(gdata&0x3000);
+
  UpdateGlobalTP((unsigned short)gdata);
  GlobalTextREST = (gdata&0x00ffffff)>>9;
 }
@@ -642,18 +585,18 @@ void primBlkFill(unsigned char * baseAddr)
 {
  uint32_t *gpuData = ((uint32_t *) baseAddr);
  short *sgpuData = ((short *) baseAddr);
-         
+
  short sX = GETLEs16(&sgpuData[2]);
  short sY = GETLEs16(&sgpuData[3]);
  short sW = GETLEs16(&sgpuData[4]) & 0x3ff;
- short sH = GETLEs16(&sgpuData[5]) & 0x3ff;
+ short sH = GETLEs16(&sgpuData[5]) & iGPUHeightMask;
 
  sW = (sW+15) & ~15;
 
  // Increase H & W if they are one short of full values, because they never can be full values
  if (sH >= 1023) sH=1024;
  if (sW >= 1023) sW=1024; 
-        
+
  // x and y of end pos
  sW+=sX;
  sH+=sY;

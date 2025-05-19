@@ -1,5 +1,5 @@
 /***************************************************************************
-                           StdAfx.h  -  description
+                         externals.c  -  description
                              -------------------
     begin                : Wed May 15 2002
     copyright            : (C) 2002 by Pete Bernert
@@ -15,50 +15,12 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifdef _WINDOWS
+#include <stdint.h>
 
-#define WIN32_LEAN_AND_MEAN
-#define STRICT
-#include <windows.h>
-#include <windowsx.h>
-#include "mmsystem.h"
-#include <process.h>
-#include <stdlib.h>
+// 15-bit value + 1-sign
+int CLAMP16(int x) {
+	if(x > 32767) x = 32767;
+	else if(x < -32768) x = -32768;
 
-// enable that for auxprintf();
-//#define SMALLDEBUG
-//#include <dbgout.h>
-//void auxprintf (LPCTSTR pFormat, ...);
-
-#define INLINE __inline
-
-//////////////////////////////////////////////////////////
-// LINUX
-//////////////////////////////////////////////////////////
-#else
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <unistd.h>
-#ifndef NOTHREADLIB
-#include <pthread.h>
-#endif
-#define RRand(range) (random()%range)  
-#include <string.h> 
-#include <sys/time.h>  
-#include <math.h>  
-
-#undef CALLBACK
-#define CALLBACK
-#define DWORD unsigned long
-#define LOWORD(l)           ((unsigned short)(l)) 
-#define HIWORD(l)           ((unsigned short)(((unsigned long)(l) >> 16) & 0xFFFF)) 
-
-#undef INLINE
-#define INLINE inline
-
-#endif
-
-#include "psemuxa.h"
+	return x;
+}

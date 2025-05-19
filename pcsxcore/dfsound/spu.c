@@ -5,7 +5,6 @@
     copyright            : (C) 2002 by Pete Bernert
     email                : BlackDove@addcom.de
  ***************************************************************************/
-                       
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -15,82 +14,6 @@
  *   additional informations.                                              *
  *                                                                         *
  ***************************************************************************/
-                           
-//*************************************************************************//
-// History of changes:
-//
-// 2004/09/19 - Pete
-// - added option: IRQ handling in the decoded sound buffer areas (Crash Team Racing)
-//
-// 2004/09/18 - Pete
-// - changed global channel var handling to local pointers (hopefully it will help LDChen's port)
-//
-// 2004/04/22 - Pete
-// - finally fixed frequency modulation and made some cleanups
-//
-// 2003/04/07 - Eric
-// - adjusted cubic interpolation algorithm
-//
-// 2003/03/16 - Eric
-// - added cubic interpolation
-//
-// 2003/03/01 - linuzappz
-// - libraryName changes using ALSA
-//
-// 2003/02/28 - Pete
-// - added option for type of interpolation
-// - adjusted spu irqs again (Thousant Arms, Valkyrie Profile)
-// - added MONO support for MSWindows DirectSound
-//
-// 2003/02/20 - kode54
-// - amended interpolation code, goto GOON could skip initialization of gpos and cause segfault
-//
-// 2003/02/19 - kode54
-// - moved SPU IRQ handler and changed sample flag processing
-//
-// 2003/02/18 - kode54
-// - moved ADSR calculation outside of the sample decode loop, somehow I doubt that
-//   ADSR timing is relative to the frequency at which a sample is played... I guess
-//   this remains to be seen, and I don't know whether ADSR is applied to noise channels...
-//
-// 2003/02/09 - kode54
-// - one-shot samples now process the end block before stopping
-// - in light of removing fmod hack, now processing ADSR on frequency channel as well
-//
-// 2003/02/08 - kode54
-// - replaced easy interpolation with gaussian
-// - removed fmod averaging hack
-// - changed .sinc to be updated from .iRawPitch, no idea why it wasn't done this way already (<- Pete: because I sometimes fail to see the obvious, haharhar :)
-//
-// 2003/02/08 - linuzappz
-// - small bugfix for one usleep that was 1 instead of 1000
-// - added iDisStereo for no stereo (Linux)
-//
-// 2003/01/22 - Pete
-// - added easy interpolation & small noise adjustments
-//
-// 2003/01/19 - Pete
-// - added Neill's reverb
-//
-// 2003/01/12 - Pete
-// - added recording window handlers
-//
-// 2003/01/06 - Pete
-// - added Neill's ADSR timings
-//
-// 2002/12/28 - Pete
-// - adjusted spu irq handling, fmod handling and loop handling
-//
-// 2002/08/14 - Pete
-// - added extra reverb
-//
-// 2002/06/08 - linuzappz
-// - SPUupdate changed for SPUasync
-//
-// 2002/05/15 - Pete
-// - generic cleanup for the Peops release
-//
-//*************************************************************************//
 
 #include "stdafx.h"
 

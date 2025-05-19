@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,8 +14,9 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
  ***************************************************************************/
+
 
 #ifndef _SIO_H_
 #define _SIO_H_
@@ -61,17 +61,12 @@ extern unsigned short BaudReg;
 
 extern char Mcd1Data[MCD_SIZE], Mcd2Data[MCD_SIZE];
 
+unsigned char sioRead8();
 void sioWrite8(unsigned char value);
 void sioWriteStat16(unsigned short value);
 void sioWriteMode16(unsigned short value);
 void sioWriteCtrl16(unsigned short value);
 void sioWriteBaud16(unsigned short value);
-
-unsigned char sioRead8();
-unsigned short sioReadStat16();
-unsigned short sioReadMode16();
-unsigned short sioReadCtrl16();
-unsigned short sioReadBaud16();
 
 void netError();
 
@@ -85,16 +80,18 @@ void CreateMcd(char *mcd);
 void ConvertMcd(char *mcd, char *data);
 
 typedef struct {
-	char Title[48 + 1]; // Title in ASCII
-	char sTitle[48 * 2 + 1]; // Title in Shift-JIS
-	char ID[12 + 1];
-	char Name[16 + 1];
+	char Title[48];
+	short sTitle[48];
+	char ID[14];
+	char Name[16];
 	int IconCount;
-	short Icon[16 * 16 * 3];
+	short Icon[16*16*3];
 	unsigned char Flags;
 } McdBlock;
 
 void GetMcdBlockInfo(int mcd, int block, McdBlock *info);
+
+void CALLBACK SIO1irq(void);
 
 #ifdef __cplusplus
 }

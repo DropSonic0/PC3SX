@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
  ***************************************************************************/
 
 #ifndef __R3000A_H__
@@ -25,10 +24,10 @@
 extern "C" {
 #endif
 
-#include "psxcommon.h"
-#include "psxmem.h"
-#include "psxcounters.h"
-#include "psxbios.h"
+#include "PsxCommon.h"
+#include "PsxMem.h"
+#include "PsxCounters.h"
+#include "PsxBios.h"
 
 typedef struct {
 	int  (*Init)();
@@ -41,7 +40,8 @@ typedef struct {
 
 extern R3000Acpu *psxCpu;
 extern R3000Acpu psxInt;
-#if (defined(__x86_64__) || defined(__i386__) || defined(__sh__) || defined(__ppc__)) && !defined(NOPSXREC)
+extern R3000Acpu psxIntDbg;
+#if defined(__x86_64__) || defined(__i386__) || defined(__sh__) || defined(__ppc__) || defined(__BIGENDIAN__)
 extern R3000Acpu psxRec;
 #define PSXREC
 #endif
@@ -58,6 +58,8 @@ typedef union {
 	struct { s8 l, h, h2, h3; } sb;
 	struct { s16 l, h; } sw;
 #endif
+	u32 d;
+	s32 sd;
 } PAIR;
 
 typedef union {
@@ -74,8 +76,8 @@ typedef union {
 typedef union {
 	struct {
 		u32	Index,     Random,    EntryLo0,  BPC,
-				Context,   BDA,       PIDMask,   DCIC,
-				BadVAddr,  BDAM,      EntryHi,   BPCM,
+				Context,   PageMask,  Wired,     Reserved0,
+				BadVAddr,  Count,     EntryHi,   Compare,
 				Status,    Cause,     EPC,       PRid,
 				Config,    LLAddr,    WatchLO,   WatchHI,
 				XContext,  Reserved1, Reserved2, Reserved3,
@@ -144,7 +146,7 @@ typedef union {
 	u32 r[32];
 	PAIR p[32];
 } psxCP2Ctrl;
-/*
+
 enum {
 	PSXINT_SIO = 0,
 	PSXINT_CDR,
@@ -156,36 +158,19 @@ enum {
 	PSXINT_MDECINDMA,
 	PSXINT_GPUOTCDMA,
 	PSXINT_CDRDMA,
-	DUMMY1,
+	PSXINT_SPUASYNC,
 	PSXINT_CDRDBUF,
 	PSXINT_CDRLID,
 	PSXINT_CDRPLAY
 };
-*/
-enum {
-	PSXINT_SIO = 0,
-	PSXINT_CDR,
-	PSXINT_CDREAD,
-	PSXINT_GPUDMA,
-	PSXINT_MDECOUTDMA,
-	PSXINT_SPUDMA,
-	PSXINT_MDECINDMA,
-	PSXINT_GPUOTCDMA,
-	PSXINT_CDRDMA,
-	PSXINT_CDRPLAY,
-	PSXINT_CDRDBUF,
-	PSXINT_CDRLID
-	
-};
-
 
 typedef struct {
 	psxGPRRegs GPR;		/* General Purpose Registers */
 	psxCP0Regs CP0;		/* Coprocessor0 Registers */
 	psxCP2Data CP2D; 	/* Cop2 data registers */
 	psxCP2Ctrl CP2C; 	/* Cop2 control registers */
-	u32 pc;				/* Program counter */
-	u32 code;			/* The instruction */
+  u32 pc;						/* Program counter */
+  u32 code;					/* The instruction */
 	u32 cycle;
 	u32 interrupt;
 	u32 intCycle[32];
@@ -221,6 +206,7 @@ extern psxRegisters psxRegs;
 
 /**** R3000A Instruction Macros ****/
 #define _PC_       psxRegs.pc       // The next PC to be executed
+
 #define _fOp_(code)		((code >> 26)       )  // The opcode part of the instruction register 
 #define _fFunct_(code)	((code      ) & 0x3F)  // The funct part of the instruction register 
 #define _fRd_(code)		((code >> 11) & 0x1F)  // The rd part of the instruction register 
@@ -232,6 +218,7 @@ extern psxRegisters psxRegs;
 
 #define _fImm_(code)	((s16)code)            // sign-extended immediate
 #define _fImmU_(code)	(code&0xffff)          // zero-extended immediate
+#define _fImmLU_(code)	(code<<16)             // LUI
 
 #define _Op_     _fOp_(psxRegs.code)
 #define _Funct_  _fFunct_(psxRegs.code)
@@ -244,6 +231,7 @@ extern psxRegisters psxRegs;
 
 #define _Imm_	 _fImm_(psxRegs.code)
 #define _ImmU_	 _fImmU_(psxRegs.code)
+#define _ImmLU_	 _fImmLU_(psxRegs.code)
 
 #define _rRs_   psxRegs.GPR.r[_Rs_]   // Rs register
 #define _rRt_   psxRegs.GPR.r[_Rt_]   // Rt register
@@ -270,9 +258,10 @@ void psxShutdown();
 void psxException(u32 code, u32 bd);
 void psxBranchTest();
 void psxExecuteBios();
-//int  psxTestLoadDelay(int reg, u32 tmp);
+int  psxTestLoadDelay(int reg, u32 tmp);
 void psxDelayTest(int reg, u32 bpc);
 void psxTestSWInts();
+void psxTestHWInts();
 void psxJumpTest();
 
 #ifdef __cplusplus

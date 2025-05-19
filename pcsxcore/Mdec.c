@@ -1,6 +1,6 @@
 /***************************************************************************
+ *   Copyright (C) 2010 Gabriele Gorla                                     *
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,24 +15,32 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
  ***************************************************************************/
 
-/*
-* Movie decoder. Based on the FPSE v0.08 Mdec decoder.
-*/
+#include "mdec.h"
 
-#include "Mdec.h"
-
+/* memory speed is 1 byte per MDEC_BIAS psx clock
+ * That mean (PSXCLK / MDEC_BIAS) B/s
+ * MDEC_BIAS = 2.0 => ~16MB/s
+ * MDEC_BIAS = 3.0 => ~11MB/s
+ * and so on ...
+ * I guess I have 50 images in 50Hz ... (could be 25 images ?)
+ * 320x240x24@50Hz => 11.52 MB/s
+ * 320x240x24@60Hz => 13.824 MB/s
+ * 320x240x16@50Hz => 7.68 MB/s
+ * 320x240x16@60Hz => 9.216 MB/s
+ * so 2.0 to 4.0 should be fine.
+ */
 #define _FIXED
 
 #define CONST_BITS  8
 #define PASS1_BITS  2
 
-#define FIX_1_082392200		(18159528) // B6
-#define FIX_1_414213562		(23726566) // A4
-#define FIX_1_847759065		(31000253) // A2
-#define FIX_2_613125930		(43840978) // B2
+#define FIX_1_082392200  (277)
+#define FIX_1_414213562  (362)
+#define FIX_1_847759065  (473)
+#define FIX_2_613125930  (669)
 
 #define MULTIPLY(var,const)  (DESCALE((var) * (const), CONST_BITS))
 
@@ -327,14 +335,14 @@ static int zscan[DCTSIZE2] = {
 };
 
 static int aanscales[DCTSIZE2] = {
-	1048576, 1454417, 1370031, 1232995, 1048576,  823861, 567485, 289301,
-	1454417, 2017334, 1900287, 1710213, 1454417, 1142728, 787125, 401273,
-	1370031, 1900287, 1790031, 1610986, 1370031, 1076426, 741455, 377991,
-	1232995, 1710213, 1610986, 1449849, 1232995,  968758, 667292, 340183,
-	1048576, 1454417, 1370031, 1232995, 1048576,  823861, 567485, 289301,
-	823861,  1142728, 1076426, 968758,  823861,  647303, 445870, 227303,
-	567485,  787125,  741455,  667292,  567485,  445870, 307121, 156569,
-	289301,  401273,  377991,  340183,  289301,  227303, 156569,  79818
+	  16384, 22725, 21407, 19266, 16384, 12873,  8867,  4520,
+	  22725, 31521, 29692, 26722, 22725, 17855, 12299,  6270,
+	  21407, 29692, 27969, 25172, 21407, 16819, 11585,  5906,
+	  19266, 26722, 25172, 22654, 19266, 15137, 10426,  5315,
+	  16384, 22725, 21407, 19266, 16384, 12873,  8867,  4520,
+	  12873, 17855, 16819, 15137, 12873, 10114,  6967,  3552,
+	   8867, 12299, 11585, 10426,  8867,  6967,  4799,  2446,
+	   4520,  6270,  5906,  5315,  4520,  3552,  2446,  1247
 };
 
 void iqtab_init(int *iqtab,unsigned char *iq_y) {
@@ -529,11 +537,13 @@ void yuv2rgb24(int *blk,unsigned char *image) {
 }
 
 int mdecFreeze(gzFile f, int Mode) {
+	char Unused[4096];
+
 	gzfreeze(&mdec, sizeof(mdec));
-	gzfreeze(iq_y, sizeof(iq_y));
-	gzfreeze(iq_uv, sizeof(iq_uv));
+	gzfreezel(iq_y);
+	gzfreezel(iq_uv);
+	gzfreezel(Unused);
 
 	return 0;
 }
-
 

@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,32 +14,31 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
  ***************************************************************************/
 
 /*
 * Handles PSX DMA functions.
 */
-#include "PsxDma.h"
+
+#include "psxdma.h"
 
 // Dma0/1 in Mdec.c
 // Dma3   in CdRom.c
 
 void psxDma4(u32 madr, u32 bcr, u32 chcr) { // SPU
-
 	u16 *ptr;
 	u32 size;
 
 	switch (chcr) {
 		case 0x01000201: //cpu to spu transfer
-#ifdef DEBUG_DMA
-      sprintf(txtbuffer,"*** DMA4 SPU - mem2spu *** %08x addr = %08x size = %08x\n", chcr, madr, bcr);
-      DEBUG_print(txtbuffer, 5);
+#ifdef PSXDMA_LOG
+			PSXDMA_LOG("*** DMA4 SPU - mem2spu *** %08x addr = %08x size = %08x\n", chcr, madr, bcr);
 #endif
 			ptr = (u16 *)PSXM(madr);
 			if (ptr == NULL) {
-#ifdef DEBUG_DMA
-        DEBUG_print("*** DMA4 SPU - mem2spu *** NULL Pointer!!!\n", 5);
+#ifdef PSXDMA_LOG
+				PSXDMA_LOG("*** DMA4 SPU - mem2spu *** NULL Pointer!!!\n");
 #endif
 				break;
 			}

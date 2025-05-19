@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
  ***************************************************************************/
 
 #ifndef __PSXDMA_H__
@@ -25,10 +24,10 @@
 extern "C" {
 #endif
 
-#include "PsxCommon.h"
-#include "R3000A.h"
-#include "PsxHw.h"
-#include "PsxMem.h"
+#include "psxcommon.h"
+#include "r3000a.h"
+#include "psxhw.h"
+#include "psxmem.h"
 
 #define GPUDMA_INT(eCycle) { \
 	psxRegs.interrupt |= 0x01000000; \
@@ -42,11 +41,40 @@ extern "C" {
 	psxRegs.intCycle[5+24] = psxRegs.cycle; \
 }
 
+#define SPUDMA_INT(eCycle) { \
+	psxRegs.interrupt |= 0x03000000; \
+	psxRegs.intCycle[6+24+1] = eCycle; \
+	psxRegs.intCycle[6+24] = psxRegs.cycle; \
+}
+
+#define MDECINDMA_INT(eCycle) { \
+	psxRegs.interrupt |= 0x04000000; \
+	psxRegs.intCycle[7+24+1] = eCycle; \
+	psxRegs.intCycle[7+24] = psxRegs.cycle; \
+}
+
+#define GPUOTCDMA_INT(eCycle) { \
+	psxRegs.interrupt |= 0x05000000; \
+	psxRegs.intCycle[8+24+1] = eCycle; \
+	psxRegs.intCycle[8+24] = psxRegs.cycle; \
+}
+
+#define CDRDMA_INT(eCycle) { \
+	psxRegs.interrupt |= 0x06000000; \
+	psxRegs.intCycle[9+24+1] = eCycle; \
+	psxRegs.intCycle[9+24] = psxRegs.cycle; \
+}
+
 void psxDma3(u32 madr, u32 bcr, u32 chcr);
 void psxDma4(u32 madr, u32 bcr, u32 chcr);
 void psxDma6(u32 madr, u32 bcr, u32 chcr);
+void spuInterrupt();
+void mdec0Interrupt();
+void gpuotcInterrupt();
+void cdrDmaInterrupt();
 
 #ifdef __cplusplus
 }
 #endif
 #endif
+

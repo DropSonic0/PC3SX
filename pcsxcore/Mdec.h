@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
  ***************************************************************************/
 
 #ifndef __MDEC_H__
@@ -25,37 +24,10 @@
 extern "C" {
 #endif
 
-#include "PsxCommon.h"
-#include "R3000A.h"
-#include "PsxHw.h"
-#include "PsxDma.h"
-
-#define	MDEC_END_OF_DATA	0xfe00
-
-// mdec0: command register
-#define MDEC0_STP			0x02000000
-#define MDEC0_RGB24			0x08000000
-#define MDEC0_SIZE_MASK		0x0000FFFF
-
-// mdec1: status register
-#define MDEC1_BUSY			0x20000000
-#define MDEC1_DREQ			0x18000000
-#define MDEC1_FIFO			0xc0000000
-#define MDEC1_RGB24			0x02000000
-#define MDEC1_STP			0x00800000
-#define MDEC1_RESET			0x80000000
-
-struct _pending_dma1 {
-	u32 adr;
-	u32 bcr;
-	u32 chcr;
-};
-
-#define mdec1func() \
-mdec.reg1 &= ~MDEC1_STP; \
-HW_DMA0_CHCR_2 &= SWAP32(~0x01000000); \
-DMA_INTERRUPT_2(0); \
-mdec.reg1 &= ~MDEC1_BUSY;
+#include "psxcommon.h"
+#include "r3000a.h"
+#include "psxhw.h"
+#include "psxdma.h"
 
 void mdecInit();
 void mdecWrite0(u32 data);

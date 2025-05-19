@@ -5,7 +5,6 @@
     copyright            : (C) 2001 by Pete Bernert
     email                : BlackDove@addcom.de
  ***************************************************************************/
- 
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -15,93 +14,6 @@
  *   additional informations.                                              *
  *                                                                         *
  ***************************************************************************/
-
-//*************************************************************************// 
-// History of changes:
-//
-// 2004/01/31 - Pete  
-// - added zn bits
-//
-// 2003/01/04 - Pete  
-// - the odd/even bit hack (CronoCross status screen) is now a special game fix
-//
-// 2003/01/04 - Pete  
-// - fixed wrapped y display position offset - Legend of Legaia
-//
-// 2002/11/24 - Pete  
-// - added new frameskip func support
-//
-// 2002/11/02 - Farfetch'd & Pete
-// - changed the y display pos handling
-//
-// 2002/10/03 - Farfetch'd & Pete
-// - added all kind of tiny stuff (gpureset, gpugetinfo, dmachain align, polylines...)
-//
-// 2002/10/03 - Pete
-// - fixed gpuwritedatamem & now doing every data processing with it
-//
-// 2002/08/31 - Pete
-// - delayed odd/even toggle for FF8 intro scanlines
-//
-// 2002/08/03 - Pete
-// - "Sprite 1" command count added
-//
-// 2002/08/03 - Pete
-// - handles "screen disable" correctly
-//
-// 2002/07/28 - Pete
-// - changed dmachain handler (monkey hero)
-//
-// 2002/06/15 - Pete
-// - removed dmachain fixes, added dma endless loop detection instead
-//
-// 2002/05/31 - Lewpy 
-// - Win95/NT "disable screensaver" fix
-//
-// 2002/05/30 - Pete
-// - dmawrite/read wrap around
-//
-// 2002/05/15 - Pete
-// - Added dmachain "0" check game fix
-//
-// 2002/04/20 - linuzappz
-// - added iFastFwd stuff
-//
-// 2002/02/18 - linuzappz
-// - Added DGA2 support to PIC stuff
-//
-// 2002/02/10 - Pete
-// - Added dmacheck for The Mummy and T'ai Fu
-//
-// 2002/01/13 - linuzappz
-// - Added timing in the GPUdisplayText func
-//
-// 2002/01/06 - lu
-// - Added some #ifdef for the linux configurator
-//
-// 2002/01/05 - Pete
-// - fixed unwanted screen clearing on horizontal centering (causing
-//   flickering in linux version)
-//
-// 2001/12/10 - Pete
-// - fix for Grandia in ChangeDispOffsetsX
-//
-// 2001/12/05 - syo (syo68k@geocities.co.jp)
-// - added disable screen saver for "stop screen saver" option
-//
-// 2001/11/20 - linuzappz
-// - added Soft and About DlgProc calls in GPUconfigure and
-//   GPUabout, for linux
-//
-// 2001/11/09 - Darko Matesic
-// - added recording frame in updateLace and stop recording
-//   in GPUclose (if it is still recording)
-//
-// 2001/10/28 - Pete  
-// - generic cleanup for the Peops release
-//
-//*************************************************************************// 
-
 
 #define _IN_GPU
 
@@ -116,6 +28,12 @@
 #include "fps.h"
 #include "swap.h"
 
+#ifdef ENABLE_NLS
+#include <libintl.h>
+#include <locale.h>
+#define _(x)  gettext(x)
+#define N_(x) (x)
+#endif
 ////////////////////////////////////////////////////////////////////////
 // PPDK developer must change libraryName field and can change revision and build
 ////////////////////////////////////////////////////////////////////////
@@ -130,7 +48,7 @@ static char *libraryInfo      = "P.E.Op.S. Xvideo Driver V1.17\nCoded by Pete Be
 static char *PluginAuthor     = "Pete Bernert and the P.E.Op.S. team";
  
 ////////////////////////////////////////////////////////////////////////
-// memory image of the PSX vram 
+// memory image of the PSX vram
 ////////////////////////////////////////////////////////////////////////
 
 unsigned char  *psxVSecure;
@@ -151,7 +69,7 @@ long              lGPUstatusRet;
 char              szDispBuf[64];
 char              szMenuBuf[36];
 char              szDebugText[512];
-uint32_t     ulStatusControl[256];      
+uint32_t     ulStatusControl[256];
 
 static uint32_t gpuDataM[256];
 static unsigned   char gpuCommand = 0;
@@ -173,7 +91,12 @@ PSXDisplay_t      PreviousPSXDisplay;
 long              lSelectedSlot=0;
 BOOL              bChangeWinMode=FALSE;
 BOOL              bDoLazyUpdate=FALSE;
-uint32_t     lGPUInfoVals[16];
+uint32_t          lGPUInfoVals[16];
+static int        iFakePrimBusy=0;
+uint32_t          vBlank=0;
+int               iRumbleVal=0;
+int               iRumbleTime=0;
+BOOL              oddLines;
 
 ////////////////////////////////////////////////////////////////////////
 // some misc external display funcs
@@ -237,45 +160,45 @@ char * pGetConfigInfos(int iCfg)
  if(!pB) return NULL;
  *pB=0;
  //----------------------------------------------------//
- sprintf(szTxt,"Plugin: %s %d.%d.%d\r\n",libraryName,version,revision,build);
+ sprintf(szTxt,"Plugin: %s %d.%d.%d\n",libraryName,version,revision,build);
  strcat(pB,szTxt);
- sprintf(szTxt,"Author: %s\r\n\r\n",PluginAuthor);
+ sprintf(szTxt,"Author: %s\n\n",PluginAuthor);
  strcat(pB,szTxt);
  //----------------------------------------------------//
  if(iCfg && iWindowMode)
-  sprintf(szTxt,"Resolution/Color:\r\n- %dx%d ",LOWORD(iWinSize),HIWORD(iWinSize));
+  sprintf(szTxt,"Resolution/Color:\n- %dx%d ",LOWORD(iWinSize),HIWORD(iWinSize));
  else
-  sprintf(szTxt,"Resolution/Color:\r\n- %dx%d ",iResX,iResY);
+  sprintf(szTxt,"Resolution/Color:\n- %dx%d ",iResX,iResY);
  strcat(pB,szTxt);
  if(iWindowMode && iCfg) 
-   strcpy(szTxt,"Window mode\r\n");
+   strcpy(szTxt,"Window mode\n");
  else
  if(iWindowMode) 
-   sprintf(szTxt,"Window mode - [%d Bit]\r\n",iDesktopCol);
+   sprintf(szTxt,"Window mode - [%d Bit]\n",iDesktopCol);
  else
-   sprintf(szTxt,"Fullscreen - [%d Bit]\r\n",iColDepth);
+   sprintf(szTxt,"Fullscreen - [%d Bit]\n",iColDepth);
  strcat(pB,szTxt);
 
- sprintf(szTxt,"Stretch mode: %d\r\n",iUseNoStretchBlt);
+ sprintf(szTxt,"Stretch mode: %d\n",iUseNoStretchBlt);
  strcat(pB,szTxt);
- sprintf(szTxt,"Dither mode: %d\r\n\r\n",iUseDither);
+ sprintf(szTxt,"Dither mode: %d\n\n",iUseDither);
  strcat(pB,szTxt);
  //----------------------------------------------------//
- sprintf(szTxt,"Framerate:\r\n- FPS limit: %s\r\n",szO[UseFrameLimit]);
+ sprintf(szTxt,"Framerate:\n- FPS limit: %s\n",szO[UseFrameLimit]);
  strcat(pB,szTxt);
  sprintf(szTxt,"- Frame skipping: %s",szO[UseFrameSkip]);
  strcat(pB,szTxt);
  if(iFastFwd) strcat(pB," (fast forward)");
- strcat(pB,"\r\n");
+ strcat(pB,"\n");
  if(iFrameLimit==2)
-      strcpy(szTxt,"- FPS limit: Auto\r\n\r\n");
- else sprintf(szTxt,"- FPS limit: %.1f\r\n\r\n",fFrameRate);
+      strcpy(szTxt,"- FPS limit: Auto\n\n");
+ else sprintf(szTxt,"- FPS limit: %.1f\n\n",fFrameRate);
  strcat(pB,szTxt);
  //----------------------------------------------------//
- strcpy(szTxt,"Misc:\r\n- MaintainAspect: ");
- strcat(szTxt,"\r\n");
+ strcpy(szTxt,"Misc:\n- MaintainAspect: ");
+ strcat(szTxt,"\n");
  strcat(pB,szTxt);
- sprintf(szTxt,"- Game fixes: %s [%08x]\r\n",szO[iUseFixes],dwCfgFixes);
+ sprintf(szTxt,"- Game fixes: %s [%08x]\n",szO[iUseFixes],dwCfgFixes);
  strcat(pB,szTxt);
  //----------------------------------------------------//
  return pB;
@@ -301,44 +224,45 @@ void DoTextSnapShot(int iNum)
 
 ////////////////////////////////////////////////////////////////////////
 
-void CALLBACK GPUmakeSnapshot(void)                    // snapshot of whole vram
+void CALLBACK GPUmakeSnapshot(void)
 {
  FILE *bmpfile;
- char filename[256];     
+ char filename[256];
  unsigned char header[0x36];
- long size,height;
- unsigned char line[1024*3];
- short i,j;
- unsigned char empty[2]={0,0};
+ long size, height;
+ unsigned char line[1024 * 3];
+ short i, j;
+ unsigned char empty[2] = {0,0};
  unsigned short color;
  unsigned long snapshotnr = 0;
- 
- height=PreviousPSXDisplay.DisplayMode.y;
+ unsigned char *pD;
 
- size=height*PreviousPSXDisplay.Range.x1*3+0x38;
- 
+ height = PreviousPSXDisplay.DisplayMode.y;
+
+ size = height * PreviousPSXDisplay.Range.x1 * 3 + 0x38;
+
  // fill in proper values for BMP
 
  // hardcoded BMP header
- memset(header,0,0x36);
- header[0]='B';
- header[1]='M';
- header[2]=size&0xff;
- header[3]=(size>>8)&0xff;
- header[4]=(size>>16)&0xff;
- header[5]=(size>>24)&0xff;
- header[0x0a]=0x36;
- header[0x0e]=0x28;
- header[0x12]=PreviousPSXDisplay.Range.x1%256;
- header[0x13]=PreviousPSXDisplay.Range.x1/256;
- header[0x16]=height%256;
- header[0x17]=height/256;
- header[0x1a]=0x01;
- header[0x1c]=0x18;
- header[0x26]=0x12;
- header[0x27]=0x0B;
- header[0x2A]=0x12;
- header[0x2B]=0x0B;
+ memset(header, 0, 0x36);
+ header[0] = 'B';
+ header[1] = 'M';
+ header[2] = size & 0xff;
+ header[3] = (size >> 8) & 0xff;
+ header[4] = (size >> 16) & 0xff;
+ header[5] = (size >> 24) & 0xff;
+ header[0x0a] = 0x36;
+ header[0x0e] = 0x28;
+ header[0x12] = PreviousPSXDisplay.Range.x1 % 256;
+ header[0x13] = PreviousPSXDisplay.Range.x1 / 256;
+ header[0x16] = height % 256;
+ header[0x17] = height / 256;
+ header[0x1a] = 0x01;
+ header[0x1c] = 0x18;
+ header[0x26] = 0x12;
+ header[0x27] = 0x0B;
+ header[0x2A] = 0x12;
+ header[0x2B] = 0x0B;
 
  // increment snapshot value & try to get filename
  do
@@ -377,18 +301,19 @@ void CALLBACK GPUmakeSnapshot(void)                    // snapshot of whole vram
 ////////////////////////////////////////////////////////////////////////
 // INIT, will be called after lib load... well, just do some var init...
 ////////////////////////////////////////////////////////////////////////
- 
+
 long CALLBACK GPUinit()                                // GPU INIT
 {
  memset(ulStatusControl,0,256*sizeof(uint32_t));  // init save state scontrol field
 
- szDebugText[0]=0;                                     // init debug text buffer
+ szDebugText[0] = 0;                                     // init debug text buffer
 
- psxVSecure=(unsigned char *)malloc((iGPUHeight*2)*1024 + (1024*1024)); // always alloc one extra MB for soft drawing funcs security
- if(!psxVSecure) return -1;
+ psxVSecure = (unsigned char *)malloc((iGPUHeight*2)*1024 + (1024*1024)); // always alloc one extra MB for soft drawing funcs security
+ if (!psxVSecure)
+  return -1;
 
  //!!! ATTENTION !!!
- psxVub=psxVSecure+512*1024;                           // security offset into double sized psx vram!
+ psxVub=psxVSecure + 512 * 1024;                           // security offset into double sized psx vram!
 
  psxVsb=(signed char *)psxVub;                         // different ways of accessing PSX VRAM
  psxVsw=(signed short *)psxVub;
@@ -397,11 +322,11 @@ long CALLBACK GPUinit()                                // GPU INIT
  psxVul=(uint32_t *)psxVub;
 
  psxVuw_eom=psxVuw+1024*iGPUHeight;                    // pre-calc of end of vram
-                        
+
  memset(psxVSecure,0x00,(iGPUHeight*2)*1024 + (1024*1024));
  memset(lGPUInfoVals,0x00,16*sizeof(uint32_t));
- 
- SetFPSHandler();   
+
+ SetFPSHandler();
 
  PSXDisplay.RGB24        = FALSE;                      // init some stuff
  PSXDisplay.Interlaced   = FALSE;
@@ -417,21 +342,22 @@ long CALLBACK GPUinit()                                // GPU INIT
  PSXDisplay.Range.x0=0;
  PSXDisplay.Range.x1=0;
  PreviousPSXDisplay.DisplayModeNew.y=0;
- PSXDisplay.Double=1;
- lGPUdataRet=0x400;
+ PSXDisplay.Double = 1;
+ lGPUdataRet = 0x400;
 
  DataWriteMode = DR_NORMAL;
 
  // Reset transfer values, to prevent mis-transfer of data
- memset(&VRAMWrite,0,sizeof(VRAMLoad_t));
- memset(&VRAMRead,0,sizeof(VRAMLoad_t));
- 
+ memset(&VRAMWrite, 0, sizeof(VRAMLoad_t));
+ memset(&VRAMRead, 0, sizeof(VRAMLoad_t));
+
  // device initialised already !
  lGPUstatusRet = 0x14802000;
  GPUIsIdle;
  GPUIsReadyForCommands;
- bDoVSyncUpdate=TRUE;
-
+ bDoVSyncUpdate = TRUE;
+ vBlank = 0;
+ oddLines = FALSE;
 
  return 0;
 }
@@ -708,7 +634,8 @@ void ChangeWindowMode(void)                            // TOGGLE FULLSCREEN - WI
 {
 /* extern Display         *display;
  extern Window        window;
- Screen 		*screen;
+ extern int           root_window_id;
+ extern Screen        *screen;
  XSizeHints           hints;
  MotifWmHints         mwmhints;
  Atom                 mwmatom;
@@ -733,7 +660,46 @@ void ChangeWindowMode(void)                            // TOGGLE FULLSCREEN - WI
 
    XSetWMNormalHints(display,window,&hints);
 
+   {
+    XEvent xev;
+
+    memset(&xev, 0, sizeof(xev));
+    xev.xclient.type = ClientMessage;
+    xev.xclient.serial = 0;
+    xev.xclient.send_event = 1;
+    xev.xclient.message_type = XInternAtom(display, "_NET_WM_STATE", 0);
+    xev.xclient.window = window;
+    xev.xclient.format = 32;
+    xev.xclient.data.l[0] = 1;
+    xev.xclient.data.l[1] = XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", 0);
+    xev.xclient.data.l[2] = 0;
+    xev.xclient.data.l[3] = 0;
+    xev.xclient.data.l[4] = 0;
+
+    XSendEvent(display, root_window_id, 0,
+      SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+   }
   } else {
+   {
+    XEvent xev;
+
+    memset(&xev, 0, sizeof(xev));
+    xev.xclient.type = ClientMessage;
+    xev.xclient.serial = 0;
+    xev.xclient.send_event = 1;
+    xev.xclient.message_type = XInternAtom(display, "_NET_WM_STATE", 0);
+    xev.xclient.window = window;
+    xev.xclient.format = 32;
+    xev.xclient.data.l[0] = 0;
+    xev.xclient.data.l[1] = XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", 0);
+    xev.xclient.data.l[2] = 0;
+    xev.xclient.data.l[3] = 0;
+    xev.xclient.data.l[4] = 0;
+
+    XSendEvent(display, root_window_id, 0,
+      SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+   }
+
    mwmhints.flags=MWM_HINTS_DECORATIONS;
    mwmhints.functions=0;
    mwmhints.decorations=1;
@@ -826,16 +792,40 @@ void CALLBACK GPUupdateLace(void)                      // VSYNC
 
 uint32_t CALLBACK GPUreadStatus(void)             // READ STATUS
 {
+ if (vBlank || oddLines == FALSE) 
+  { // vblank or even lines
+   lGPUstatusRet &= ~(0x80000000);
+  } 
+ else 
+  { // Oddlines and not vblank
+   lGPUstatusRet |= 0x80000000;
+  }
+
  if(dwActFixes&1)
   {
-   static int iNumRead=0;                              // odd/even hack
+   static int iNumRead=0;                         // odd/even hack
    if((iNumRead++)==2)
     {
      iNumRead=0;
-     lGPUstatusRet^=0x80000000;                        // interlaced bit toggle... we do it on every 3 read status... needed by some games (like ChronoCross) with old epsxe versions (1.5.2 and older)
+     lGPUstatusRet^=0x80000000;                   // interlaced bit toggle... we do it on every 3 read status... needed by some games (like ChronoCross) with old epsxe versions (1.5.2 and older)
     }
   }
 
+ if(iFakePrimBusy)                                // 27.10.2007 - PETE : emulating some 'busy' while drawing... pfff
+  {
+   iFakePrimBusy--;
+
+   if(iFakePrimBusy&1)                            // we do a busy-idle-busy-idle sequence after/while drawing prims
+    {
+     GPUIsBusy;
+     GPUIsNotReadyForCommands;
+    }
+   else
+    {
+     GPUIsIdle;
+     GPUIsReadyForCommands;
+    }
+  }
  return lGPUstatusRet;
 }
 
@@ -1238,7 +1228,7 @@ const unsigned char primTableCX[256] =
 //  7,7,7,7,9,9,9,9,    // GLINE
     255,255,255,255,255,255,255,255,
     // 60
-    3,3,3,3,4,4,4,4,    
+    3,3,3,3,4,4,4,4,
     // 68
     2,2,2,2,3,3,3,3,    // 3=SPRITE1???
     // 70
@@ -1309,10 +1299,14 @@ STARTVRAM:
 
        gdata=GETLE32(pMem); pMem++;
 
-       PUTLE16(VRAMWrite.ImagePtr, (unsigned short)gdata); VRAMWrite.ImagePtr++;
-       if(VRAMWrite.ImagePtr>=psxVuw_eom) VRAMWrite.ImagePtr-=iGPUHeight*1024;
+       // Write odd pixel - Wrap from beginning to next index if going past GPU width
+       if(VRAMWrite.Width+VRAMWrite.x-VRAMWrite.RowsRemaining >= 1024) {
+         PUTLE16(VRAMWrite.ImagePtr-1024, (unsigned short)gdata); VRAMWrite.ImagePtr++;
+       } else { PUTLE16(VRAMWrite.ImagePtr, (unsigned short)gdata); VRAMWrite.ImagePtr++; }
+       if(VRAMWrite.ImagePtr>=psxVuw_eom) VRAMWrite.ImagePtr-=iGPUHeight*1024;// Check if went past framebuffer
        VRAMWrite.RowsRemaining --;
 
+       // Check if end at odd pixel drawn
        if(VRAMWrite.RowsRemaining <= 0)
         {
          VRAMWrite.ColsRemaining--;
@@ -1327,8 +1321,11 @@ STARTVRAM:
          VRAMWrite.ImagePtr += 1024 - VRAMWrite.Width;
         }
 
-       PUTLE16(VRAMWrite.ImagePtr, (unsigned short)(gdata>>16)); VRAMWrite.ImagePtr++;
-       if(VRAMWrite.ImagePtr>=psxVuw_eom) VRAMWrite.ImagePtr-=iGPUHeight*1024;
+       // Write even pixel - Wrap from beginning to next index if going past GPU width
+       if(VRAMWrite.Width+VRAMWrite.x-VRAMWrite.RowsRemaining >= 1024) {
+         PUTLE16(VRAMWrite.ImagePtr-1024, (unsigned short)(gdata>>16)); VRAMWrite.ImagePtr++;
+       } else { PUTLE16(VRAMWrite.ImagePtr, (unsigned short)(gdata>>16)); VRAMWrite.ImagePtr++; }
+       if(VRAMWrite.ImagePtr>=psxVuw_eom) VRAMWrite.ImagePtr-=iGPUHeight*1024;// Check if went past framebuffer
        VRAMWrite.RowsRemaining --;
       }
 
@@ -1355,11 +1352,11 @@ ENDVRAM:
      if(DataWriteMode==DR_VRAMTRANSFER) goto STARTVRAM;
 
      gdata=GETLE32(pMem); pMem++; i++;
- 
+
      if(gpuDataC == 0)
       {
        command = (unsigned char)((gdata>>24) & 0xff);
- 
+
 //if(command>=0xb0 && command<0xc0) auxprintf("b0 %x!!!!!!!!!\n",command);
 
        if(primTableCX[command])
@@ -1385,13 +1382,14 @@ ENDVRAM:
         }
        gpuDataP++;
       }
- 
+
      if(gpuDataP == gpuDataC)
       {
        gpuDataC=gpuDataP=0;
        primFunc[gpuCommand]((unsigned char *)gpuDataM);
+        iFakePrimBusy=4;
       }
-    } 
+    }
   }
 
  lGPUdataRet=gdata;
@@ -1502,7 +1500,6 @@ long CALLBACK GPUdmaChain(uint32_t * baseAddrL, uint32_t addr)
 ////////////////////////////////////////////////////////////////////////
 // show about dlg
 ////////////////////////////////////////////////////////////////////////
-
 
 void CALLBACK GPUabout(void)                           // ABOUT
 {
@@ -1933,4 +1930,31 @@ void CALLBACK GPUshowScreenPic(unsigned char * pMem)
  CreatePic(pMem);                                      // create new pic... don't free pMem or something like that... just read from it
 }
 
-////////////////////////////////////////////////////////////////////////
+void CALLBACK GPUvBlank( int val )
+{
+ vBlank = val;
+ oddLines = oddLines ? FALSE : TRUE; // bit changes per frame when not interlaced
+ //printf("VB %x (%x)\n", oddLines, vBlank);
+}
+
+void CALLBACK GPUhSync( int val ) {
+ // Interlaced mode - update bit every scanline
+ if (PSXDisplay.Interlaced) {
+   oddLines = (val%2 ? FALSE : TRUE);
+ }
+ //printf("HS %x (%x)\n", oddLines, vBlank);
+}
+
+void CALLBACK GPUvisualVibration(uint32_t iSmall, uint32_t iBig)
+{
+ int iVibVal;
+
+ if(PreviousPSXDisplay.DisplayMode.x)                  // calc min "shake pixel" from screen width
+      iVibVal=max(1,iResX/PreviousPSXDisplay.DisplayMode.x);
+ else iVibVal=1;
+                                                       // big rumble: 4...15 sp ; small rumble 1...3 sp
+ if(iBig) iRumbleVal=max(4*iVibVal,min(15*iVibVal,((int)iBig  *iVibVal)/10));
+ else     iRumbleVal=max(1*iVibVal,min( 3*iVibVal,((int)iSmall*iVibVal)/10));
+
+ iRumbleTime=15;                                       // let the rumble last 16 buffer swaps
+}

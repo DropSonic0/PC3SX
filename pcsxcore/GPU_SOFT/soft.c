@@ -5,7 +5,6 @@
     copyright            : (C) 2001 by Pete Bernert
     email                : BlackDove@addcom.de
  ***************************************************************************/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -15,61 +14,6 @@
  *   additional informations.                                              *
  *                                                                         *
  ***************************************************************************/
-
-//*************************************************************************// 
-// History of changes:
-//
-// 2005/06/11 - Pete
-// - added y sprite mirror
-//
-// 2005/04/15 - Pete
-// - gamefix 0x200 controls g-shaded quads now
-//
-// 2005/04/12 - Pete
-// - 25% blending mode 3
-//
-// 2004/02/01 - Pete
-// - added ZN stuff... Tekken "IL" texture decoding infos kindly given by smf from the MAME team
-//
-// 2003/08/30 - Pete
-// - added game fix 0x100 (dark forces)
-//
-// 2002/10/03 - Farfetch'd & Pete
-// - changed: mask bit handling
-//
-// 2002/06/04 - Lewpy
-// - new line drawing funcs
-//
-// 2002/05/24 - Pete
-// - added additional handling for tex quads to avoid texture distortions
-//
-// 2002/05/14 - Pete
-// - redone all texture window funcs... much faster now
-//
-// 2002/05/12 - Pete
-// - Mask bit fix on non-textured/sprite prims
-//
-// 2002/03/27 - Pete
-// - doom adjustment
-//
-// 2002/02/12 - Pete
-// - removed "no sprite transparency" fix
-//
-// 2001/12/14 - Pete
-// - added support for 15 bit texture window primitives
-//
-// 2001/12/10 - Pete
-// - fixed a mask bit bug in drawPoly4F, causing troubles in MGS
-//
-// 2001/11/08 - Linuzappz
-// - shl10idiv converted to nasm, C version still works :define __i386_ 
-//   to use the asm version 
-//
-// 2001/10/28 - Pete  
-// - generic cleanup for the Peops release
-//
-//*************************************************************************// 
-
  
 #define _IN_SOFT
                    
@@ -1261,33 +1205,13 @@ __inline int shl10idiv(int x, int y);
 
 #else
 
-#ifdef VC_INLINE
-
-#pragma warning  (disable : 4035)
-
-__inline int shl10idiv(int x, int y)
-{
- __asm
-  {
-   mov   eax,x
-   mov   ebx,y
-   mov   edx, eax 
-   shl   eax, 10 
-   sar   edx, 22 
-   idiv  ebx                                           
-   // return result in eax
-  }
-}
-
-#else
-
 __inline int shl10idiv(int x, int y)
 {
  __int64 bi=x;
  bi<<=10;
- return bi/y;
+ return (int)(bi/y);
 }
-#endif
+
 #endif
 
 /*
@@ -3345,9 +3269,9 @@ void drawPoly4TEx4(short x1, short y1, short x2, short y2, short x3, short y3, s
 void drawPoly4TEx4_IL(short x1, short y1, short x2, short y2, short x3, short y3, short x4, short y4, short tx1, short ty1, short tx2, short ty2, short tx3, short ty3, short tx4, short ty4,short clX, short clY)
 {
  int32_t num; 
- int32_t i,j,xmin,xmax,ymin,ymax,n_xi,n_yi,TXV;
+ int32_t i,j=0,xmin,xmax,ymin,ymax,n_xi,n_yi,TXV;
  int32_t difX, difY, difX2, difY2;
- int32_t posX,posY,YAdjust,clutP,XAdjust;
+ int32_t posX=0,posY=0,YAdjust,clutP,XAdjust;
  short tC1,tC2;
 
  if(x1>drawW && x2>drawW && x3>drawW && x4>drawW) return;
@@ -8406,7 +8330,7 @@ void HorzLineFlat(int y, int x0, int x1, unsigned short colour)
 		x1 = drawW;
 
 	for (x = x0; x <= x1; x++)
-		GetShadeTransCol(&psxVuw[(y<<10)+x], colour);
+		GetShadeTransCol(&psxVuw[(y << 10) + x], colour);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -8418,12 +8342,12 @@ void DrawSoftwareLineShade(int32_t rgb0, int32_t rgb1)
 	int32_t rgbt;
 	double m, dy, dx;
 
-	if(lx0>drawW && lx1>drawW) return;
-	if(ly0>drawH && ly1>drawH) return;
-	if(lx0<drawX && lx1<drawX) return;
-	if(ly0<drawY && ly1<drawY) return;
-	if(drawY>=drawH) return;
-	if(drawX>=drawW) return; 
+	if (lx0 > drawW && lx1 > drawW) return;
+	if (ly0 > drawH && ly1 > drawH) return;
+	if (lx0 < drawX && lx1 < drawX) return;
+	if (ly0 < drawY && ly1 < drawY) return;
+	if (drawY >= drawH) return;
+	if (drawX >= drawW) return; 
 
 	x0 = lx0;
 	y0 = ly0;
@@ -8460,13 +8384,13 @@ void DrawSoftwareLineShade(int32_t rgb0, int32_t rgb1)
 				rgb0 = rgb1;
 				x1 = xt;
 				y1 = yt;
-				rgb1 = rgb0;
+				rgb1 = rgbt;
 
 				dx = x1 - x0;
 				dy = y1 - y0;
 			}
 
-			m = dy/dx;
+			m = dy / dx;
 
 			if (m >= 0)
 			{
@@ -8491,14 +8415,14 @@ void DrawSoftwareLineFlat(int32_t rgb)
 	double m, dy, dx;
 	unsigned short colour = 0;
  
-	if(lx0>drawW && lx1>drawW) return;
-	if(ly0>drawH && ly1>drawH) return;
-	if(lx0<drawX && lx1<drawX) return;
-	if(ly0<drawY && ly1<drawY) return;
-	if(drawY>=drawH) return;
-	if(drawX>=drawW) return; 
+	if (lx0 > drawW && lx1 > drawW) return;
+	if (ly0 > drawH && ly1 > drawH) return;
+	if (lx0 < drawX && lx1 < drawX) return;
+	if (ly0 < drawY && ly1 < drawY) return;
+	if (drawY >= drawH) return;
+	if (drawX >= drawW) return; 
 
-	colour = ((rgb & 0x00f80000)>>9) | ((rgb & 0x0000f800)>>6) | ((rgb & 0x000000f8)>>3);
+	colour = ((rgb & 0x00f80000) >> 9) | ((rgb & 0x0000f800) >> 6) | ((rgb & 0x000000f8) >> 3);
 
 	x0 = lx0;
 	y0 = ly0;

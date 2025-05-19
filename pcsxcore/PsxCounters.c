@@ -217,7 +217,7 @@ void psxRcntWtarget(u32 index, u32 value) {
 	psxRcntSet();
 }
 
-u32 psxRcntRcount(u32 index) {
+unsigned long psxRcntRcount(u32 index) {
 	u32 ret;
 
 //	if ((!(psxCounters[index].mode & 1)) || (index!=2)) {

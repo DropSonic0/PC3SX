@@ -5,7 +5,7 @@
 #define SWAP16(x) ({ uint16_t y=(x); (((y)>>8 & 0xff) | ((y)<<8 & 0xff00)); })
 #define SWAP32(x) ({ uint32_t y=(x); (((y)>>24 & 0xfful) | ((y)>>8 & 0xff00ul) | ((y)<<8 & 0xff0000ul) | ((y)<<24 & 0xff000000ul)); })
 
-#ifdef __BIGENDIAN__
+#ifdef __BIG_ENDIAN__
 
 // big endian config
 #define HOST2LE32(x) SWAP32(x)

@@ -17,7 +17,7 @@
 // default shader sources
 #define DEFAULT_SHADER_FILE "/dev_hdd0/game/PCSX00001/USRDIR/shaders/stock.cg"
 
-#define EMU_RENDER_TEXTURE_WIDTH  (1024)
+#define EMU_RENDER_TEXTURE_WIDTH  (640)
 #define EMU_RENDER_TEXTURE_HEIGHT (480)
 #define EMU_RENDER_BYTE_BY_PIXEL  (2)
 

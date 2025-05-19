@@ -5,7 +5,6 @@
     copyright            : (C) 2001 by Pete Bernert
     email                : BlackDove@addcom.de
  ***************************************************************************/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -15,26 +14,6 @@
  *   additional informations.                                              *
  *                                                                         *
  ***************************************************************************/
-
-//*************************************************************************// 
-// History of changes:
-//
-// 2005/04/15 - Pete
-// - Changed user frame limit to floating point value
-//
-// 2003/07/30 - Pete  
-// - fixed frame limitation if "old skipping method" is used
-//
-// 2002/12/14 - Pete  
-// - improved skipping and added some skipping security code
-//
-// 2002/11/24 - Pete  
-// - added new frameskip func
-//
-// 2001/10/28 - Pete  
-// - generic cleanup for the Peops release
-//
-//*************************************************************************// 
 
 #define _IN_FPS
 
@@ -48,10 +27,7 @@
 #include <sys/sys_time.h>
 #include <sys/time_util.h>
 
-////////////////////////////////////////////////////////////////////////
 // FPS stuff
-////////////////////////////////////////////////////////////////////////
-
 float          fFrameRateHz=0;
 DWORD          dwFrameRateTicks=16;
 float          fFrameRate;
@@ -59,17 +35,20 @@ int            iFrameLimit;
 int            UseFrameLimit=0;
 int            UseFrameSkip=0;
 
-////////////////////////////////////////////////////////////////////////
 // FPS skipping / limit
-////////////////////////////////////////////////////////////////////////
-       
 BOOL   bInitCap = TRUE;
 float  fps_skip = 0;
 float  fps_cur  = 0;
 
-////////////////////////////////////////////////////////////////////////
+float  speed  = 1;
 
 #define MAXLACE 16
+
+void CALLBACK GPUsetSpeed(float newSpeed) {
+ if (newSpeed > 0 && newSpeed <= 1000) {
+  speed = newSpeed;
+ }
+}
 
 void CheckFrameRate(void)
 {                           
@@ -111,6 +90,7 @@ void FrameCap (void)
 {
  static unsigned long curticks, lastticks, _ticks_since_last_update;
  static unsigned int TicksToWait = 0;
+ unsigned int frTicks = dwFrameRateTicks / speed;
  int overslept=0, tickstogo=0;
  BOOL Waiting = TRUE;
 
@@ -123,10 +103,10 @@ void FrameCap (void)
     {
      lastticks = curticks;
      overslept = _ticks_since_last_update - TicksToWait;
-     if((_ticks_since_last_update-TicksToWait) > dwFrameRateTicks)
+     if((_ticks_since_last_update-TicksToWait) > frTicks)
           TicksToWait=0;
      else
-          TicksToWait=dwFrameRateTicks - overslept;
+          TicksToWait=frTicks - overslept;
     }
    else
     {
@@ -141,7 +121,7 @@ void FrameCap (void)
          Waiting = FALSE;
          lastticks = curticks;
          overslept = _ticks_since_last_update - TicksToWait;
-         TicksToWait = dwFrameRateTicks - overslept;
+         TicksToWait = frTicks - overslept;
          return;
         }
 	if (tickstogo >= 200 && !(dwActFixes&16))
@@ -150,8 +130,6 @@ void FrameCap (void)
     }
   }
 }
-
-////////////////////////////////////////////////////////////////////////
 
 #define MAXSKIP 120
 
@@ -162,6 +140,7 @@ void FrameSkip(void)
  static DWORD curticks, lastticks, _ticks_since_last_update;
  int tickstogo=0;
  static int overslept=0;
+ unsigned int frTicks = dwFrameRateTicks / speed;
 
  if(!dwLaceCnt) return;                                // important: if no updatelace happened, we ignore it completely
 
@@ -185,12 +164,12 @@ void FrameSkip(void)
        curticks = timeGetTime();                       // -> now we calc the time of the last drawn frame + the time we spent skipping
        _ticks_since_last_update= dwT+curticks - lastticks;
 
-       dwWaitTime=dwLastLace*dwFrameRateTicks;         // -> and now we calc the time the real psx would have needed
+       dwWaitTime=dwLastLace*frTicks;                  // -> and now we calc the time the real psx would have needed
 
        if(_ticks_since_last_update<dwWaitTime)         // -> we were too fast?
-        {                                    
+        {
          if((dwWaitTime-_ticks_since_last_update)>     // -> some more security, to prevent
-            (60*dwFrameRateTicks))                     //    wrong waiting times
+            (60*frTicks))                              //    wrong waiting times
           _ticks_since_last_update=dwWaitTime;
 
          while(_ticks_since_last_update<dwWaitTime)    // -> loop until we have reached the real psx time
@@ -216,7 +195,7 @@ void FrameSkip(void)
      bSkipNextFrame=FALSE;                             // -> we don't skip the next frame
      lastticks = timeGetTime();                        // -> we store the start time of the next frame
      dwLaceCnt=0;                                      // -> and we start to count the laces 
-     dwLastLace=0;      
+     dwLastLace=0;
      _ticks_since_last_update=0;
      return;                                           // -> done, the next frame will get drawn
     }
@@ -227,7 +206,7 @@ void FrameSkip(void)
    _ticks_since_last_update = curticks - lastticks;
 
    dwLastLace=dwLaceCnt;                               // store curr count (frame limitation helper)
-   dwWaitTime=dwLaceCnt*dwFrameRateTicks;              // calc the 'real psx lace time'
+   dwWaitTime=dwLaceCnt*frTicks;                       // calc the 'real psx lace time'
    if (dwWaitTime >= overslept)
    	dwWaitTime-=overslept;
 
@@ -269,8 +248,6 @@ void FrameSkip(void)
 
  dwLaceCnt=0;                                          // init lace counter
 }
-
-////////////////////////////////////////////////////////////////////////
 
 void calcfps(void)
 {
@@ -338,8 +315,6 @@ void PCFrameCap (void)
   }
 }
 
-////////////////////////////////////////////////////////////////////////
-
 void PCcalcfps(void)
 {
  static unsigned long curticks,_ticks_since_last_update,lastticks;
@@ -362,11 +337,9 @@ void PCcalcfps(void)
    fps_acc = 0;
    fps_cnt = 0;
   }
- 
+
  fps_skip=CurrentFPS+1.0f;
 }
-
-////////////////////////////////////////////////////////////////////////
 
 void SetAutoFrameCap(void)
 {
@@ -386,23 +359,19 @@ void SetAutoFrameCap(void)
  else
   {
    fFrameRateHz = PSXDisplay.PAL?50.0f:59.94f;
-   dwFrameRateTicks=(TIMEBASE*100 / (unsigned long)(fFrameRateHz*100)); 
+   dwFrameRateTicks=(TIMEBASE*100 / (unsigned long)(fFrameRateHz*100));
   }
 }
-
-////////////////////////////////////////////////////////////////////////
 
 void SetFPSHandler(void)
 {
 }
 
-////////////////////////////////////////////////////////////////////////
-
 void InitFPS(void)
 {
  if(!fFrameRate) fFrameRate=200.0f;
  if(fFrameRateHz==0) fFrameRateHz=fFrameRate;          // set user framerate
- dwFrameRateTicks=(TIMEBASE / (unsigned long)fFrameRateHz); 
+ dwFrameRateTicks=(TIMEBASE / (unsigned long)fFrameRateHz);
 }
 
 

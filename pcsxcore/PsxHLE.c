@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,14 +14,14 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
  ***************************************************************************/
 
 /*
 * Internal PSX HLE functions.
 */
 
-#include "PsxHLE.h"
+#include "psxhle.h"
 
 static void hleDummy() {
 	psxRegs.pc = psxRegs.GPR.n.ra;
@@ -55,10 +54,10 @@ static void hleC0() {
 }
 
 static void hleBootstrap() { // 0xbfc00000
-	SysPrintf("hleBootstrap\n");
+	printf("hleBootstrap\n");
 	CheckCdrom();
 	LoadCdrom();
-	SysPrintf("CdromLabel: \"%s\": PC = %8.8lx (SP = %8.8lx)\n", CdromLabel, psxRegs.pc, psxRegs.GPR.n.sp);
+	printf("CdromLabel: \"%s\": PC = %8.8x (SP = %8.8x)\n", CdromLabel, (unsigned int)psxRegs.pc, (unsigned int)psxRegs.GPR.n.sp);
 }
 
 typedef struct {                   
@@ -78,7 +77,7 @@ typedef struct {
 static void hleExecRet() {
 	EXEC *header = (EXEC*)PSXM(psxRegs.GPR.n.s0);
 
-	SysPrintf("ExecRet %x: %x\n", psxRegs.GPR.n.s0, header->ret);
+	printf("ExecRet %x: %x\n", psxRegs.GPR.n.s0, header->ret);
 
 	psxRegs.GPR.n.ra = header->ret;
 	psxRegs.GPR.n.sp = header->_sp;

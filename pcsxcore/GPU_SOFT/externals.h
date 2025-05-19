@@ -108,14 +108,15 @@ typedef struct PSXRECTTAG
 #define max(a,b)            (((a) > (b)) ? (a) : (b))
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #define DWORD uint32_t
-#define __int64 long long int 
+#define __int64 long long int
+
 typedef struct RECTTAG
 {
  int left;
  int top;
  int right;
  int bottom;
-}RECT;
+} RECT;
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -132,7 +133,7 @@ typedef struct PSXDISPLAYTAG
  PSXPoint_t  DisplayMode;
  PSXPoint_t  DisplayPosition;
  PSXPoint_t  DisplayEnd;
- 
+
  int32_t        Double;
  int32_t        Height;
  int32_t        PAL;

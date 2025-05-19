@@ -5,7 +5,6 @@
     copyright            : (C) 2001 by Pete Bernert
     email                : BlackDove@addcom.de
  ***************************************************************************/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -20,10 +19,8 @@
 
 #define _IN_CFG
 
-
-//-------------------------------------------------------------------------// linux headers
-
 #include <sys/stat.h>
+
 #undef FALSE
 #undef TRUE
 #define MAKELONG(low,high)     ((unsigned long)(((unsigned short)(low)) | (((unsigned long)((unsigned short)(high))) << 16)))
@@ -91,8 +88,6 @@ char * pConfigFile=NULL;
   size+=sprintf(pB+size, "%s = %.1f\n", name, (double)var); \
  }
 
-/////////////////////////////////////////////////////////////////////////////
-//extern char app_path[128];
 void ReadConfigFile()
 {
  struct stat buf;
@@ -121,8 +116,8 @@ void ReadConfigFile()
  in = fopen(t,"rb");
  if (!in) return;
 
- pB=(char *)malloc(size);
- memset(pB,0,size);
+ pB=(char *)malloc(size + 1);
+ memset(pB,0,size + 1);
 
  len = fread(pB, 1, size, in);
  fclose(in);
@@ -149,7 +144,6 @@ void ReadConfigFile()
  if(iShowFPS<0) iShowFPS=0;
  if(iShowFPS>1) iShowFPS=1;
 
-
  GetValue("UseFrameLimit", UseFrameLimit);
  if(UseFrameLimit<0) UseFrameLimit=0;
  if(UseFrameLimit>1) UseFrameLimit=1;
@@ -163,6 +157,7 @@ void ReadConfigFile()
  if(iFrameLimit>2) iFrameLimit=2;
 
  GetFloatValue("FrameRate", fFrameRate);
+ fFrameRate/=10;
  if(fFrameRate<10.0f)   fFrameRate=10.0f;
  if(fFrameRate>1000.0f) fFrameRate=1000.0f;
 
@@ -173,7 +168,6 @@ void ReadConfigFile()
  if(iUseFixes>1) iUseFixes=1;
 
  free(pB);
-
 }
 
 #endif
@@ -194,42 +188,61 @@ void ExecCfg(char *arg) {
 
 void SoftDlgProc(void)
 {
-	
+
 }
 #ifndef _FPSE
 
 extern unsigned char revision;
 extern unsigned char build;
-#define RELEASE_DATE "10.06.2025"
+#define RELEASE_DATE "12.06.2005"
 
 void AboutDlgProc(void)
 {
-
 }
+
+
+////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////
 
 void ReadConfig(void)
 {
  // defaults
  iResX=640;iResY=480;
- iWinSize=MAKELONG(320,240);
- iColDepth=16;
- iWindowMode=0;
+ iWinSize=MAKELONG(iResX,iResY);
+ iColDepth=32;
+ iWindowMode=1;
+ UseFrameLimit=0;
  UseFrameSkip=0;
  iFrameLimit=2;
- fFrameRate=200.0f;
+ fFrameRate=30.0f;
  dwCfgFixes=0;
+ iUseFixes=0;
  iUseNoStretchBlt=0;
  iUseDither=0;
  iShowFPS=0;
 
  // additional checks
- if(!iColDepth)       iColDepth=16;
+ if(!iColDepth)       iColDepth=32;
  if(iUseFixes)        dwActFixes=dwCfgFixes;
  SetFixes();
 }
 
 void WriteConfig(void) {
 
+  // defaults
+  iResX=640;iResY=480;
+  iColDepth=32;
+  iWindowMode=1;
+  UseFrameLimit=0;
+  UseFrameSkip=0;
+  iFrameLimit=2;
+  fFrameRate=30.0f;
+  dwCfgFixes=0;
+  iUseFixes=0;
+  iUseNoStretchBlt=0;
+  iUseDither=0;
+  iShowFPS=0;
 }
 #endif
 

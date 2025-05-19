@@ -4,8 +4,13 @@
     begin                : Sun Oct 28 2001
     copyright            : (C) 2001 by Pete Bernert
     email                : BlackDove@addcom.de
+/***************************************************************************
+                          cfg.h  -  description
+                             -------------------
+    begin                : Sun Oct 28 2001
+    copyright            : (C) 2001 by Pete Bernert
+    email                : BlackDove@addcom.de
  ***************************************************************************/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -25,9 +30,9 @@ void ReadWinSizeConfig(void);
 
 #ifdef _WINDOWS
 BOOL CALLBACK SoftDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam ); 
-#else // LINUX
+#else
 void SoftDlgProc(void);
 void AboutDlgProc(void);
 #endif
 
-#endif // _GPU_CFG_H_
+#endif

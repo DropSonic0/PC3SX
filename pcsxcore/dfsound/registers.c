@@ -5,7 +5,6 @@
     copyright            : (C) 2002 by Pete Bernert
     email                : BlackDove@addcom.de
  ***************************************************************************/
-
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -15,27 +14,6 @@
  *   additional informations.                                              *
  *                                                                         *
  ***************************************************************************/
-
-//*************************************************************************//
-// History of changes:
-//
-// 2004/09/18 - LDChen
-// - pre-calculated ADSRX values
-//
-// 2003/02/09 - kode54
-// - removed &0x3fff from reverb volume registers, fixes a few games,
-//   hopefully won't be breaking anything
-//
-// 2003/01/19 - Pete
-// - added Neill's reverb
-//
-// 2003/01/06 - Pete
-// - added Neill's ADSR timings
-//
-// 2002/05/15 - Pete
-// - generic cleanup for the Peops release
-//
-//*************************************************************************//
 
 #include "stdafx.h"
 
@@ -74,7 +52,6 @@ int iSPUDebugMode = 0;
 void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
 {
  const unsigned long r=reg&0xfff;
-
  regArea[(r-0xc00)>>1] = val;
 
  if(r>=0x0c00 && r<0x0d80)                             // some channel info?
@@ -96,7 +73,8 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
        break;
      //------------------------------------------------// start
      case 6:      
-       s_chan[ch].pStart=spuMemC+((unsigned long) val<<3);
+			 // Brain Dead 13 - align to 16 boundary
+       s_chan[ch].pStart= spuMemC+(unsigned long)((val<<3)&~0xf);
        break;
      //------------------------------------------------// level with pre-calcs
      case 8:
@@ -108,7 +86,7 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
         s_chan[ch].ADSRX.DecayRate = 4*(((lval>>4) & 0x000f)^0x1f);
         s_chan[ch].ADSRX.SustainLevel = (lval & 0x000f) << 27;
         //---------------------------------------------//
-        if(!iSPUDebugMode) break;
+        if(!iDebugMode) break;
         //---------------------------------------------// stuff below is only for debug mode
 
         s_chan[ch].ADSR.AttackModeExp=(lval&0x8000)?1:0;        //0x007f
@@ -141,6 +119,7 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
      case 10:
       {
        const unsigned long lval=val;unsigned long lx;
+
        //----------------------------------------------//
        s_chan[ch].ADSRX.SustainModeExp = (lval&0x8000)?1:0;
        s_chan[ch].ADSRX.SustainIncrease= (lval&0x4000)?0:1;
@@ -148,7 +127,7 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
        s_chan[ch].ADSRX.ReleaseModeExp = (lval&0x0020)?1:0;
        s_chan[ch].ADSRX.ReleaseRate = 4*((lval & 0x001f)^0x1f);
        //----------------------------------------------//
-       if(!iSPUDebugMode) break;
+       if(!iDebugMode) break;
        //----------------------------------------------// stuff below is only for debug mode
 
        s_chan[ch].ADSR.SustainModeExp = (lval&0x8000)?1:0;
@@ -187,15 +166,14 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
      //------------------------------------------------//
      case 14:                                          // loop?
        //WaitForSingleObject(s_chan[ch].hMutex,2000);        // -> no multithread fuckups
-       s_chan[ch].pLoop=spuMemC+((unsigned long) val<<3);
-       s_chan[ch].bIgnoreLoop=1;
+       
+			 s_chan[ch].pLoop=spuMemC+((unsigned long) val<<3);
+             s_chan[ch].bIgnoreLoop=1;
        //ReleaseMutex(s_chan[ch].hMutex);                    // -> oki, on with the thread
        break;
      //------------------------------------------------//
     }
-
    iSpuAsyncWait=0;
-
    return;
   }
 
@@ -214,6 +192,39 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
     //-------------------------------------------------//
     case H_SPUctrl:
       spuCtrl=val;
+
+
+			// flags
+			if( spuCtrl & CTRL_CD_PLAY )
+				spuStat |= CTRL_CD_PLAY;
+			else
+				spuStat &= ~CTRL_CD_PLAY;
+
+			if( spuCtrl & CTRL_CD_REVERB )
+				spuStat |= STAT_CD_REVERB;
+			else
+				spuStat &= ~STAT_CD_REVERB;
+
+
+			if( spuCtrl & CTRL_EXT_PLAY )
+				spuStat |= STAT_EXT_PLAY;
+			else
+				spuStat &= ~STAT_EXT_PLAY;
+
+			if( spuCtrl & CTRL_EXT_REVERB )
+				spuStat |= STAT_EXT_REVERB;
+			else
+				spuStat &= ~STAT_EXT_REVERB;
+
+
+			
+			spuStat &= ~(STAT_DMA_NON | STAT_DMA_R | STAT_DMA_W);
+
+			if( spuCtrl & CTRL_DMA_F )
+				spuStat |= STAT_DMA_F;
+
+			if( (spuCtrl & CTRL_DMA_F) == CTRL_DMA_R )
+				spuStat |= STAT_DMA_R;
       break;
     //-------------------------------------------------//
     case H_SPUstat:
@@ -291,13 +302,13 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
       break;
     //-------------------------------------------------//
     case H_CDLeft:
-      iLeftXAVol=val  & 0x7fff;
-      if(cddavCallback) cddavCallback(0,val);
-      break;
+			iLeftXAVol=val  & 0x7fff;
+			if(cddavCallback) cddavCallback(0,val);
+			break;
     case H_CDRight:
-      iRightXAVol=val & 0x7fff;
-      if(cddavCallback) cddavCallback(1,val);
-      break;
+			iRightXAVol=val & 0x7fff;
+			if(cddavCallback) cddavCallback(1,val);
+			break;
     //-------------------------------------------------//
     case H_FMod1:
       FModOn(0,16,val);
@@ -369,7 +380,6 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
    }
 
  iSpuAsyncWait=0;
-
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -379,7 +389,7 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
 unsigned short CALLBACK SPU__readRegister(unsigned long reg)
 {
  const unsigned long r=reg&0xfff;
-
+        
  iSpuAsyncWait=0;
 
  if(r>=0x0c00 && r<0x0d80)
@@ -389,32 +399,24 @@ unsigned short CALLBACK SPU__readRegister(unsigned long reg)
      case 12:                                          // get adsr vol
       {
        const int ch=(r>>4)-0xc0;
-
        if(s_chan[ch].bNew) return 1;                   // we are started, but not processed? return 1
        if(s_chan[ch].ADSRX.lVolume &&                  // same here... we haven't decoded one sample yet, so no envelope yet. return 1 as well
           !s_chan[ch].ADSRX.EnvelopeVol)                   
         return 1;
-       return (unsigned short)(s_chan[ch].ADSRX.EnvelopeVol>>16);
-      }
-
-     case 14:                                          // get loop address
-      {
-       const int ch=(r>>4)-0xc0;
-       if(s_chan[ch].pLoop==NULL) return 0;
-       return (unsigned short)((s_chan[ch].pLoop-spuMemC)>>3);
+        return (unsigned short)(s_chan[ch].ADSRX.EnvelopeVol>>16);
       }
     }
-  }
+ }
 
  switch(r)
   {
+	case H_SPUaddr:
+     return spuAddr>>3;
+
     case H_SPUctrl:
      return spuCtrl;
 
     case H_SPUstat:
-     return spuStat;
-        
-    case H_SPUaddr:
      return (unsigned short)(spuAddr>>3);
 
     case H_SPUdata:
@@ -424,9 +426,6 @@ unsigned short CALLBACK SPU__readRegister(unsigned long reg)
       if(spuAddr>0x7ffff) spuAddr=0;
       return s;
      }
-
-    case H_SPUirqAddr:
-     return spuIrq;
 
     //case H_SPUIsOn1:
     // return IsSoundOn(0,16);
@@ -451,8 +450,25 @@ void SoundOn(int start,int end,unsigned short val)     // SOUND ON PSX COMAND
   {
    if((val&1) && s_chan[ch].pStart)                    // mmm... start has to be set before key on !?!
     {
-     s_chan[ch].bIgnoreLoop=0;
+		 s_chan[ch].bIgnoreLoop=0;
      s_chan[ch].bNew=1;
+
+		 // do this here, not in StartSound
+		 // - fixes fussy timing issues
+		 s_chan[ch].iSilent=0;
+		 s_chan[ch].bStop=0;
+		 s_chan[ch].bOn=1;
+		 s_chan[ch].pCurr=s_chan[ch].pStart;
+
+#if 0
+		 // ADSR init time (guess to # apu cycles)
+		 s_chan[ch].ADSRX.StartDelay = 0;
+#endif
+
+		 // Final Fantasy 7 - don't do any of these
+		 // - sets loop address before VoiceOn
+		 //s_chan[ch].pLoop = s_chan[ch].pStart;
+
      dwNewChannel|=(1<<ch);                            // bitfield for faster testing
     }
   }
@@ -470,7 +486,12 @@ void SoundOff(int start,int end,unsigned short val)    // SOUND OFF PSX COMMAND
    if(val&1)                                           // && s_chan[i].bOn)  mmm...
     {
      s_chan[ch].bStop=1;
-    }                                                  
+
+		 // Jungle Book - Rhythm 'n Groove
+		 // - turns off buzzing sound (loop hangs)
+		 s_chan[ch].bNew=0;
+		 dwNewChannel &= ~(1<<ch);
+		}                                                  
   }
 }
 
