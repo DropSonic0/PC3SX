@@ -134,6 +134,8 @@ typedef struct {
 	long VSyncWA;
 	long PsxStock;
 	long PsxClock;
+	long GPUEnaFPSLimit; // To store EnableFPSLimit
+	float GPUUserFPS;   // To store UserFPS
 } PcsxConfig;
 
 PcsxConfig Config;

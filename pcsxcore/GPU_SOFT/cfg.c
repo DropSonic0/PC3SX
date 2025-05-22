@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "stdafx.h"
+#include "../psxcommon.h" // New include
 
 #define _IN_CFG
 
@@ -29,6 +30,7 @@
 #include "cfg.h"
 #include "gpu.h"
 
+extern PcsxConfig Config; // New extern declaration
                
 /////////////////////////////////////////////////////////////////////////////
 // CONFIG FILE helpers.... used in (non-fpse) Linux and ZN Windows
@@ -224,6 +226,20 @@ void ReadConfig(void)
 
  // additional checks
  if(!iColDepth)       iColDepth=32;
+
+ // Override with values from global PcsxConfig
+ UseFrameLimit = Config.GPUEnaFPSLimit;
+
+ if (Config.GPUUserFPS > 0.0f) {
+  fFrameRate = Config.GPUUserFPS;
+  iFrameLimit = 1; // Use custom FPS
+ } else {
+  // If UserFPS is 0 or negative, iFrameLimit will remain its default (e.g., 2 for auto),
+  // and fFrameRate will also be its default or determined by SetAutoFrameCap().
+  // Explicitly setting iFrameLimit to 2 for clarity if it wasn't already.
+  iFrameLimit = 2; // Use auto FPS detection
+ }
+
  if(iUseFixes)        dwActFixes=dwCfgFixes;
  SetFixes();
 }

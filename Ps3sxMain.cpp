@@ -10,6 +10,7 @@
 #include <unistd.h> 
 #include <pthread.h>
 #include <sysutil/sysutil_gamecontent.h>
+#include <stdlib.h> // For atoi, atof
 
 SYS_PROCESS_PARAM(1001, 0x10000);
 
@@ -330,16 +331,20 @@ void InitConfig()
 {
 	memset(&Config, 0, sizeof(PcsxConfig));
 
+	// Set default FPS limit settings
+	Config.GPUEnaFPSLimit = 1; // Default to disabled
+	Config.GPUUserFPS = 0.0f;  // Default to auto/emulator default
+
 	Config.PsxAuto = 1; //Autodetect
 	Config.HLE	   = Settings.HLE; //Use HLE
 	Config.Xa      = 0; //disable xa decoding (audio)
 	Config.Sio     = 0; //disable sio interrupt ?
-	Config.Mdec    = 1; //movie decode
+	Config.Mdec    = 0; //movie decode
 	Config.Cdda    = 0; //diable cdda playback
 	
-	Config.Cpu	   = 0;// interpreter 1 :  dynarec 0
+	Config.Cpu	   = Settings.CPU;// interpreter 1 :  dynarec 0
 
-	Config.SpuIrq  = 1;
+	Config.SpuIrq  = 0;
 	Config.RCntFix = 0;//Parasite Eve 2, Vandal Hearts 1/2 Fix
 	Config.VSyncWA = 0; // interlaced /non ? something with the display timer
 	Config.PsxOut =  0; // on screen debug 
@@ -355,6 +360,10 @@ void InitConfig()
 
 	sprintf(Config.Mcd1, "%s/Mcd001.mcr",Iniconfig.savpath);
 	sprintf(Config.Mcd2, "%s/Mcd002.mcr",Iniconfig.savpath);
+
+	// Transfer parsed FPS settings from Iniconfig to global Config
+	Config.GPUEnaFPSLimit = Iniconfig.GPUEnaFPSLimit;
+	Config.GPUUserFPS = Iniconfig.GPUUserFPS;
 }
 
 static int sysInited = 0;
@@ -518,6 +527,10 @@ static int handler(void* user, const char* section, const char* name,const char*
         pconfig->sram_path = strdup(value);
     }else if (MATCH("psxbios", "biospath")) {
         pconfig->biospath = strdup(value);
+    } else if (MATCH("GPU", "EnableFPSLimit")) {
+        pconfig->GPUEnaFPSLimit = atoi(value);
+    } else if (MATCH("GPU", "UserFPS")) {
+        pconfig->GPUUserFPS = atof(value);
     }
 }
 
