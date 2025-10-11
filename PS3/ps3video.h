@@ -19,7 +19,7 @@
 
 #define EMU_RENDER_TEXTURE_WIDTH  (640)
 #define EMU_RENDER_TEXTURE_HEIGHT (480)
-#define EMU_RENDER_BYTE_BY_PIXEL  (2)
+#define EMU_RENDER_BYTE_BY_PIXEL  (4)
 
 #define SCREEN_16_9_ASPECT_RATIO (16.0/9)
 #define SCREEN_4_3_ASPECT_RATIO (4.0/3)
@@ -108,6 +108,9 @@ class PS3Graphics : public PSGLGraphics
 		float m_ratio;
 		bool m_smooth;
 		bool m_pal60Hz;
+
+		uint32_t m_tex_width;
+		uint32_t m_tex_height;
 
 		uint8_t *gl_buffer;
 		uint8_t *vertex_buf;

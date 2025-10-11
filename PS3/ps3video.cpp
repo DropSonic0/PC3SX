@@ -14,6 +14,8 @@ PS3Graphics::PS3Graphics() : PSGLGraphics(), gl_buffer(NULL), vertex_buf(NULL)
 	m_pal60Hz = false;
 	m_overscan = false;
 	m_overscan_amount = 0.0;
+	m_tex_width = 0;
+	m_tex_height = 0;
 }
 
 PS3Graphics::~PS3Graphics()
@@ -157,10 +159,31 @@ void PS3Graphics::SetAspectRatio(bool keep_aspect)
 
 void PS3Graphics::Draw(int width, int height, uint8_t* screen)
 {
+	// Reallocate texture buffer if the resolution from the game has changed.
+	if ((width > 0 && height > 0) && (width != m_tex_width || height != m_tex_height))
+	{
+		m_tex_width = width;
+		m_tex_height = height;
+
+		const int screen_pitch = m_tex_width * EMU_RENDER_BYTE_BY_PIXEL;
+
+		if (gl_buffer)
+		{
+			free(gl_buffer);
+		}
+
+		gl_buffer = (uint8_t*)memalign(128, m_tex_height * screen_pitch);
+		memset(gl_buffer, 0, m_tex_height * screen_pitch);
+
+		glBindBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE, vbo[0]);
+		glBufferData(GL_TEXTURE_REFERENCE_BUFFER_SCE, m_tex_height * screen_pitch, gl_buffer, GL_STREAM_DRAW);
+	}
+
 	Clear();
 	
-	glBufferSubData(GL_TEXTURE_REFERENCE_BUFFER_SCE, 0, height * EMU_SCREEN_PITCH, screen);
-	glTextureReferenceSCE(GL_TEXTURE_2D, 1, width, height, 0, GL_ARGB_SCE, SCREEN_RENDER_TEXTURE_PITCH, 0);
+	const int screen_pitch = width * EMU_RENDER_BYTE_BY_PIXEL;
+	glBufferSubData(GL_TEXTURE_REFERENCE_BUFFER_SCE, 0, height * screen_pitch, screen);
+	glTextureReferenceSCE(GL_TEXTURE_2D, 1, width, height, 0, GL_ARGB_SCE, screen_pitch, 0);
 	UpdateCgParams(width, height, width, height);
 	
 	glDrawArrays(GL_QUADS, 0, 4); 
@@ -376,8 +399,10 @@ int32_t PS3Graphics::PSGLInit()
 
 	SetViewports();
 
-	gl_buffer = (uint8_t*)memalign(128, SCREEN_RENDER_TEXTURE_HEIGHT * SCREEN_RENDER_TEXTURE_PITCH); // Allocate memory for texture.
-   memset(gl_buffer, 0, SCREEN_RENDER_TEXTURE_HEIGHT * SCREEN_RENDER_TEXTURE_PITCH);
+	m_tex_width = EMU_RENDER_TEXTURE_WIDTH;
+	m_tex_height = EMU_RENDER_TEXTURE_HEIGHT;
+	gl_buffer = (uint8_t*)memalign(128, m_tex_height * (m_tex_width * EMU_RENDER_BYTE_BY_PIXEL)); // Allocate memory for texture.
+   memset(gl_buffer, 0, m_tex_height * (m_tex_width * EMU_RENDER_BYTE_BY_PIXEL));
 	vertex_buf = (uint8_t*)memalign(128, 256);
 
 	glMatrixMode(GL_MODELVIEW);
@@ -385,10 +410,11 @@ int32_t PS3Graphics::PSGLInit()
 
 	glGenBuffers(2, vbo);
 
+	const int screen_pitch = m_tex_width * EMU_RENDER_BYTE_BY_PIXEL;
 	glBindBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE, vbo[0]);
-	glBufferData(GL_TEXTURE_REFERENCE_BUFFER_SCE, SCREEN_RENDER_TEXTURE_HEIGHT * SCREEN_RENDER_TEXTURE_PITCH, gl_buffer, GL_STREAM_DRAW);
+	glBufferData(GL_TEXTURE_REFERENCE_BUFFER_SCE, m_tex_height * screen_pitch, gl_buffer, GL_STREAM_DRAW);
 
-	glTextureReferenceSCE(GL_TEXTURE_2D, 1, SCREEN_RENDER_TEXTURE_WIDTH, SCREEN_RENDER_TEXTURE_HEIGHT, 0, GL_ARGB_SCE, SCREEN_RENDER_TEXTURE_PITCH, 0);
+	glTextureReferenceSCE(GL_TEXTURE_2D, 1, m_tex_width, m_tex_height, 0, GL_ARGB_SCE, screen_pitch, 0);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
@@ -402,7 +428,7 @@ int32_t PS3Graphics::PSGLInit()
 	psglSwap();
 
    // Use some initial values for the screen quad.
-	InitScreenQuad(SCREEN_RENDER_TEXTURE_WIDTH, SCREEN_RENDER_TEXTURE_HEIGHT);
+	InitScreenQuad(m_tex_width, m_tex_height);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
 	glBufferData(GL_ARRAY_BUFFER, 256, vertex_buf, GL_STATIC_DRAW);

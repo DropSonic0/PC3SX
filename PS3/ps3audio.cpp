@@ -28,7 +28,6 @@ typedef struct
 
    pthread_t thread;
    pthread_mutex_t lock;
-   pthread_mutex_t cond_lock;
    pthread_cond_t cond;
 } ps3_audio_t;
 
@@ -109,7 +108,6 @@ bool cellAudioPortInit(uint64_t samplerate, uint64_t buffersize)
    aud->input_rate = samplerate;
 
    pthread_mutex_init(&aud->lock, NULL);
-   pthread_mutex_init(&aud->cond_lock, NULL);
    pthread_cond_init(&aud->cond, NULL);
 
    cellAudioPortStart(aud->audio_port);
@@ -122,14 +120,12 @@ bool cellAudioPortInit(uint64_t samplerate, uint64_t buffersize)
 void cellAudioPortWrite(const audio_input_t* buf, uint64_t samples)
 {
    // We will continuously write slightly more data than we should per second, and rely on blocking mechanisms to ensure we don't write too much. 
+   pthread_mutex_lock(&aud->lock);
    while (fifo_write_avail(aud->buffer) < samples * sizeof(audio_input_t))
    {
-      pthread_mutex_lock(&aud->cond_lock);
       pthread_cond_wait(&aud->cond, &aud->lock);
-      pthread_mutex_unlock(&aud->cond_lock);
    }
 
-   pthread_mutex_lock(&aud->lock);
    fifo_write(aud->buffer, buf, samples * sizeof(audio_input_t));
    pthread_mutex_unlock(&aud->lock);
 }
@@ -150,7 +146,6 @@ void cellAudioPortExit()
    fifo_free(aud->buffer);
 
    pthread_mutex_destroy(&aud->lock);
-   pthread_mutex_destroy(&aud->cond_lock);
    pthread_cond_destroy(&aud->cond);
    free(aud);
 }
