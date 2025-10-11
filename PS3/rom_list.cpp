@@ -325,6 +325,12 @@ void do_general_settings()
 						Settings.PAD = true;
 					}
 					break;
+				case SETTING_ANALOG_TO_DPAD:
+					if(PS3input->WasButtonPressed(0, CTRL_LEFT) | PS3input->WasButtonPressed(0, CTRL_RIGHT) | PS3input->WasButtonPressed(0, CTRL_CROSS))
+					{
+						Settings.AnalogToDPad = !Settings.AnalogToDPad;
+					}
+					break;
 				case SETTING_FPS:
 					if(PS3input->WasButtonPressed(0, CTRL_LEFT) )
 					{
@@ -366,6 +372,7 @@ void do_general_settings()
 						Graphics->SetAspectRatio(Settings.PS3KeepAspect);
 						Graphics->SetSmooth(Settings.PS3Smooth);
 						Settings.PAD = false;
+						Settings.AnalogToDPad = false;
 						Settings.PS3PALTemporalMode60Hz = false;
 						Graphics->SetPAL60Hz(Settings.PS3PALTemporalMode60Hz);
 					}
@@ -444,6 +451,11 @@ void do_general_settings()
 	cellDbgFontPrintf(0.5f, yPos, FontSize(), Settings.PAD == true ? GREEN : RED,
 			"%s", Settings.PAD == true ? "Enable" : "Disable");
 
+	yPos += ySpacing;
+	cellDbgFontPuts(0.09f, yPos, FontSize(), currently_selected_setting == SETTING_ANALOG_TO_DPAD ? YELLOW : WHITE, "Map Analog to D-Pad");
+	cellDbgFontPrintf(0.5f, yPos, FontSize(), Settings.AnalogToDPad == true ? GREEN : RED,
+			"%s", Settings.AnalogToDPad == true ? "Enable" : "Disable");
+	
 	yPos += ySpacing;
 	cellDbgFontPuts(0.09f, yPos, FontSize(), currently_selected_setting == SETTING_FPS ? YELLOW : WHITE, "Display FPS");
 	cellDbgFontPrintf(0.5f, yPos, FontSize(), Settings.Fps == true ? GREEN : RED,

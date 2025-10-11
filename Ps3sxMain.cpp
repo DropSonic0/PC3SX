@@ -129,28 +129,28 @@ long PAD__readPort1(PadDataS* pad)
 			pad_status |=  (1<<3);
 		}
 
-		if (PS3input->IsButtonPressed(0,CTRL_DOWN))
+		if (PS3input->IsButtonPressed(0,CTRL_DOWN) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedDown(0, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<6);
 		}else{
 			pad_status |=  (1<<6);
 		}
 
-		if (PS3input->IsButtonPressed(0,CTRL_UP))
+		if (PS3input->IsButtonPressed(0,CTRL_UP) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedUp(0, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<4);
 		}else{
 			pad_status |=  (1<<4);
 		}
 
-		if (PS3input->IsButtonPressed(0,CTRL_RIGHT))
+		if (PS3input->IsButtonPressed(0,CTRL_RIGHT) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedRight(0, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<5);
 		}else{
 			pad_status |=  (1<<5);
 		}
 
-		if (PS3input->IsButtonPressed(0,CTRL_LEFT))
+		if (PS3input->IsButtonPressed(0,CTRL_LEFT) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedLeft(0, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<7);
 		}else{
@@ -203,7 +203,15 @@ long PAD__readPort1(PadDataS* pad)
 	pad->buttonStatus = pad_status;
 
 	if(Settings.PAD)
-		pad->controllerType = PSE_PAD_TYPE_ANALOGPAD; 
+	{
+		pad->controllerType = PSE_PAD_TYPE_ANALOGPAD;
+		CellPadUtilAxis lstick = PS3input->GetNewAxisValue(0, CTRL_LSTICK);
+		pad->leftJoyX = lstick.x;
+		pad->leftJoyY = lstick.y;
+		CellPadUtilAxis rstick = PS3input->GetNewAxisValue(0, CTRL_RSTICK);
+		pad->rightJoyX = rstick.x;
+		pad->rightJoyY = rstick.y;
+	}
 	else
 		pad->controllerType = PSE_PAD_TYPE_STANDARD;
 
@@ -244,28 +252,28 @@ long PAD__readPort2(PadDataS* pad)
 			pad_status |=  (1<<3);
 		}
 
-		if (PS3input->IsButtonPressed(1,CTRL_DOWN))
+		if (PS3input->IsButtonPressed(1,CTRL_DOWN) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedDown(1, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<6);
 		}else{
 			pad_status |=  (1<<6);
 		}
 
-		if (PS3input->IsButtonPressed(1,CTRL_UP))
+		if (PS3input->IsButtonPressed(1,CTRL_UP) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedUp(1, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<4);
 		}else{
 			pad_status |=  (1<<4);
 		}
 
-		if (PS3input->IsButtonPressed(1,CTRL_RIGHT))
+		if (PS3input->IsButtonPressed(1,CTRL_RIGHT) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedRight(1, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<5);
 		}else{
 			pad_status |=  (1<<5);
 		}
 
-		if (PS3input->IsButtonPressed(1,CTRL_LEFT))
+		if (PS3input->IsButtonPressed(1,CTRL_LEFT) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedLeft(1, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<7);
 		}else{
@@ -318,7 +326,15 @@ long PAD__readPort2(PadDataS* pad)
 	pad->buttonStatus = pad_status;
 
 	if(Settings.PAD)
-		pad->controllerType = PSE_PAD_TYPE_ANALOGPAD; 
+	{
+		pad->controllerType = PSE_PAD_TYPE_ANALOGPAD;
+		CellPadUtilAxis lstick = PS3input->GetNewAxisValue(1, CTRL_LSTICK);
+		pad->leftJoyX = lstick.x;
+		pad->leftJoyY = lstick.y;
+		CellPadUtilAxis rstick = PS3input->GetNewAxisValue(1, CTRL_RSTICK);
+		pad->rightJoyX = rstick.x;
+		pad->rightJoyY = rstick.y;
+	}
 	else
 		pad->controllerType = PSE_PAD_TYPE_STANDARD;
 
