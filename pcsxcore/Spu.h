@@ -14,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
 #ifndef __SPU_H__
@@ -24,12 +24,10 @@
 extern "C" {
 #endif
 
-#include "psxcommon.h"
-#include "plugins.h"
-#include "r3000a.h"
-#include "psxmem.h"
-
-#define CALLBACK  
+#include "Psxcommon.h"
+#include "Plugins.h"
+#include "R3000a.h"
+#include "Psxmem.h"
 
 #define H_SPUirqAddr     0x0da4
 #define H_SPUaddr        0x0da6

@@ -14,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
 #ifndef __SYSTEM_H__
@@ -26,10 +26,10 @@ extern "C" {
 
 int SysInit();							// Init mem and plugins
 void SysReset();						// Resets mem
-void SysPrintf(char *fmt, ...);	// Printf used by bios syscalls
-void SysMessage(char *fmt, ...);	// Message used to print msg to users
-void *SysLoadLibrary(char *lib);	// Loads Library
-void *SysLoadSym(void *lib, char *sym);	// Loads Symbol from Library
+void SysPrintf(const char *fmt, ...);	// Printf used by bios syscalls
+void SysMessage(const char *fmt, ...);	// Message used to print msg to users
+void *SysLoadLibrary(const char *lib);	// Loads Library
+void *SysLoadSym(void *lib, const char *sym);	// Loads Symbol from Library
 const char *SysLibError();				// Gets previous error loading sysbols
 void SysCloseLibrary(void *lib);		// Closes Library
 void SysUpdate();						// Called on VBlank (to update i.e. pads)
