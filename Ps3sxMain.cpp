@@ -348,7 +348,7 @@ void InitConfig()
 	memset(&Config, 0, sizeof(PcsxConfig));
 
 	// Set default FPS limit settings
-	Config.GPUEnaFPSLimit = 1; // Default to disabled
+	Config.GPUEnaFPSLimit = 1; // Default to enabled
 	Config.GPUUserFPS = 0.0f;  // Default to auto/emulator default
 
 	Config.PsxAuto = 1; //Autodetect
@@ -613,6 +613,11 @@ int main()
 	InitPS3();
 	PS3input->Init();
 	
+	// Set default value for frame limiter before parsing INI.
+	// If the INI file contains the key, this value will be overwritten.
+	// Otherwise, the limiter will be enabled by default.
+	Iniconfig.GPUEnaFPSLimit = 1;
+
 	printf("InitPS3 done\n");
 	unsigned int type = 0;
 	unsigned int attributes = 0;

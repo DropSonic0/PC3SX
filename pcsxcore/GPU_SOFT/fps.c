@@ -81,9 +81,7 @@ void CheckFrameRate(void)
 
 unsigned long timeGetTime()
 {
- struct timeval tv;
- sys_time_get_current_time((sys_time_sec_t*)&tv, 0);   // well, maybe there are better ways
- return tv.tv_sec * 100000 + tv.tv_usec/10;            // to do that, but at least it works
+ return sys_time_get_system_time() / 10;
 }
 
 void FrameCap (void)
@@ -103,6 +101,7 @@ void FrameCap (void)
     {
      lastticks = curticks;
      overslept = _ticks_since_last_update - TicksToWait;
+     if (overslept > frTicks) overslept = frTicks;
      if((_ticks_since_last_update-TicksToWait) > frTicks)
           TicksToWait=0;
      else
@@ -121,11 +120,12 @@ void FrameCap (void)
          Waiting = FALSE;
          lastticks = curticks;
          overslept = _ticks_since_last_update - TicksToWait;
+         if (overslept > frTicks) overslept = frTicks;
          TicksToWait = frTicks - overslept;
          return;
         }
 	if (tickstogo >= 200 && !(dwActFixes&16))
-		sys_timer_sleep(tickstogo*10 - 200);
+		sys_timer_usleep(tickstogo*10 - 200);
       }
     }
   }
