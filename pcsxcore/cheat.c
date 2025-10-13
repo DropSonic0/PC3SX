@@ -19,7 +19,7 @@
 #include "psxcommon.h"
 #include "r3000a.h"
 #include "psxmem.h"
-
+#include <ctype.h>
 #include "cheat.h"
 
 Cheat *Cheats = NULL;
@@ -83,6 +83,32 @@ void LoadCheats(const char *filename) {
 			continue;
 
 		if (buf[0] == '[' && buf[strlen(buf) - 1] == ']') {
+			char *desc_ptr;
+			int enabled;
+			int is_desc_valid = 0;
+			
+			buf[strlen(buf) - 1] = '\0'; // remove trailing ']'
+			
+			enabled = 0;
+			desc_ptr = buf + 1;
+			if (*desc_ptr == '*') {
+				desc_ptr++;
+				enabled = 1;
+			}
+			
+			// Manually check if the description contains any non-whitespace characters.
+			for (char* p = desc_ptr; *p; p++) {
+				if (!isspace((unsigned char)*p)) {
+					is_desc_valid = 1;
+					break;
+				}
+			}
+
+			if (!is_desc_valid) {
+				continue; // Skip this entry if it's empty or only whitespace.
+			}
+
+			// Now that we know it's a valid cheat, proceed with adding it.
 			if (NumCheats > 0)
 				Cheats[NumCheats - 1].n = count;
 
@@ -97,18 +123,11 @@ void LoadCheats(const char *filename) {
 					Cheats = (Cheat *)realloc(Cheats, sizeof(Cheat) * NumCheatsAllocated);
 				}
 			}
-
-			buf[strlen(buf) - 1] = '\0';
+			
 			count = 0;
 
-			if (buf[1] == '*') {
-				Cheats[NumCheats].Descr = strdup(buf + 2);
-				Cheats[NumCheats].Enabled = 1;
-			} else {
-				Cheats[NumCheats].Descr = strdup(buf + 1);
-				Cheats[NumCheats].Enabled = 0;
-			}
-
+			Cheats[NumCheats].Descr = strdup(desc_ptr);
+			Cheats[NumCheats].Enabled = enabled;
 			Cheats[NumCheats].First = NumCodes;
 
 			NumCheats++;

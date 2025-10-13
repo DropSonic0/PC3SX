@@ -25,11 +25,6 @@
 #ifndef __PSXCOMMON_H__
 #define __PSXCOMMON_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-//#include "config.h"
-
 /* System includes */
 #include <stdio.h>
 #include <string.h>
@@ -41,6 +36,12 @@ extern "C" {
 #include <ctype.h>
 #include <sys/types.h>
 #include <assert.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+//#include "config.h"
+
 #include "zlib/zlib.h"
 
 #define MAXPATHLEN 512
@@ -138,7 +139,7 @@ typedef struct {
 	float GPUUserFPS;   // To store UserFPS
 } PcsxConfig;
 
-PcsxConfig Config;
+extern PcsxConfig Config;
 
 extern long LoadCdBios;
 extern int StatesC;

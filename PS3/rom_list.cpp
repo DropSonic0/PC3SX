@@ -22,6 +22,8 @@
 #include <cell/cell_fs.h>
 #include <cell/dbgfont.h>
 #include <sysutil/sysutil_sysparam.h>
+#include <sys/timer.h>
+#include "pcsxcore/cheat.h"
 
 extern int is_running;
 extern int RomType;
@@ -33,7 +35,7 @@ SSettings	Settings;
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
 
-#define NUM_ENTRY_PER_PAGE 24
+#define NUM_ENTRY_PER_PAGE 20
 
 extern char rom_path[256];
 
@@ -200,6 +202,108 @@ void do_shaderChoice()
 }
 
 int currently_selected_setting = 0;
+int currently_selected_cheat = 0;
+
+void do_cheats_menu()
+{
+	if (NumCheats == 0)
+	{
+		cellDbgFontPuts(0.09f, 0.5f, FontSize(), WHITE, "No cheats found for this game.");
+		Graphics->Swap();
+		sys_timer_sleep(2);
+		menuStack.pop();
+		MenuStop();
+		return;
+	}
+
+	if (PS3input->UpdateDevice(0) == CELL_PAD_OK)
+	{
+		// Handle input
+		if (PS3input->WasButtonPressed(0, CTRL_DOWN) || PS3input->IsAnalogPressedDown(0, CTRL_LSTICK))
+		{
+			currently_selected_cheat++;
+			if (currently_selected_cheat >= NumCheats)
+			{
+				currently_selected_cheat = 0;
+			}
+		}
+		if (PS3input->WasButtonPressed(0, CTRL_UP) || PS3input->IsAnalogPressedUp(0, CTRL_LSTICK))
+		{
+			currently_selected_cheat--;
+			if (currently_selected_cheat < 0)
+			{
+				currently_selected_cheat = NumCheats - 1;
+			}
+		}
+
+		if (PS3input->WasButtonPressed(0, CTRL_R1))
+		{
+			currently_selected_cheat = MIN(currently_selected_cheat + NUM_ENTRY_PER_PAGE, NumCheats - 1);
+		}
+
+		if (PS3input->WasButtonPressed(0, CTRL_L1))
+		{
+			if (currently_selected_cheat <= NUM_ENTRY_PER_PAGE)
+			{
+				currently_selected_cheat = 0;
+			}
+			else
+			{
+				currently_selected_cheat = currently_selected_cheat - NUM_ENTRY_PER_PAGE;
+			}
+		}
+
+		if (PS3input->WasButtonPressed(0, CTRL_LEFT) || PS3input->WasButtonPressed(0, CTRL_RIGHT))
+		{
+			if (Cheats[currently_selected_cheat].Enabled)
+				Cheats[currently_selected_cheat].Enabled = 0;
+			else
+				Cheats[currently_selected_cheat].Enabled = 1;
+		}
+
+		if (PS3input->WasButtonPressed(0, CTRL_CROSS))
+		{
+			menuStack.pop();
+			MenuStop(); // This will exit the menu loop and start the game
+			return;
+		}
+	}
+
+	// Render menu
+	cellDbgFontPuts(0.09f, 0.05f, FontSize(), RED, "Cheat Menu");
+
+	int page_number = currently_selected_cheat / NUM_ENTRY_PER_PAGE;
+	int page_base = page_number * NUM_ENTRY_PER_PAGE;
+	float currentY = 0.09f;
+	float ySpacing = 0.035f;
+
+	for (int i = page_base; i < NumCheats && i < page_base + NUM_ENTRY_PER_PAGE; ++i)
+	{
+		uint32_t color = WHITE;
+		if (i == currently_selected_cheat) {
+			color = YELLOW;
+		}
+
+		std::string descr_str = Cheats[i].Descr;
+		if (descr_str.length() > 55)
+		{
+			descr_str = descr_str.substr(0, 52) + "...";
+		}
+		cellDbgFontPuts(0.09f, currentY, FontSize(), color, descr_str.c_str());
+
+
+		const char* status = Cheats[i].Enabled ? "ON" : "OFF";
+		uint32_t status_color = Cheats[i].Enabled ? GREEN : RED;
+		cellDbgFontPuts(0.8f, currentY, FontSize(), status_color, status);
+
+		currentY += ySpacing;
+		Graphics->FlushDbgFont();
+	}
+
+	cellDbgFontPuts(0.09f, 0.88f, FontSize(), YELLOW, "UP/DOWN - Select, LEFT/RIGHT - Toggle");
+	cellDbgFontPuts(0.09f, 0.92f, FontSize(), YELLOW, "X - Start Game");
+	Graphics->FlushDbgFont();
+}
 
 void do_general_settings()
 {
@@ -507,22 +611,32 @@ void do_ROMMenu()
 			}
 			else if (browser->IsCurrentAFile())
 			{
-				// load game (standard controls), go back to main loop
+				// A game has been selected, let's load cheats and show the cheat menu.
 				path = browser->GetCurrentDirectoryInfo().dir + "/" + browser->GetCurrentEntry()->d_name;
+				sprintf(rom_path, "%s", path.c_str());
 
-				MenuStop();
-
-
-				sprintf(rom_path,"%s",path.c_str());
-
-
-				GetExtension(path.c_str(),ext);
-			
-				if(!stricmp(ext,"psx")||!stricmp(ext,"PSX")||!stricmp(ext,"exe")||!stricmp(ext,"EXE"))
+				GetExtension(path.c_str(), ext);
+				if (!stricmp(ext, "psx") || !stricmp(ext, "PSX") || !stricmp(ext, "exe") || !stricmp(ext, "EXE"))
 					RomType = 1;
 				else
 					RomType = 2;
 
+				// Construct cheat file path from ROM filename
+				string rom_filename = browser->GetCurrentEntry()->d_name;
+				size_t last_dot = rom_filename.find_last_of(".");
+				string basename;
+				if (last_dot != string::npos) {
+					basename = rom_filename.substr(0, last_dot);
+				} else {
+					basename = rom_filename;
+				}
+				string cheat_path = "/dev_hdd0/game/PCSX00001/USRDIR/cheats/" + basename + ".cht";
+
+				ClearAllCheats();
+				LoadCheats(cheat_path.c_str());
+
+				currently_selected_cheat = 0; // Reset selection
+				menuStack.push(do_cheats_menu);
 				return;
 			}
 		}

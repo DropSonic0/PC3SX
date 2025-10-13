@@ -51,9 +51,14 @@ extern "C"
 #include "psxcommon.h"
 #include "Sio.h"
 #include "PlugCD.h"
+#include "cheat.h"
 #include "plugins.h"
 #include "misc.h"
 #include "R3000a.h"
+
+// PCSX core global variables
+PcsxConfig Config;
+FILE *emuLog = NULL;
 
 void SysPrintf(const char *fmt, ...);
 
@@ -99,6 +104,7 @@ long PAD__readPort1(PadDataS* pad)
 {
 		static unsigned short pad_status = 0xffff;
 
+		ApplyCheats();
 		PS3input->UpdateDevice(0);
   
 		if (PS3input->IsButtonPressed(0,CTRL_CIRCLE))
