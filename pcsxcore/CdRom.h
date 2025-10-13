@@ -21,6 +21,13 @@
 #ifndef __CDROM_H__
 #define __CDROM_H__
 
+#define CD_FRAMESIZE_RAW             2352
+#define DATA_SIZE                            (CD_FRAMESIZE_RAW - 12)
+
+#define btoi(b)		((b)/16*10 + (b)%16)		/* BCD to u_char */
+#define itob(i)		((i)/10*16 + (i)%10)		/* u_char to BCD */
+#define MSF2SECT(m,s,f) (((m)*60*75) + ((s)*75) + (f))
+
 #include "PsxCommon.h"
 #include "Decode_XA.h"
 #include "R3000A.h"

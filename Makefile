@@ -41,6 +41,8 @@ PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.
 	./pcsxcore/plugins.c	\
 	./pcsxcore/plugin.c	\
 	./pcsxcore/decode_xa.c	\
+	./pcsxcore/ppf.c	\
+	./pcsxcore/cheat.c	\
 	./pcsxcore/ppc/pasm.s	\
 	./pcsxcore/r3000a.c	\
 	./pcsxcore/psxinterpreter.c	\
