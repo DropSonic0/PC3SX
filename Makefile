@@ -53,9 +53,7 @@ PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.
 	./pcsxcore/ppc/reguse.c \
 	./pcsxcore/PlugPAD.c \
 	./pcsxcore/PlugCD.c \
-	./pcsxcore/dfsound/adsr.c \
 	./pcsxcore/dfsound/externals.c \
-	./pcsxcore/dfsound/xa.c \
 	./pcsxcore/dfsound/spu.c \
 	./pcsxcore/dfsound/dma.c \
 	./pcsxcore/dfsound/registers.c \

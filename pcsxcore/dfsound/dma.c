@@ -14,24 +14,21 @@
  *   additional informations.                                              *
  *                                                                         *
  ***************************************************************************/
+
 #include "stdafx.h"
 
 #define _IN_DMA
 
 #include "externals.h"
-#include "swap.h"
+#include "registers.h"
 
 ////////////////////////////////////////////////////////////////////////
 // READ DMA (one value)
 ////////////////////////////////////////////////////////////////////////
 
-unsigned short CALLBACK SPU__readDMA(void)
+unsigned short CALLBACK SPUreadDMA(void)
 {
- unsigned short s;
-
- s=LE2HOST16(spuMem[spuAddr>>1]);
-
-
+ unsigned short s=spuMem[spuAddr>>1];
  spuAddr+=2;
  if(spuAddr>0x7ffff) spuAddr=0;
 
@@ -44,20 +41,30 @@ unsigned short CALLBACK SPU__readDMA(void)
 // READ DMA (many values)
 ////////////////////////////////////////////////////////////////////////
 
-void CALLBACK SPU__readDMAMem(unsigned short * pusPSXMem,int iSize)
+void CALLBACK SPUreadDMAMem(unsigned short * pusPSXMem,int iSize)
 {
- int i, mask = 0x7fffe;
+ int i;
+
+ spuStat |= STAT_DATA_BUSY;
 
  for(i=0;i<iSize;i++)
   {
-   *pusPSXMem++=spuMem[spuAddr>>1];                    // spu addr got by writeregister
-   //spuAddr+=2;                                         // inc spu addr
-   //if(spuAddr>0x7ffff) spuAddr=0;                      // wrap
-   spuAddr = (spuAddr+2) & mask;                                    // wrap
+	 Check_IRQ( spuAddr, 0 );
+
+		
+	 *pusPSXMem++=spuMem[spuAddr>>1];                    // spu addr got by writeregister
+   spuAddr+=2;                                         // inc spu addr
+
+	 // guess based on Vib Ribbon (below)
+   if(spuAddr>0x7ffff) break;
   }
 
  iSpuAsyncWait=0;
 
+ spuStat &= ~STAT_DATA_BUSY;
+ spuStat &= ~STAT_DMA_NON;
+ spuStat &= ~STAT_DMA_W;
+ spuStat |= STAT_DMA_R;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -72,36 +79,44 @@ void CALLBACK SPU__readDMAMem(unsigned short * pusPSXMem,int iSize)
 // WRITE DMA (one value)
 ////////////////////////////////////////////////////////////////////////
   
-void CALLBACK SPU__writeDMA(unsigned short val)
+void CALLBACK SPUwriteDMA(unsigned short val)
 {
- spuMem[spuAddr>>1] = HOST2LE16(val);                  // spu addr got by writeregister
+ spuMem[spuAddr>>1] = val;                             // spu addr got by writeregister
 
  spuAddr+=2;                                           // inc spu addr
  if(spuAddr>0x7ffff) spuAddr=0;                        // wrap
 
  iSpuAsyncWait=0;
-
 }
 
 ////////////////////////////////////////////////////////////////////////
 // WRITE DMA (many values)
 ////////////////////////////////////////////////////////////////////////
 
-void CALLBACK SPU__writeDMAMem(unsigned short * pusPSXMem,int iSize)
+void CALLBACK SPUwriteDMAMem(unsigned short * pusPSXMem,int iSize)
 {
- int i, mask = 0x7fffe;
+ int i;
+
+ spuStat |= STAT_DATA_BUSY;
 
  for(i=0;i<iSize;i++)
   {
-   spuMem[spuAddr>>1] = *pusPSXMem++;                  // spu addr got by writeregister
-   //spuAddr+=2;                                         // inc spu addr
-   //if(spuAddr>0x7ffff) spuAddr=0;                      // wrap
-   spuAddr = (spuAddr+2) & mask;                                    // wrap
+	 Check_IRQ( spuAddr, 0 );
+
+	 spuMem[spuAddr>>1] = *pusPSXMem++;                  // spu addr got by writeregister
+   spuAddr+=2;                                         // inc spu addr
+
+	 // Vib Ribbon - stop transfer (reverb playback)
+   if(spuAddr>0x7ffff) break;
   }
  
  iSpuAsyncWait=0;
 
+
+ spuStat &= ~STAT_DATA_BUSY;
+ spuStat &= ~STAT_DMA_NON;
+ spuStat &= ~STAT_DMA_R;
+ spuStat |= STAT_DMA_W;
 }
 
 ////////////////////////////////////////////////////////////////////////
-

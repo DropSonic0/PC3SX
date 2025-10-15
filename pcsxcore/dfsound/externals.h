@@ -127,7 +127,7 @@ typedef struct
  long           lDummy1;
  long           lDummy2;
 } ADSRInfoEx;
-              
+
 ///////////////////////////////////////////////////////////
 
 // Tmp Flags
@@ -166,7 +166,7 @@ typedef struct
  int               iUsedFreq;                          // current pc pitch
  int               iLeftVolume;                        // left volume
  int               iLeftVolRaw;                        // left psx volume value
- int               bIgnoreLoop;													 // ignore loop bit, if an external loop address is used
+ int               bLoopJump;													 // ignore loop bit, if an external loop address is used
  int               iMute;                              // mute mode (debug)
  int               iSilent;                            // voice on - sound on/off
  int               iRightVolume;                       // right volume
@@ -221,6 +221,7 @@ typedef struct
  int IIR_DEST_B0;    // (offset)
  int IIR_DEST_B1;    // (offset)
  int ACC_SRC_C0;     // (offset)
+
  int ACC_SRC_C1;     // (offset)
  int ACC_SRC_D0;     // (offset)
  int ACC_SRC_D1;     // (offset)
@@ -234,11 +235,6 @@ typedef struct
  int IN_COEF_R;      // (coef.)
 } REVERBInfo;
 
-#ifdef _WINDOWS
-extern HINSTANCE hInst;
-#define WM_MUTE (WM_USER+543)
-#endif
-
 ///////////////////////////////////////////////////////////
 // SPU.C globals
 ///////////////////////////////////////////////////////////
@@ -247,7 +243,7 @@ extern HINSTANCE hInst;
 
 // psx buffers / addresses
 
-extern unsigned short  regArea[];                        
+extern unsigned short  regArea[];
 extern unsigned short  spuMem[];
 extern unsigned char * spuMemC;
 extern unsigned char * pSpuIrq;
@@ -255,7 +251,6 @@ extern unsigned char * pSpuBuffer;
 
 // user settings
 
-extern int        iUseXA;
 extern int        iVolume;
 extern int        iXAPitch;
 extern int        iUseTimer;
@@ -283,60 +278,19 @@ extern unsigned long  spuAddr;
 extern int      bEndThread;
 extern int      bThreadEnded;
 extern int      bSpuInit;
-extern unsigned long dwNewChannel;
-extern unsigned int bIrqHit;
+extern uint32_t dwNewChannel;
+extern int bIrqHit;
 
 extern int      SSumR[];
 extern int      SSumL[];
 extern int      iCycle;
 extern short *  pS;
 
-#ifdef _WINDOWS
-extern HWND    hWMain;                               // window handle
-extern HWND    hWDebug;
-#endif
-
 extern void (CALLBACK *cddavCallback)(unsigned short,unsigned short);
 extern void (CALLBACK *irqCallback)(void);                  // func of main emu, called on spu irq
 
 #endif
 
-///////////////////////////////////////////////////////////
-// CFG.C globals
-///////////////////////////////////////////////////////////
-
-#ifndef _IN_CFG
-
-#ifndef _WINDOWS
-extern char * pConfigFile;
-#endif
-
-#endif
-
-///////////////////////////////////////////////////////////
-// DSOUND.C globals
-///////////////////////////////////////////////////////////
-
-#ifndef _IN_DSOUND
-
-#ifdef _WINDOWS
-extern unsigned long LastWrite;
-extern unsigned long LastPlay;
-#endif
-
-#endif
-
-///////////////////////////////////////////////////////////
-// RECORD.C globals
-///////////////////////////////////////////////////////////
-
-#ifndef _IN_RECORD
-
-#ifdef _WINDOWS
-extern int iDoRecord;
-#endif
-
-#endif
 
 ///////////////////////////////////////////////////////////
 // XA.C globals
@@ -346,18 +300,18 @@ extern int iDoRecord;
 
 extern xa_decode_t   * xapGlobal;
 
-extern unsigned long * XAFeed;
-extern unsigned long * XAPlay;
-extern unsigned long   XAStart [44100*4] __attribute__((aligned(32)));
-extern unsigned long * XAEnd;
+extern uint32_t * XAFeed;
+extern uint32_t * XAPlay;
+extern uint32_t * XAStart;
+extern uint32_t * XAEnd;
 
-extern unsigned long   XARepeat;
-extern unsigned long   XALastVal;
+extern uint32_t   XARepeat;
+extern uint32_t   XALastVal;
 
-extern unsigned long * CDDAFeed;
-extern unsigned long * CDDAPlay;
-extern unsigned long * CDDAStart;
-extern unsigned long * CDDAEnd;
+extern uint32_t * CDDAFeed;
+extern uint32_t * CDDAPlay;
+extern uint32_t * CDDAStart;
+extern uint32_t * CDDAEnd;
 
 extern int           iLeftXAVol;
 extern int           iRightXAVol;
@@ -372,7 +326,7 @@ extern int           iRightXAVol;
 
 extern int *          sRVBPlay;
 extern int *          sRVBEnd;
-extern int            sRVBStart[NSSIZE*2] __attribute__((aligned(32)));
+extern int *          sRVBStart;
 extern int            iReverbOff;
 extern int            iReverbRepeat;
 extern int            iReverbNum;

@@ -15,40 +15,32 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifdef _WINDOWS
-
-#define WIN32_LEAN_AND_MEAN
-#define STRICT
-#include <windows.h>
-#include <windowsx.h>
-#include "mmsystem.h"
-#include <process.h>
-#include <stdlib.h>
-
-// enable that for auxprintf();
-//#define SMALLDEBUG
-//#include <dbgout.h>
-//void auxprintf (LPCTSTR pFormat, ...);
-
-#define INLINE __inline
-
-//////////////////////////////////////////////////////////
-// LINUX
-//////////////////////////////////////////////////////////
-#else
+//ROBO: Rename functions with plugin kludge tag
+#define SPUinit pkSPUinit
+#define SPUshutdown pkSPUshutdown
+#define SPUclose pkSPUclose
+#define SPUplaySample pkSPUplaySample 
+#define SPUwriteRegister pkSPUwriteRegister
+#define SPUreadRegister pkSPUreadRegister
+#define SPUwriteDMA pkSPUwriteDMA
+#define SPUreadDMA pkSPUreadDMA
+#define SPUwriteDMAMem pkSPUwriteDMAMem
+#define SPUreadDMAMem pkSPUreadDMAMem
+#define SPUplayADPCMchannel pkSPUplayADPCMchannel
+#define SPUregisterCallback pkSPUregisterCallback
+#define SPUconfigure pkSPUconfigure
+#define SPUtest pkSPUtest
+#define SPUabout pkSPUabout
+#define SPUfreeze pkSPUfreeze
+#define SPUasync pkSPUasync
+#define SPUplayCDDAchannel pkSPUplayCDDAchannel
+#define SPUopen pkSPUopen
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <unistd.h>
-#ifndef NOTHREADLIB
-#include <pthread.h>
-#endif
 #define RRand(range) (random()%range)  
 #include <string.h> 
-#include <sys/time.h>  
-#include <math.h>  
+//#include <math.h>  
 
 #undef CALLBACK
 #define CALLBACK
@@ -56,9 +48,10 @@
 #define LOWORD(l)           ((unsigned short)(l)) 
 #define HIWORD(l)           ((unsigned short)(((unsigned long)(l) >> 16) & 0xFFFF)) 
 
-#undef INLINE
-#define INLINE inline
-
+#ifndef INLINE
+#define INLINE static inline
 #endif
+
+//#endif
 
 #include "psemuxa.h"

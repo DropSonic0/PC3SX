@@ -15,5 +15,5 @@
  *                                                                         *
  ***************************************************************************/
 
-INLINE void StartADSR(SPUCHAN * pChannel);
-INLINE int  MixADSR(SPUCHAN * pChannel);
+INLINE void StartADSR(int ch);
+INLINE int  MixADSR(int ch);

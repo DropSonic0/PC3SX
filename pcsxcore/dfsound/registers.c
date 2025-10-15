@@ -23,10 +23,7 @@
 #include "registers.h"
 #include "regs.h"
 #include "reverb.h"
-#include "../PsxMem.h"
-#include "swap.h"
 
-int iSPUDebugMode = 0;
 /*
 // adsr time values (in ms) by James Higgs ... see the end of
 // the adsr.c source for details
@@ -45,11 +42,43 @@ int iSPUDebugMode = 0;
 #define SUSTAIN_MS     441L
 #define RELEASE_MS     437L
 
+
+
+
+
+
+int Check_IRQ( int addr, int force ) {
+	if(spuCtrl & CTRL_IRQ)         // some callback and irq active?
+	{
+		if( ( bIrqHit == 0 ) &&
+				( force == 1 || pSpuIrq == spuMemC+addr ) )
+		{
+			if(irqCallback)
+				irqCallback();                        // -> call main emu
+
+			// one-time
+			bIrqHit = 1;
+			spuStat |= STAT_IRQ;
+
+#if 0
+			MessageBox( NULL, "IRQ", "SPU", MB_OK );
+#endif
+
+			return 1;
+		}
+	}
+
+
+	return 0;
+}
+
+
+
 ////////////////////////////////////////////////////////////////////////
 // WRITE REGISTERS: called by main emu
 ////////////////////////////////////////////////////////////////////////
 
-void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
+void CALLBACK SPUwriteRegister(unsigned long reg, unsigned short val)
 {
  const unsigned long r=reg&0xfff;
  regArea[(r-0xc00)>>1] = val;
@@ -82,9 +111,9 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
         const unsigned long lval=val;unsigned long lx;
         //---------------------------------------------//
         s_chan[ch].ADSRX.AttackModeExp=(lval&0x8000)?1:0; 
-        s_chan[ch].ADSRX.AttackRate = ((lval>>8) & 0x007f)^0x7f;
-        s_chan[ch].ADSRX.DecayRate = 4*(((lval>>4) & 0x000f)^0x1f);
-        s_chan[ch].ADSRX.SustainLevel = (lval & 0x000f) << 27;
+        s_chan[ch].ADSRX.AttackRate=(lval>>8) & 0x007f;
+        s_chan[ch].ADSRX.DecayRate=(lval>>4) & 0x000f;
+        s_chan[ch].ADSRX.SustainLevel=lval & 0x000f;
         //---------------------------------------------//
         if(!iDebugMode) break;
         //---------------------------------------------// stuff below is only for debug mode
@@ -123,9 +152,9 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
        //----------------------------------------------//
        s_chan[ch].ADSRX.SustainModeExp = (lval&0x8000)?1:0;
        s_chan[ch].ADSRX.SustainIncrease= (lval&0x4000)?0:1;
-       s_chan[ch].ADSRX.SustainRate = ((lval>>6) & 0x007f)^0x7f;
+       s_chan[ch].ADSRX.SustainRate = (lval>>6) & 0x007f;
        s_chan[ch].ADSRX.ReleaseModeExp = (lval&0x0020)?1:0;
-       s_chan[ch].ADSRX.ReleaseRate = 4*((lval & 0x001f)^0x1f);
+       s_chan[ch].ADSRX.ReleaseRate = lval & 0x001f;
        //----------------------------------------------//
        if(!iDebugMode) break;
        //----------------------------------------------// stuff below is only for debug mode
@@ -167,8 +196,9 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
      case 14:                                          // loop?
        //WaitForSingleObject(s_chan[ch].hMutex,2000);        // -> no multithread fuckups
        
-			 s_chan[ch].pLoop=spuMemC+((unsigned long) val<<3);
-             s_chan[ch].bIgnoreLoop=1;
+			 s_chan[ch].pLoop=spuMemC+((unsigned long)((val<<3)&~0xf));
+       
+			 //s_chan[ch].bIgnoreLoop=1;
        //ReleaseMutex(s_chan[ch].hMutex);                    // -> oki, on with the thread
        break;
      //------------------------------------------------//
@@ -185,7 +215,10 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
       break;
     //-------------------------------------------------//
     case H_SPUdata:
-      spuMem[spuAddr>>1] = HOST2LE16(val);
+			// BIOS - allow dma 00
+			Check_IRQ( spuAddr, 0 );
+
+      spuMem[spuAddr>>1] = val;
       spuAddr+=2;
       if(spuAddr>0x7ffff) spuAddr=0;
       break;
@@ -225,6 +258,17 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
 
 			if( (spuCtrl & CTRL_DMA_F) == CTRL_DMA_R )
 				spuStat |= STAT_DMA_R;
+
+
+
+			// reset IRQ flag
+			if( (spuCtrl & CTRL_IRQ) == 0 ) {
+				bIrqHit = 0;
+				spuStat &= ~STAT_IRQ;
+			}
+
+
+			dwNoiseClock = (spuCtrl & CTRL_NOISE)>>8;
       break;
     //-------------------------------------------------//
     case H_SPUstat:
@@ -302,11 +346,11 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
       break;
     //-------------------------------------------------//
     case H_CDLeft:
-			iLeftXAVol=val  & 0x7fff;
+			iLeftXAVol = val;
 			if(cddavCallback) cddavCallback(0,val);
 			break;
     case H_CDRight:
-			iRightXAVol=val & 0x7fff;
+			iRightXAVol = val;
 			if(cddavCallback) cddavCallback(1,val);
 			break;
     //-------------------------------------------------//
@@ -386,7 +430,7 @@ void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val)
 // READ REGISTER: called by main emu
 ////////////////////////////////////////////////////////////////////////
 
-unsigned short CALLBACK SPU__readRegister(unsigned long reg)
+unsigned short CALLBACK SPUreadRegister(unsigned long reg)
 {
  const unsigned long r=reg&0xfff;
         
@@ -403,25 +447,22 @@ unsigned short CALLBACK SPU__readRegister(unsigned long reg)
        if(s_chan[ch].ADSRX.lVolume &&                  // same here... we haven't decoded one sample yet, so no envelope yet. return 1 as well
           !s_chan[ch].ADSRX.EnvelopeVol)                   
         return 1;
-        return (unsigned short)(s_chan[ch].ADSRX.EnvelopeVol>>16);
+       return (unsigned short)(s_chan[ch].ADSRX.EnvelopeVol);
       }
     }
- }
+  }
 
  switch(r)
   {
-	case H_SPUaddr:
-     return spuAddr>>3;
-
     case H_SPUctrl:
      return spuCtrl;
 
     case H_SPUstat:
-     return (unsigned short)(spuAddr>>3);
+     return spuStat;
 
     case H_SPUdata:
      {
-      unsigned short s=LE2HOST16(spuMem[spuAddr>>1]);
+      unsigned short s=spuMem[spuAddr>>1];
       spuAddr+=2;
       if(spuAddr>0x7ffff) spuAddr=0;
       return s;
@@ -450,7 +491,7 @@ void SoundOn(int start,int end,unsigned short val)     // SOUND ON PSX COMAND
   {
    if((val&1) && s_chan[ch].pStart)                    // mmm... start has to be set before key on !?!
     {
-		 s_chan[ch].bIgnoreLoop=0;
+		 s_chan[ch].bLoopJump = 0;
      s_chan[ch].bNew=1;
 
 		 // do this here, not in StartSound
@@ -603,7 +644,7 @@ void SetVolumeR(unsigned char ch,short vol)            // RIGHT VOLUME
 ////////////////////////////////////////////////////////////////////////
 // PITCH register write
 ////////////////////////////////////////////////////////////////////////
- 
+
 void SetPitch(int ch,unsigned short val)               // SET PITCH
 {
  int NP;
