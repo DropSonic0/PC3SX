@@ -31,38 +31,38 @@ extern "C" {
 
 #define GPUDMA_INT(eCycle) { \
 	psxRegs.interrupt |= 0x01000000; \
-	psxRegs.intCycle[3+24+1] = eCycle; \
-	psxRegs.intCycle[3+24] = psxRegs.cycle; \
+	psxRegs.intCycle[3+24].cycle = eCycle; \
+	psxRegs.intCycle[3+24].sCycle = psxRegs.cycle; \
 }
 
 #define MDECOUTDMA_INT(eCycle) { \
 	psxRegs.interrupt |= 0x02000000; \
-	psxRegs.intCycle[5+24+1] = eCycle; \
-	psxRegs.intCycle[5+24] = psxRegs.cycle; \
+	psxRegs.intCycle[5+24].cycle = eCycle; \
+	psxRegs.intCycle[5+24].sCycle = psxRegs.cycle; \
 }
 
 #define SPUDMA_INT(eCycle) { \
 	psxRegs.interrupt |= 0x03000000; \
-	psxRegs.intCycle[6+24+1] = eCycle; \
-	psxRegs.intCycle[6+24] = psxRegs.cycle; \
+	psxRegs.intCycle[6+24].cycle = eCycle; \
+	psxRegs.intCycle[6+24].sCycle = psxRegs.cycle; \
 }
 
 #define MDECINDMA_INT(eCycle) { \
 	psxRegs.interrupt |= 0x04000000; \
-	psxRegs.intCycle[7+24+1] = eCycle; \
-	psxRegs.intCycle[7+24] = psxRegs.cycle; \
+	psxRegs.intCycle[7+24].cycle = eCycle; \
+	psxRegs.intCycle[7+24].sCycle = psxRegs.cycle; \
 }
 
 #define GPUOTCDMA_INT(eCycle) { \
 	psxRegs.interrupt |= 0x05000000; \
-	psxRegs.intCycle[8+24+1] = eCycle; \
-	psxRegs.intCycle[8+24] = psxRegs.cycle; \
+	psxRegs.intCycle[8+24].cycle = eCycle; \
+	psxRegs.intCycle[8+24].sCycle = psxRegs.cycle; \
 }
 
 #define CDRDMA_INT(eCycle) { \
 	psxRegs.interrupt |= 0x06000000; \
-	psxRegs.intCycle[9+24+1] = eCycle; \
-	psxRegs.intCycle[9+24] = psxRegs.cycle; \
+	psxRegs.intCycle[9+24].cycle = eCycle; \
+	psxRegs.intCycle[9+24].sCycle = psxRegs.cycle; \
 }
 
 void psxDma3(u32 madr, u32 bcr, u32 chcr);

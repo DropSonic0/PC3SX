@@ -52,8 +52,8 @@ char Mcd1Data[MCD_SIZE], Mcd2Data[MCD_SIZE];
 #define SIO_INT() { \
 	if (!Config.Sio) { \
 		psxRegs.interrupt|= 0x80; \
-		psxRegs.intCycle[7+1] = 200; /*270;*/ \
-		psxRegs.intCycle[7] = psxRegs.cycle; \
+		psxRegs.intCycle[7].cycle = 200; /*270;*/ \
+		psxRegs.intCycle[7].sCycle = psxRegs.cycle; \
 	} \
 }
 

@@ -30,16 +30,16 @@ PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.
 	./pcsxcore/psxmem.c	\
 	./pcsxcore/misc.c	\
 	./pcsxcore/socket.c	\
-	./pcsxcore/GPU_SOFT/cfg.c \
-	./pcsxcore/GPU_SOFT/Gudraw.c \
-	./pcsxcore/GPU_SOFT/fps.c \
-	./pcsxcore/GPU_SOFT/gpu.c \
-	./pcsxcore/GPU_SOFT/menu.c \
-	./pcsxcore/GPU_SOFT/prim.c \
-	./pcsxcore/GPU_SOFT/soft.c \
-	./pcsxcore/GPU_SOFT/zn.c \
+	./plugins/video_plugin/cfg.c \
+	./plugins/video_plugin/Gudraw.c \
+	./plugins/video_plugin/fps.c \
+	./plugins/video_plugin/gpu.c \
+	./plugins/video_plugin/menu.c \
+	./plugins/video_plugin/prim.c \
+	./plugins/video_plugin/soft.c \
+	./plugins/video_plugin/zn.c \
 	./pcsxcore/plugins.c	\
-	./pcsxcore/plugin.c	\
+	./plugins/plugins.c	\
 	./pcsxcore/decode_xa.c	\
 	./pcsxcore/ppf.c	\
 	./pcsxcore/cheat.c	\
@@ -51,13 +51,13 @@ PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.
 	./pcsxcore/ppc/pR3000A.c	\
 	./pcsxcore/ppc/ppc.c	\
 	./pcsxcore/ppc/reguse.c \
-	./pcsxcore/PlugPAD.c \
-	./pcsxcore/PlugCD.c \
-	./pcsxcore/dfsound/externals.c \
-	./pcsxcore/dfsound/spu.c \
-	./pcsxcore/dfsound/dma.c \
-	./pcsxcore/dfsound/registers.c \
-	./pcsxcore/dfsound/freeze.c \
+	./plugins/input_plugin/pad.c \
+	./plugins/cdrplugin/cdr.c \
+	./plugins/sound_plugin/externals.c \
+	./plugins/sound_plugin/spu.c \
+	./plugins/sound_plugin/dma.c \
+	./plugins/sound_plugin/registers.c \
+	./plugins/sound_plugin/freeze.c \
 	./pcsxcore/zlib/adler32.c \
 	./pcsxcore/zlib/compress.c \
 	./pcsxcore/zlib/crc32.c \

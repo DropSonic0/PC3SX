@@ -25,7 +25,7 @@ extern "C" {
 
 typedef void* HWND;
 #define CALLBACK
-#include "Plugin.h"
+#include "../plugins/Plugins.h"
 
 #include "PSEmu_Plugin_Defs.h"
 #include "Decode_XA.h"

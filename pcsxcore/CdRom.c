@@ -92,13 +92,13 @@ static struct SubQ *subq;
 
 #define CDR_INT(eCycle) { \
 	psxRegs.interrupt|= 0x4; \
-	psxRegs.intCycle[2+1] = eCycle; \
-	psxRegs.intCycle[2] = psxRegs.cycle; }
+	psxRegs.intCycle[2].cycle = eCycle; \
+	psxRegs.intCycle[2].sCycle = psxRegs.cycle; }
 
 #define CDREAD_INT(eCycle) { \
 	psxRegs.interrupt|= 0x40000; \
-	psxRegs.intCycle[2+16+1] = eCycle; \
-	psxRegs.intCycle[2+16] = psxRegs.cycle; }
+	psxRegs.intCycle[2+16].cycle = eCycle; \
+	psxRegs.intCycle[2+16].sCycle = psxRegs.cycle; }
 
 #define StartReading(type) { \
    	cdr.Reading = type; \

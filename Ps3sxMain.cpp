@@ -50,7 +50,7 @@ extern "C"
 
 #include "psxcommon.h"
 #include "Sio.h"
-#include "PlugCD.h"
+#include "plugins/cdrplugin/cdr.h"
 #include "cheat.h"
 #include "plugins.h"
 #include "misc.h"
@@ -59,6 +59,8 @@ extern "C"
 // PCSX core global variables
 PcsxConfig Config;
 FILE *emuLog = NULL;
+
+int iDebugMode = 0;
 
 void SysPrintf(const char *fmt, ...);
 

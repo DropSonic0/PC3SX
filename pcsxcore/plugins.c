@@ -22,7 +22,7 @@
 #include "Plugins.h"
 #include "spu.h"
 #include "PsxCommon.h"
-#include "Plugin.h"
+#include "../plugins/Plugins.h"
 
 #ifdef __WIN32__
 #pragma warning(disable:4244)

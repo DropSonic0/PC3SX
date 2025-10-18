@@ -115,31 +115,31 @@ void psxBranchTest() {
 
 	if (psxRegs.interrupt) {
 		if ((psxRegs.interrupt & 0x80) && (!Config.Sio)) { // sio
-			if ((psxRegs.cycle - psxRegs.intCycle[7]) >= psxRegs.intCycle[7+1]) {
+			if ((psxRegs.cycle - psxRegs.intCycle[7].sCycle) >= psxRegs.intCycle[7].cycle) {
 				psxRegs.interrupt&=~0x80;
 				sioInterrupt();
 			}
 		}
 		if (psxRegs.interrupt & 0x04) { // cdr
-			if ((psxRegs.cycle - psxRegs.intCycle[2]) >= psxRegs.intCycle[2+1]) {
+			if ((psxRegs.cycle - psxRegs.intCycle[2].sCycle) >= psxRegs.intCycle[2].cycle) {
 				psxRegs.interrupt&=~0x04;
 				cdrInterrupt();
 			}
 		}
 		if (psxRegs.interrupt & 0x040000) { // cdr read
-			if ((psxRegs.cycle - psxRegs.intCycle[2+16]) >= psxRegs.intCycle[2+16+1]) {
+			if ((psxRegs.cycle - psxRegs.intCycle[2+16].sCycle) >= psxRegs.intCycle[2+16].cycle) {
 				psxRegs.interrupt&=~0x040000;
 				cdrReadInterrupt();
 			}
 		}
 		if (psxRegs.interrupt & 0x01000000) { // gpu dma
-			if ((psxRegs.cycle - psxRegs.intCycle[3+24]) >= psxRegs.intCycle[3+24+1]) {
+			if ((psxRegs.cycle - psxRegs.intCycle[3+24].sCycle) >= psxRegs.intCycle[3+24].cycle) {
 				psxRegs.interrupt&=~0x01000000;
 				gpuInterrupt();
 			}
 		}
 		if (psxRegs.interrupt & 0x02000000) { // mdec out dma
-			if ((psxRegs.cycle - psxRegs.intCycle[5+24]) >= psxRegs.intCycle[5+24+1]) {
+			if ((psxRegs.cycle - psxRegs.intCycle[5+24].sCycle) >= psxRegs.intCycle[5+24].cycle) {
 				psxRegs.interrupt&=~0x02000000;
 				mdec1Interrupt();
 			}

@@ -14,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
 #ifndef __R3000A_H__
@@ -24,10 +24,10 @@
 extern "C" {
 #endif
 
-#include "PsxCommon.h"
-#include "PsxMem.h"
-#include "PsxCounters.h"
-#include "PsxBios.h"
+#include "psxcommon.h"
+#include "psxmem.h"
+#include "psxcounters.h"
+#include "psxbios.h"
 
 typedef struct {
 	int  (*Init)();
@@ -40,8 +40,7 @@ typedef struct {
 
 extern R3000Acpu *psxCpu;
 extern R3000Acpu psxInt;
-extern R3000Acpu psxIntDbg;
-#if defined(__x86_64__) || defined(__i386__) || defined(__sh__) || defined(__ppc__) || defined(__BIGENDIAN__)
+#if (defined(__x86_64__) || defined(__i386__) || defined(__sh__) || defined(__ppc__)) && !defined(NOPSXREC)
 extern R3000Acpu psxRec;
 #define PSXREC
 #endif
@@ -58,8 +57,6 @@ typedef union {
 	struct { s8 l, h, h2, h3; } sb;
 	struct { s16 l, h; } sw;
 #endif
-	u32 d;
-	s32 sd;
 } PAIR;
 
 typedef union {
@@ -76,8 +73,8 @@ typedef union {
 typedef union {
 	struct {
 		u32	Index,     Random,    EntryLo0,  BPC,
-				Context,   PageMask,  Wired,     Reserved0,
-				BadVAddr,  Count,     EntryHi,   Compare,
+				Context,   BDA,       PIDMask,   DCIC,
+				BadVAddr,  BDAM,      EntryHi,   BPCM,
 				Status,    Cause,     EPC,       PRid,
 				Config,    LLAddr,    WatchLO,   WatchHI,
 				XContext,  Reserved1, Reserved2, Reserved3,
@@ -173,12 +170,87 @@ typedef struct {
   u32 code;					/* The instruction */
 	u32 cycle;
 	u32 interrupt;
-	u32 intCycle[32];
+	struct { u32 sCycle, cycle; } intCycle[32];
 	u8 ICache_Addr[0x1000];
 	u8 ICache_Code[0x1000];
+	boolean ICache_valid;
 } psxRegisters;
 
 extern psxRegisters psxRegs;
+
+/*
+Formula One 2001
+- Use old CPU cache code when the RAM location is
+  updated with new code (affects in-game racing)
+
+TODO:
+- I-cache / D-cache swapping
+- Isolate D-cache from RAM
+*/
+
+static inline u32 *Read_ICache(u32 pc, boolean isolate) {
+	u32 pc_bank, pc_offset, pc_cache;
+	u8 *IAddr, *ICode;
+
+	pc_bank = pc >> 24;
+	pc_offset = pc & 0xffffff;
+	pc_cache = pc & 0xfff;
+
+	IAddr = psxRegs.ICache_Addr;
+	ICode = psxRegs.ICache_Code;
+
+	// clear I-cache
+	if (!psxRegs.ICache_valid) {
+		memset(psxRegs.ICache_Addr, 0xff, sizeof(psxRegs.ICache_Addr));
+		memset(psxRegs.ICache_Code, 0xff, sizeof(psxRegs.ICache_Code));
+
+		psxRegs.ICache_valid = TRUE;
+	}
+
+	// uncached
+	if (pc_bank >= 0xa0)
+		return (u32 *)PSXM(pc);
+
+	// cached - RAM
+	if (pc_bank == 0x80 || pc_bank == 0x00) {
+		if (SWAP32(*(u32 *)(IAddr + pc_cache)) == pc_offset) {
+			// Cache hit - return last opcode used
+			return (u32 *)(ICode + pc_cache);
+		} else {
+			// Cache miss - addresses don't match
+			// - default: 0xffffffff (not init)
+
+			if (!isolate) {
+				// cache line is 4 bytes wide
+				pc_offset &= ~0xf;
+				pc_cache &= ~0xf;
+
+				// address line
+				*(u32 *)(IAddr + pc_cache + 0x0) = SWAP32(pc_offset + 0x0);
+				*(u32 *)(IAddr + pc_cache + 0x4) = SWAP32(pc_offset + 0x4);
+				*(u32 *)(IAddr + pc_cache + 0x8) = SWAP32(pc_offset + 0x8);
+				*(u32 *)(IAddr + pc_cache + 0xc) = SWAP32(pc_offset + 0xc);
+
+				// opcode line
+				pc_offset = pc & ~0xf;
+				*(u32 *)(ICode + pc_cache + 0x0) = psxMu32ref(pc_offset + 0x0);
+				*(u32 *)(ICode + pc_cache + 0x4) = psxMu32ref(pc_offset + 0x4);
+				*(u32 *)(ICode + pc_cache + 0x8) = psxMu32ref(pc_offset + 0x8);
+				*(u32 *)(ICode + pc_cache + 0xc) = psxMu32ref(pc_offset + 0xc);
+			}
+
+			// normal code
+			return (u32 *)PSXM(pc);
+		}
+	}
+
+	/*
+	TODO: Probably should add cached BIOS
+	*/
+
+	// default
+	return (u32 *)PSXM(pc);
+}
 
 #if defined(__BIGENDIAN__)
 
@@ -218,7 +290,6 @@ extern psxRegisters psxRegs;
 
 #define _fImm_(code)	((s16)code)            // sign-extended immediate
 #define _fImmU_(code)	(code&0xffff)          // zero-extended immediate
-#define _fImmLU_(code)	(code<<16)             // LUI
 
 #define _Op_     _fOp_(psxRegs.code)
 #define _Funct_  _fFunct_(psxRegs.code)
@@ -231,7 +302,6 @@ extern psxRegisters psxRegs;
 
 #define _Imm_	 _fImm_(psxRegs.code)
 #define _ImmU_	 _fImmU_(psxRegs.code)
-#define _ImmLU_	 _fImmLU_(psxRegs.code)
 
 #define _rRs_   psxRegs.GPR.r[_Rs_]   // Rs register
 #define _rRt_   psxRegs.GPR.r[_Rt_]   // Rt register
@@ -261,7 +331,6 @@ void psxExecuteBios();
 int  psxTestLoadDelay(int reg, u32 tmp);
 void psxDelayTest(int reg, u32 bpc);
 void psxTestSWInts();
-void psxTestHWInts();
 void psxJumpTest();
 
 #ifdef __cplusplus

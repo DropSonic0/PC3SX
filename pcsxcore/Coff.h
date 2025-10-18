@@ -32,47 +32,38 @@
 /*
  * Some ECOFF definitions.
  */
-struct external_filehdr {
-	unsigned short f_magic;		/* magic number			*/
-	unsigned short f_nscns;		/* number of sections		*/
-	unsigned long f_timdat;	/* time & date stamp		*/
-	unsigned long f_symptr;	/* file pointer to symtab	*/
-	unsigned long f_nsyms;		/* number of symtab entries	*/
-	unsigned short f_opthdr;	/* sizeof(optional hdr)		*/
-	unsigned short f_flags;		/* flags			*/
-};
+typedef struct filehdr {
+	u16		f_magic;        /* magic number */
+	u16		f_nscns;        /* number of sections */
+	u32		f_timdat;       /* time & date stamp */
+	u32		f_symptr;       /* file pointer to symbolic header */
+	u32		f_nsyms;        /* sizeof(symbolic hdr) */
+	u16		f_opthdr;       /* sizeof(optional hdr) */
+	u16		f_flags;        /* flags */
+} FILHDR;
 
-#define	FILHDR	struct external_filehdr
-#define	FILHSZ	sizeof(FILHDR)
+typedef struct scnhdr {
+	char	s_name[8];      /* section name */
+	u32		s_paddr;        /* physical address, aliased s_nlib */
+	u32		s_vaddr;        /* virtual address */
+	u32		s_size;         /* section size */
+	u32		s_scnptr;       /* file ptr to raw data for section */
+	u32		s_relptr;       /* file ptr to relocation */
+	u32		s_lnnoptr;      /* file ptr to gp histogram */
+	u16		s_nreloc;       /* number of relocation entries */
+	u16		s_nlnno;        /* number of gp histogram entries */
+	u32		s_flags;        /* flags */
+} SCNHDR;
 
-struct external_scnehdr {
-	char            s_name[8];      /* section name */
-	unsigned long s_paddr;        /* physical address, aliased s_nlib */
-	unsigned long s_vaddr;        /* virtual address */
-	unsigned long s_size;         /* section size */
-	unsigned long s_scnptr;       /* file ptr to raw data for section */
-	unsigned long s_relptr;       /* file ptr to relocation */
-	unsigned long s_lnnoptr;      /* file ptr to gp histogram */
-	unsigned short s_nreloc;       /* number of relocation entries */
-	unsigned short s_nlnno;        /* number of gp histogram entries */
-	unsigned long s_flags;        /* flags */
-};
-
-#define	SCNHDR	struct external_scnehdr
-#define	SCNHSZ	sizeof(SCNHDR)
-
-struct external_aoutehdr {
-	unsigned short magic;          /* magic */
-	unsigned short vstamp;         /* version stamp */
-	unsigned long tsize;          /* text size in bytes, padded to DW bdry */
-	unsigned long dsize;          /* initialized data */
-	unsigned long bsize;          /* uninitialized data */
-	unsigned long entry;          /* entry pt. */
-	unsigned long text_start;     /* base of text used for this file */
-	unsigned long data_start;     /* base of data used for this file */
-};
-
-#define	AOUTHDR	struct external_aoutehdr
-#define	AOUTHSZ	sizeof(AOUTHDR)
+typedef struct aouthdr {
+	u16		magic;          /* magic */
+	u16		vstamp;         /* version stamp */
+	u32		tsize;          /* text size in bytes, padded to DW bdry */
+	u32		dsize;          /* initialized data */
+	u32		bsize;          /* uninitialized data */
+	u32		entry;          /* entry pt. */
+	u32		text_start;     /* base of text used for this file */
+	u32		data_start;     /* base of data used for this file */
+} AOUTHDR;
 
 #endif

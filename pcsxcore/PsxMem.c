@@ -225,13 +225,13 @@ void psxMemWrite16(u32 mem, u16 value) {
 	char *p;
 	u32 t;
 	
-	t = mem >> 16;
-	if (t == 0x1f80 || t == 0x9f80 || t == 0xbf80) {
-		if (mem < 0x1f801000)
-			psxHu16ref(mem) = SWAPu16(value);
-		else
-			psxHwWrite16(mem, value);
-	} else {
+ 	t = mem >> 16;
+ 	if (t == 0x1f80 || t == 0x9f80 || t == 0xbf80) {
+ 		if (mem < 0x1f801000)
+			*(u16*)&psxH[mem & 0xffff] = SWAP16(value);
+ 		else
+ 			psxHwWrite16(mem, value);
+ 	} else {
 		p = (char *)(psxMemWLUT[t]);
 		if (p != NULL) {
 			*(u16 *)(p + (mem & 0xffff)) = SWAPu16(value);
@@ -251,13 +251,13 @@ void psxMemWrite32(u32 mem, u32 value) {
 	u32 t;
 
 	//	if ((mem&0x1fffff) == 0x71E18 || value == 0x48088800) SysPrintf("t2fix!!\n");
-	t = mem >> 16;
-	if (t == 0x1f80 || t == 0x9f80 || t == 0xbf80) {
-		if (mem < 0x1f801000)
-			psxHu32ref(mem) = SWAPu32(value);
-		else
-			psxHwWrite32(mem, value);
-	} else {
+ 	t = mem >> 16;
+ 	if (t == 0x1f80 || t == 0x9f80 || t == 0xbf80) {
+ 		if (mem < 0x1f801000)
+			*(u32*)&psxH[mem & 0xffff] = SWAP32(value);
+ 		else
+ 			psxHwWrite32(mem, value);
+ 	} else {
 		p = (char *)(psxMemWLUT[t]);
 		if (p != NULL) {
 			*(u32 *)(p + (mem & 0xffff)) = SWAPu32(value);
