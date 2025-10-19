@@ -29,6 +29,7 @@
 #else
 #include <pthread.h>
 #include <sys/time.h>
+#include <sys/timer.h>
 #endif
 
 static FILE *cdHandle = NULL;
@@ -128,7 +129,7 @@ static long GetTickCount(void) {
 	static time_t		initial_time = 0;
 	struct timeval		now;
 
-	gettimeofday(&now, NULL);
+	sys_time_get_system_time((u64*)&now.tv_sec, (u64*)&now.tv_usec);
 
 	if (initial_time == 0) {
 		initial_time = now.tv_sec;
@@ -170,7 +171,7 @@ static void *playthread(void *param)
 #ifdef _WIN32
 		Sleep(d);
 #else
-		usleep(d * 1000);
+		sys_timer_usleep(d * 1000);
 #endif
 
 		t = GetTickCount() + CDDA_FRAMETIME;

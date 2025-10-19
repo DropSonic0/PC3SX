@@ -17,80 +17,60 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
-/*
-* Internal PSX HLE functions.
-*/
+#include "psxcommon.h"
+#include "r3000a.h"
+#include "psxbios.h"
 
-#include "psxhle.h"
+#include "cheat.h"
+#include "ppf.h"
 
-static void hleDummy() {
-	psxRegs.pc = psxRegs.GPR.n.ra;
+PcsxConfig Config;
+boolean NetOpened = FALSE;
 
-	psxBranchTest();
+int Log = 0;
+FILE *emuLog = NULL;
+
+int EmuInit() {
+	return psxInit();
 }
 
-static void hleA0() {
-	u32 call = psxRegs.GPR.n.t1 & 0xff;
+void EmuReset() {
+	FreeCheatSearchResults();
+	FreeCheatSearchMem();
 
-	if (biosA0[call]) biosA0[call]();
-
-	psxBranchTest();
+	psxReset();
 }
 
-static void hleB0() {
-	u32 call = psxRegs.GPR.n.t1 & 0xff;
+void EmuShutdown() {
+	ClearAllCheats();
+	FreeCheatSearchResults();
+	FreeCheatSearchMem();
 
-	if (biosB0[call]) biosB0[call]();
+	FreePPFCache();
 
-	psxBranchTest();
+	psxShutdown();
 }
 
-static void hleC0() {
-	u32 call = psxRegs.GPR.n.t1 & 0xff;
+void EmuUpdate() {
+	// Do not allow hotkeys inside a softcall from HLE BIOS
+	if (!Config.HLE || !hleSoftCall)
+		SysUpdate();
 
-	if (biosC0[call]) biosC0[call]();
-
-	psxBranchTest();
+	ApplyCheats();
 }
 
-static void hleBootstrap() { // 0xbfc00000
-	SysPrintf("hleBootstrap\n");
-	CheckCdrom();
-	LoadCdrom();
-	SysPrintf("CdromLabel: \"%s\": PC = %8.8lx (SP = %8.8lx)\n", CdromLabel, psxRegs.pc, psxRegs.GPR.n.sp);
+void __Log(char *fmt, ...) {
+	va_list list;
+#ifdef LOG_STDOUT
+	char tmp[1024];
+#endif
+
+	va_start(list, fmt);
+#ifndef LOG_STDOUT
+	vfprintf(emuLog, fmt, list);
+#else
+	vsprintf(tmp, fmt, list);
+	SysPrintf(tmp);
+#endif
+	va_end(list);
 }
-
-typedef struct {                   
-	u32 _pc0;      
-	u32 gp0;      
-	u32 t_addr;   
-	u32 t_size;   
-	u32 d_addr;   
-	u32 d_size;   
-	u32 b_addr;   
-	u32 b_size;   
-	u32 S_addr;
-	u32 s_size;
-	u32 _sp,_fp,_gp,ret,base;
-} EXEC;
-
-static void hleExecRet() {
-	EXEC *header = (EXEC*)PSXM(psxRegs.GPR.n.s0);
-
-	SysPrintf("ExecRet %x: %x\n", psxRegs.GPR.n.s0, header->ret);
-
-	psxRegs.GPR.n.ra = header->ret;
-	psxRegs.GPR.n.sp = header->_sp;
-	psxRegs.GPR.n.s8 = header->_fp;
-	psxRegs.GPR.n.gp = header->_gp;
-	psxRegs.GPR.n.s0 = header->base;
-
-	psxRegs.GPR.n.v0 = 1;
-	psxRegs.pc = psxRegs.GPR.n.ra;
-}
-
-void (*psxHLEt[256])() = {
-	hleDummy, hleA0, hleB0, hleC0,
-	hleBootstrap, hleExecRet,
-	hleDummy, hleDummy
-};

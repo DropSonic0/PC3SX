@@ -20,6 +20,8 @@ PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.
 	./ps3/buffer.c ./ps3/resampler.c ./ps3/ini/ini.c ./ps3/ini/iniFile.cpp \
 	./pcsxcore/psxbios.c	\
 	./pcsxcore/cdrom.c	\
+	./pcsxcore/gpu.c	\
+	./pcsxcore/debug.c	\
 	./pcsxcore/psxcounters.c	\
 	./pcsxcore/psxdma.c	\
 	./pcsxcore/disr3000a.c	\

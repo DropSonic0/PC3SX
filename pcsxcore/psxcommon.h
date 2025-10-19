@@ -144,7 +144,6 @@ extern PcsxConfig Config;
 extern long LoadCdBios;
 extern int StatesC;
 extern int cdOpenCase;
-extern int NetOpened;
 
 
 #define gzfreeze(ptr, size) { \

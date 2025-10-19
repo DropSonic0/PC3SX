@@ -48,27 +48,29 @@
 
 extern void SysMessage(const char *fmt, ...);
 
-s8 psxM[0x00220000] __attribute__((aligned(32)));
-s8 psxR[0x00080000] __attribute__((aligned(32)));
+s8 *psxM;
+s8 *psxP;
+s8 *psxH;
+s8 *psxR;
 
-u8* psxMemWLUT[0x10000] __attribute__((aligned(32)));
-u8* psxMemRLUT[0x10000] __attribute__((aligned(32)));
+u8 **psxMemWLUT;
+u8 **psxMemRLUT;
 
 int psxMemInit() {
 	int i;
 
-	//psxMemRLUT = (u8**)memalign(32,0x10000 * sizeof(void*));
-	//psxMemWLUT = (u8**)memalign(32,0x10000 * sizeof(void*));
+	psxMemRLUT = (u8**)memalign(32,0x10000 * sizeof(void*));
+	psxMemWLUT = (u8**)memalign(32,0x10000 * sizeof(void*));
 	memset(psxMemRLUT, 0, 0x10000 * sizeof(void*));
 	memset(psxMemWLUT, 0, 0x10000 * sizeof(void*));
-	//psxM = memalign(32,0x00220000);
+	psxM = (s8*)memalign(32,0x00220000);
 	psxP = &psxM[0x200000];
 	psxH = &psxM[0x210000];
-	//psxR = (s8*)memalign(32,0x00080000);
-	/*if (psxMemRLUT == NULL || psxMemWLUT == NULL || 
+	psxR = (s8*)memalign(32,0x00080000);
+	if (psxMemRLUT == NULL || psxMemWLUT == NULL || 
 		psxM == NULL || psxP == NULL || psxH == NULL) {
-		SysMessage(_("Error allocating memory!")); return -1;
-	}*/
+		SysMessage(("Error allocating memory!")); return -1;
+	}
 
 // MemR
 	for (i = 0; i < 0x80; i++) psxMemRLUT[i + 0x0000] = (u8 *)&psxM[(i & 0x1f) << 16];
@@ -119,6 +121,7 @@ void psxMemReset() {
 }
 
 void psxMemShutdown() {
+	free(psxM);
 	free(psxR);
 	free(psxMemRLUT);
 	free(psxMemWLUT);
