@@ -27,7 +27,6 @@ void ppcAlign(int bytes) {
 	ppcPtr = (u32*)(((u32)ppcPtr + bytes) & ~(bytes - 1));
 }
 
-
 void ppcShutdown() {
 }
 

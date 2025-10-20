@@ -12,10 +12,10 @@ extern "C" {
 #endif
 
 // include basic types
-#include "../PsxCommon.h"
+#include "../psxcommon.h"
 #include "ppc_mnemonics.h"
 
-#define NUM_HW_REGISTERS 28
+#define NUM_HW_REGISTERS 29
 
 /* general defines */
 #define write8(val)  *(u8 *)ppcPtr = val; ppcPtr++;
@@ -35,7 +35,7 @@ void ppcInit();
 void ppcSetPtr(u32 *ptr);
 void ppcShutdown();
 
-extern inline void ppcAlign();
+void ppcAlign(int bytes);
 void returnPC();
 void recRun(void (*func)(), u32 hw1, u32 hw2);
 u8 dynMemRead8(u32 mem);

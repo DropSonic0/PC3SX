@@ -13,12 +13,15 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *  Foundation, Inc., 51 Franklin Steet, Fifth Floor, Boston, MA 02111-1307 USA
  */
 
-#if defined (__ppc__) || defined (__ppc64__) || defined (__powerpc__) || defined (__powerpc64__) || defined (__POWERPC__)
-#include <stdint.h>
-#include <stdio.h>
+#if defined (__ppc__) || defined (__ppc64__) || defined (__powerpc__) || (__powerpc64__)
+
+#ifdef _MSC_VER_
+#pragma warning(disable:4244)
+#pragma warning(disable:4761)
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -37,6 +40,42 @@ extern int is_running;
 
 /* variable declarations */
 u32 psxRecLUT[0x010000] __attribute__((aligned(32)));
+
+#undef _Op_
+#define _Op_     _fOp_(psxRegs.code)
+#undef _Funct_
+#define _Funct_  _fFunct_(psxRegs.code)
+#undef _Rd_
+#define _Rd_     _fRd_(psxRegs.code)
+#undef _Rt_
+#define _Rt_     _fRt_(psxRegs.code)
+#undef _Rs_
+#define _Rs_     _fRs_(psxRegs.code)
+#undef _Sa_
+#define _Sa_     _fSa_(psxRegs.code)
+#undef _Im_
+#define _Im_     _fIm_(psxRegs.code)
+#undef _Target_
+#define _Target_ _fTarget_(psxRegs.code)
+
+#undef _Imm_
+#define _Imm_	 _fImm_(psxRegs.code)
+#undef _ImmU_
+#define _ImmU_	 _fImmU_(psxRegs.code)
+
+#undef PC_REC
+#undef PC_REC8
+#undef PC_REC16
+#undef PC_REC32
+#define PC_REC(x)	(psxRecLUT[x >> 16] + (x & 0xffff))
+#define PC_REC8(x)	(*(u8 *)PC_REC(x))
+#define PC_REC16(x) (*(u16*)PC_REC(x))
+#define PC_REC32(x) (*(u32*)PC_REC(x))
+
+#define OFFSET(X,Y) ((u32)(Y)-(u32)(X))
+
+#define RECMEM_SIZE		(12*1024*1024)
+
 const char recMem[RECMEM_SIZE]  __attribute__((aligned(32), section(".text#")));	/* the recompiled blocks will be here */
 const char recRAM[0x200000] __attribute__((aligned(32)));	/* and the ptr to the blocks here */
 const char recROM[0x080000] __attribute__((aligned(32)));	/* and here */
@@ -47,20 +86,30 @@ static int count;		/* recompiler intruction count */
 static int branch;		/* set for branch */
 static u32 target;		/* branch target */
 static u32 resp;
-static u32 cop2readypc = 0;
-static u32 idlecyclecount = 0;
+
+u32 cop2readypc = 0;
+u32 idlecyclecount = 0;
+
+#define NUM_REGISTERS	34
+typedef struct {
+	int state;
+	u32 k;
+	int reg;
+} iRegisters;
+
 static iRegisters iRegs[34];
 
-int psxCP2time[64] = {
-        2 , 16, 1 , 1 , 1 , 1 , 8 , 1 , // 00
-        1 , 1 , 1 , 1 , 6 , 1 , 1 , 1 , // 08
-        8 , 8 , 8 , 19, 13, 1 , 44, 1 , // 10
-        1 , 1 , 1 , 17, 11, 1 , 14, 1 , // 18
-        30, 1 , 1 , 1 , 1 , 1 , 1 , 1 , // 20
-        5 , 8 , 17, 1 , 1 , 5 , 6 , 1 , // 28
-        23, 1 , 1 , 1 , 1 , 1 , 1 , 1 , // 30
-        1 , 1 , 1 , 1 , 1 , 6 , 5 , 39  // 38
-};
+#define ST_UNK      0x00
+#define ST_CONST    0x01
+#define ST_MAPPED   0x02
+
+#ifdef NO_CONSTANT
+#define IsConst(reg) 0
+#else
+#define IsConst(reg)  (iRegs[reg].state & ST_CONST)
+#endif
+#define IsMapped(reg) (iRegs[reg].state & ST_MAPPED)
+
 
 static void (*recBSC[64])();
 static void (*recSPC[64])();
@@ -69,6 +118,48 @@ static void (*recCP0[32])();
 static void (*recCP2[64])();
 static void (*recCP2BSC[32])();
 
+#define REG_LO			32
+#define REG_HI			33
+
+// Hardware register usage
+#define HWUSAGE_NONE     0x00
+
+#define HWUSAGE_READ     0x01
+#define HWUSAGE_WRITE    0x02
+#define HWUSAGE_CONST    0x04
+#define HWUSAGE_ARG      0x08	/* used as an argument for a function call */
+
+#define HWUSAGE_RESERVED 0x10	/* won't get flushed when flushing all regs */
+#define HWUSAGE_SPECIAL  0x20	/* special purpose register */
+#define HWUSAGE_HARDWIRED 0x40	/* specific hardware register mapping that is never disposed */
+#define HWUSAGE_INITED    0x80
+#define HWUSAGE_PSXREG    0x100
+
+// Remember to invalidate the special registers if they are modified by compiler
+enum {
+    ARG1 = 3,
+    ARG2 = 4,
+    ARG3 = 5,
+    PSXREGS,	// ptr
+	 PSXMEM,		// ptr
+    CYCLECOUNT,	// ptr
+    PSXPC,	// ptr
+    TARGETPTR,	// ptr
+    TARGET,	// ptr
+    RETVAL,
+    REG_RZERO,
+    REG_WZERO
+};
+
+typedef struct {
+    int code;
+    u32 k;
+    int usage;
+    int lastUsed;
+    
+    void (*flush)(int hwreg);
+    int private;
+} HWRegister;
 static HWRegister HWRegisters[NUM_HW_REGISTERS];
 static int HWRegUseCount;
 static int DstCPUReg;
@@ -92,10 +183,6 @@ static int GetHWRegSpecial(int which);
 static int PutHWRegSpecial(int which);
 static void recRecompile();
 static void recError();
-
-// used in debug.c for dynarec free space printing
-u32 dyna_used = 0;
-u32 dyna_total = RECMEM_SIZE;
 
 #pragma mark --- Generic register mapping ---
 
@@ -1199,7 +1286,6 @@ static void recXORI() {
     }
 }
 #endif
-
 //end of * Arithmetic with immediate operand  
 
 /*********************************************************
@@ -3190,36 +3276,24 @@ static void recRFE() {
 	CALLFunc((u32)psxExceptionTest);
 }
 #endif
-// GTE function callers
-CP2_FUNC(MFC2);
-CP2_FUNC(MTC2);
-CP2_FUNC(CFC2);
-CP2_FUNC(CTC2);
+
+#if 0
+#define CP2_FUNC(f) \
+void gte##f(); \
+static void rec##f() { \
+	iFlushRegs(0); \
+	LIW(0, (u32)psxRegs.code); \
+	STW(0, OFFSET(&psxRegs, &psxRegs.code), GetHWRegSpecial(PSXREGS)); \
+	FlushAllHWReg(); \
+	CALLFunc ((u32)gte##f); \
+}
 CP2_FUNC(LWC2);
 CP2_FUNC(SWC2);
 
-CP2_FUNCNC(RTPS);
-CP2_FUNC(OP);
-CP2_FUNCNC(NCLIP);
-CP2_FUNCNC(DPCS);
-CP2_FUNCNC(INTPL);
-CP2_FUNC(MVMVA);
-CP2_FUNCNC(NCDS);
-CP2_FUNCNC(NCDT);
-CP2_FUNCNC(CDP);
-CP2_FUNCNC(NCCS);
-CP2_FUNCNC(CC);
-CP2_FUNCNC(NCS);
-CP2_FUNCNC(NCT);
-CP2_FUNC(SQR);
-CP2_FUNCNC(DCPL);
-CP2_FUNCNC(DPCT);
-CP2_FUNCNC(AVSZ3);
-CP2_FUNCNC(AVSZ4);
-CP2_FUNCNC(RTPT);
-CP2_FUNC(GPF);
-CP2_FUNC(GPL);
-CP2_FUNCNC(NCCT);
+#else
+#include "pGte.h"
+#endif
+//
 
 static void recHLE() {
 	iFlushRegs(0);

@@ -1,8 +1,10 @@
 
-#include "../PsxCommon.h"
+#if defined (__ppc__) || defined (__ppc64__) || defined (__powerpc__) || (__powerpc64__)
+
+#include "../psxcommon.h"
 #include "reguse.h"
 
-#include "../R3000A.h"
+#include "../r3000a.h"
 
 //#define SAME_CYCLE_MODE
 
@@ -417,3 +419,5 @@ int isPsxRegUsed(u32 pc, int psxreg)
     else
         return 0; // the next use is a write, i.e. current value is not important
 }
+
+#endif
