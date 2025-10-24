@@ -23,42 +23,37 @@
 
 #include <stdint.h>
 
-/* for fast recast ^^ */
-typedef union {
-	uint8_t * u8;
-	int8_t * s8;
-	uint16_t * u16;
-	int16_t * s16;
-	uint32_t * u32;
-	int32_t * s32;
-} gxv_pointer_t;
+typedef struct PSXPOINTTAG
+{
+ int32_t x;
+ int32_t y;
+} PSXPoint_t;
 
-typedef struct {
-	int32_t x;
-	int32_t y;
-} gxv_point_t;
+typedef struct PSXSPOINTTAG
+{
+ short x;
+ short y;
+} PSXSPoint_t;
 
-typedef struct {
-	int16_t x;
-	int16_t y;
-} gxv_spoint_t;
+typedef struct PSXRECTTAG
+{
+ short x0;
+ short x1;
+ short y0;
+ short y1;
+} PSXRect_t;
 
-typedef struct {
-	int16_t x0;
-	int16_t x1;
-	int16_t y0;
-	int16_t y1;
-} gxv_rect_t;
+typedef struct RECTTAG
+{
+ int left;
+ int top;
+ int right;
+ int bottom;
+} RECT;
 
-typedef struct {
-	gxv_point_t position;
-	gxv_point_t mode;
-	gxv_point_t DrawOffset;
-	gxv_rect_t range;
-} gxv_display_t;
-
-typedef struct {
-	gxv_rect_t Position;
-} gxv_win_t;
+typedef struct TWINTAG
+{
+ PSXRect_t  Position;
+} TWin_t;
 
 #endif /* GPU_UTILS_H_ */

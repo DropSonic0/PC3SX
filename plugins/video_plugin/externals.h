@@ -15,36 +15,20 @@
  *                                                                         *
  ***************************************************************************/
 
-#define INFO_TW        0
-#define INFO_DRAWSTART 1
-#define INFO_DRAWEND   2
-#define INFO_DRAWOFF   3
+#include "gpu.h"
+#include "prim.h"
+#include "soft.h"
 
-#define SHADETEXBIT(x) ((x>>24) & 0x1)
-#define SEMITRANSBIT(x) ((x>>25) & 0x1)
-#define PSXRGB(r,g,b) ((g<<10)|(b<<5)|r)
+typedef struct {
+    long lLowerpart;
+    int bCheckMask;
+    uint16_t sSetMask;
+    uint32_t lSetMask;
+} gxv_draw_t;
 
-#define DATAREGISTERMODES unsigned short
-
-#define DR_NORMAL        0
-#define DR_VRAMTRANSFER  1
-
-
-#define GPUSTATUS_ODDLINES            0x80000000
-#define GPUSTATUS_DMABITS             0x60000000 // Two bits
-#define GPUSTATUS_READYFORCOMMANDS    0x10000000
-#define GPUSTATUS_READYFORVRAM        0x08000000
-#define GPUSTATUS_IDLE                0x04000000
-#define GPUSTATUS_DISPLAYDISABLED     0x00800000
-#define GPUSTATUS_INTERLACED          0x00400000
-#define GPUSTATUS_RGB24               0x00200000
-#define GPUSTATUS_PAL                 0x00100000
-#define GPUSTATUS_DOUBLEHEIGHT        0x00080000
-#define GPUSTATUS_WIDTHBITS           0x00070000 // Three bits
-#define GPUSTATUS_MASKENABLED         0x00001000
-#define GPUSTATUS_MASKDRAWN           0x00000800
-#define GPUSTATUS_DRAWINGALLOWED      0x00000400
-#define GPUSTATUS_DITHER              0x00000200
+extern char * g_file_name;
+extern gxv_gpu_t g_gpu;
+extern gxv_draw_t g_draw;
 
 #define GPUIsBusy (lGPUstatusRet &= ~GPUSTATUS_IDLE)
 #define GPUIsIdle (lGPUstatusRet |= GPUSTATUS_IDLE)
@@ -65,38 +49,7 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-typedef struct VRAMLOADTTAG
-{
- short x;
- short y;
- short Width;
- short Height;
- short RowsRemaining;
- short ColsRemaining;
- unsigned short *ImagePtr;
-} gxv_vram_load_t;
-
 /////////////////////////////////////////////////////////////////////////////
-
-typedef struct PSXPOINTTAG
-{
- int32_t x;
- int32_t y;
-} PSXPoint_t;
-
-typedef struct PSXSPOINTTAG
-{
- short x;
- short y;
-} PSXSPoint_t;
-
-typedef struct PSXRECTTAG
-{
- short x0;
- short x1;
- short y0;
- short y1;
-} PSXRect_t;
 
 // linux defines for some windows stuff
 
@@ -110,42 +63,9 @@ typedef struct PSXRECTTAG
 #define DWORD uint32_t
 #define __int64 long long int
 
-typedef struct RECTTAG
-{
- int left;
- int top;
- int right;
- int bottom;
-} RECT;
-
 /////////////////////////////////////////////////////////////////////////////
 
-typedef struct TWINTAG
-{
- PSXRect_t  Position;
-} TWin_t;
-
 /////////////////////////////////////////////////////////////////////////////
-
-typedef struct PSXDISPLAYTAG
-{
- PSXPoint_t  DisplayModeNew;
- PSXPoint_t  DisplayMode;
- PSXPoint_t  DisplayPosition;
- PSXPoint_t  DisplayEnd;
-
- int32_t        Double;
- int32_t        Height;
- int32_t        PAL;
- int32_t        InterlacedNew;
- int32_t        Interlaced;
- int32_t        RGB24New;
- int32_t        RGB24;
- PSXSPoint_t DrawOffset;
- int32_t        Disabled;
- PSXRect_t   Range;
-
-} gxv_gpu_t;
 
 /////////////////////////////////////////////////////////////////////////////
 
