@@ -142,6 +142,7 @@ void CALLBACK GPU__keypressed(int key) {}
 long CALLBACK GPU__getScreenPic(unsigned char *pMem) { return -1; }
 long CALLBACK GPU__showScreenPic(unsigned char *pMem) { return -1; }
 void CALLBACK GPU__clearDynarec(void (CALLBACK *callback)(void)) { }
+void CALLBACK GPU__addVertex(short sx,short sy,s64 fx,s64 fy,s64 fz) {}
 
 #if defined(__ppc__)
 #define PS3LoadGpuSym(dest) \
@@ -213,6 +214,7 @@ int LoadGPUplugin(char *GPUdll) {
 	PS3LoadGpuSym1(about);
 	PS3LoadGpuSym1(makeSnapshot);
 	PS3LoadGpuSym1(keypressed);
+	PS3LoadGpuSym1(addVertex);
 	
 	SysPrintf("end of PS3LoadGpuSym\n");
 	

@@ -71,6 +71,7 @@ typedef long (CALLBACK* CBGPUfreeze)(unsigned long, GPUFreeze_t *);
 typedef long (CALLBACK* CBGPUgetScreenPic)(unsigned char *);
 typedef long (CALLBACK* CBGPUshowScreenPic)(unsigned char *);
 typedef void (CALLBACK* CBGPUclearDynarec)(void (CALLBACK *callback)(void));
+typedef void (CALLBACK* CBGPUaddVertex)(short,short,s64,s64,s64);
 
 //plugin stuff From Shadow
 // *** walking in the valley of your darking soul i realize that i was alone
@@ -97,6 +98,7 @@ CBGPUfreeze        GPU_freeze;
 CBGPUgetScreenPic  GPU_getScreenPic;
 CBGPUshowScreenPic GPU_showScreenPic;
 CBGPUclearDynarec  GPU_clearDynarec;
+CBGPUaddVertex     GPU_addVertex;
 
 //cd rom plugin ;)
 typedef long (CALLBACK* CDRinit)(void);

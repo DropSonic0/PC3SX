@@ -14,31 +14,31 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
 /* 
 * R3000A disassembler.
 */
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
 
-char ostr[512];
+char ostr[256];
 
 // Names of registers
-char *disRNameGPR[] = {
+static char *disRNameGPR[] = {
 	"r0", "at", "v0", "v1", "a0", "a1", "a2", "a3",
 	"t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
 	"s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
 	"t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"};
 
-char *disRNameCP2D[] = {
+static char *disRNameCP2D[] = {
 	"VXY0", "VZ0", "VXY1", "VZ1", "VXY2", "VZ2", "RGB", "OTZ",
 	"IR0", "IR1", "IR2", "IR3", "SXY0", "SXY1", "SXY2", "SXYP",
 	"SZ0", "SZ1", "SZ2", "SZ3", "RGB0", "RGB1", "RGB2", "RES1",
 	"MAC0", "MAC1", "MAC2", "MAC3", "IRGB", "ORGB", "LZCS", "LZCR"};
 
-char *disRNameCP2C[] = {
+static char *disRNameCP2C[] = {
 	"R11R12", "R13R21", "R22R23", "R31R32", "R33", "TRX", "TRY", "TRZ",
 	"L11L12", "L13L21", "L22L23", "L31L32", "L33", "RBK", "BBK", "GBK",
 	"LR1LR2", "LR3LG1", "LG2LG3", "LB1LB2", "LB3", "RFC", "GFC", "BFC",
@@ -59,12 +59,12 @@ typedef char* (*TdisR3000AF)(u32 code, u32 pc);
 #define MakeDisFg(fn, b) char* fn(u32 code, u32 pc) { b; return ostr; }
 #define MakeDisF(fn, b) \
 	static char* fn(u32 code, u32 pc) { \
-		sprintf (ostr, "%08x %08x:", pc, code); \
+		sprintf (ostr, "%8.8x %8.8x:", pc, code); \
 		b; /*ostr[(strlen(ostr) - 1)] = 0;*/ return ostr; \
 	}
 
 
-#include "R3000A.h"
+#include "r3000a.h"
 
 #undef _Funct_
 #undef _Rd_
@@ -86,18 +86,18 @@ typedef char* (*TdisR3000AF)(u32 code, u32 pc);
 #define _OfB_     _Im_, _nRs_
 
 #define dName(i)	sprintf(ostr, "%s %-7s,", ostr, i)
-#define dGPR(i)		sprintf(ostr, "%s %08x (%s),", ostr, psxRegs.GPR.r[i], disRNameGPR[i])
-#define dCP0(i)		sprintf(ostr, "%s %08x (%s),", ostr, psxRegs.CP0.r[i], disRNameCP0[i])
-#define dCP2D(i)	sprintf(ostr, "%s %08x (%s),", ostr, psxRegs.CP2D.r[i], disRNameCP2D[i])
-#define dCP2C(i)	sprintf(ostr, "%s %08x (%s),", ostr, psxRegs.CP2C.r[i], disRNameCP2C[i])
-#define dHI()		sprintf(ostr, "%s %08x (%s),", ostr, psxRegs.GPR.n.hi, "hi")
-#define dLO()		sprintf(ostr, "%s %08x (%s),", ostr, psxRegs.GPR.n.lo, "lo")
-#define dImm()		sprintf(ostr, "%s %08x (%08x),", ostr, _Im_, _Im_)
-#define dTarget()	sprintf(ostr, "%s %08x,", ostr, _Target_)
-#define dSa()		sprintf(ostr, "%s %08x (%08x),", ostr, _Sa_, _Sa_)
-#define dOfB()		sprintf(ostr, "%s %08x (%08x (%s)),", ostr, _Im_, psxRegs.GPR.r[_Rs_], disRNameGPR[_Rs_])
-#define dOffset()	sprintf(ostr, "%s %08x,", ostr, _Branch_)
-#define dCode()		sprintf(ostr, "%s %08x,", ostr, (code >> 6) & 0xffffff)
+#define dGPR(i)		sprintf(ostr, "%s %8.8x (%s),", ostr, psxRegs.GPR.r[i], disRNameGPR[i])
+#define dCP0(i)		sprintf(ostr, "%s %8.8x (%s),", ostr, psxRegs.CP0.r[i], disRNameCP0[i])
+#define dCP2D(i)	sprintf(ostr, "%s %8.8x (%s),", ostr, psxRegs.CP2D.r[i], disRNameCP2D[i])
+#define dCP2C(i)	sprintf(ostr, "%s %8.8x (%s),", ostr, psxRegs.CP2C.r[i], disRNameCP2C[i])
+#define dHI()		sprintf(ostr, "%s %8.8x (%s),", ostr, psxRegs.GPR.n.hi, "hi")
+#define dLO()		sprintf(ostr, "%s %8.8x (%s),", ostr, psxRegs.GPR.n.lo, "lo")
+#define dImm()		sprintf(ostr, "%s %4.4x (%d),", ostr, _Im_, _Im_)
+#define dTarget()	sprintf(ostr, "%s %8.8x,", ostr, _Target_)
+#define dSa()		sprintf(ostr, "%s %2.2x (%d),", ostr, _Sa_, _Sa_)
+#define dOfB()		sprintf(ostr, "%s %4.4x (%8.8x (%s)),", ostr, _Im_, psxRegs.GPR.r[_Rs_], disRNameGPR[_Rs_])
+#define dOffset()	sprintf(ostr, "%s %8.8x,", ostr, _Branch_)
+#define dCode()		sprintf(ostr, "%s %8.8x,", ostr, (code >> 6) & 0xffffff)
 
 /*********************************************************
 * Arithmetic with immediate operand                      *
@@ -215,10 +215,10 @@ MakeDisF(disGPF  ,		dName("GPF"))
 MakeDisF(disGPL  ,		dName("GPL"))
 MakeDisF(disNCCT ,		dName("NCCT"))
 
-MakeDisF(disMFC2,		dName("MFC2"); dGPR(_Rt_);)
-MakeDisF(disCFC2,		dName("CFC2"); dGPR(_Rt_);)
-MakeDisF(disMTC2,		dName("MTC2"); dGPR(_Rd_);)
-MakeDisF(disCTC2,		dName("CTC2"); dGPR(_Rd_);)
+MakeDisF(disMFC2,		dName("MFC2"); dGPR(_Rt_);	dCP2C(_Rd_);)
+MakeDisF(disMTC2,		dName("MTC2"); dCP2C(_Rd_); dGPR(_Rt_);)
+MakeDisF(disCFC2,		dName("CFC2"); dGPR(_Rt_);	dCP2C(_Rd_);)
+MakeDisF(disCTC2,		dName("CTC2"); dCP2C(_Rd_); dGPR(_Rt_);)
 
 /*********************************************************
 * Register branch logic                                  *

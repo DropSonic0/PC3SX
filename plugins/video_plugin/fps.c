@@ -18,6 +18,8 @@
 #define _IN_FPS
 
 #include <unistd.h>
+#include <sched.h>
+#include <sys/ppu_thread.h>
 
 #include "externals.h"
 #include "fps.h"
@@ -86,49 +88,43 @@ unsigned long timeGetTime()
 
 void FrameCap (void)
 {
- static unsigned long curticks, lastticks, _ticks_since_last_update;
- static unsigned int TicksToWait = 0;
- unsigned int frTicks = dwFrameRateTicks / speed;
- int overslept=0, tickstogo=0;
- BOOL Waiting = TRUE;
+	static uint64_t next_time = 0; // Target time for the next frame in microseconds
+	uint64_t now_time;
+	uint64_t fr_interval_us;
+	int64_t time_to_wait;
 
-  {
-   curticks = timeGetTime();
-   _ticks_since_last_update = curticks - lastticks;
+	// Convert dwFrameRateTicks (which is in 10us units) to microseconds (us)
+	fr_interval_us = (uint64_t)(dwFrameRateTicks / speed) * 10;
+	
+	now_time = sys_time_get_system_time();
 
-    if((_ticks_since_last_update > TicksToWait) ||
-       (curticks <lastticks))
-    {
-     lastticks = curticks;
-     overslept = _ticks_since_last_update - TicksToWait;
-     if (overslept > frTicks) overslept = frTicks;
-     if((_ticks_since_last_update-TicksToWait) > frTicks)
-          TicksToWait=0;
-     else
-          TicksToWait=frTicks - overslept;
-    }
-   else
-    {
-     while (Waiting)
-      {
-       curticks = timeGetTime();
-       _ticks_since_last_update = curticks - lastticks;
-       tickstogo = TicksToWait - _ticks_since_last_update;
-       if ((_ticks_since_last_update > TicksToWait) ||
-           (curticks < lastticks) || tickstogo < overslept)
-        {
-         Waiting = FALSE;
-         lastticks = curticks;
-         overslept = _ticks_since_last_update - TicksToWait;
-         if (overslept > frTicks) overslept = frTicks;
-         TicksToWait = frTicks - overslept;
-         return;
-        }
-	if (tickstogo >= 200 && !(dwActFixes&16))
-		sys_timer_usleep(tickstogo*10 - 200);
-      }
-    }
-  }
+	// Initialize or resync if we are way behind schedule (e.g., more than 4 frames)
+	// to prevent the emulator from trying to fast-forward uncontrollably.
+	if (next_time == 0 || now_time > next_time + (fr_interval_us * 4)) {
+		next_time = now_time;
+	}
+	
+	// Calculate the wait time until the next frame's target time
+	time_to_wait = next_time - now_time;
+
+	if (time_to_wait > 0)
+	{
+		// Hybrid sleep. If we have more than ~2ms to wait, call usleep.
+		// This avoids burning CPU in a busy-wait loop for long waits.
+		if (time_to_wait > 2000) {
+			sys_timer_usleep(time_to_wait - 1000); // Sleep until ~1ms before the target time
+		}
+
+		// Cooperative busy-wait for the remaining time to achieve higher precision.
+		// sys_ppu_thread_yield() allows other threads (like audio) to run.
+		while(sys_time_get_system_time() < next_time) {
+			sys_ppu_thread_yield();
+		}
+	}
+	
+	// Schedule the next frame from the last scheduled time to maintain a fixed step.
+	// This ensures a consistent emulation speed even if there are minor timing hiccups.
+	next_time += fr_interval_us;
 }
 
 #define MAXSKIP 120

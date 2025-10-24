@@ -24,6 +24,8 @@
 
 #include "CdRom.h"
 
+cdrStruct cdr;
+
 /* CD-ROM magic numbers */
 #define CdlSync         0
 #define CdlNop	        1

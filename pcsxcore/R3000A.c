@@ -58,7 +58,8 @@ void psxReset() {
 	psxRegs.CP0.r[12] = 0x10900000; // COP0 enabled | BEV = 1 | TS = 1
 	psxRegs.CP0.r[15] = 0x00000002; // PRevID = Revision ID, same as R3000A
 
-	psxHwReset();
+	if (!Config.HLE)
+		psxHwReset();
 	psxBiosInit();
 
 	if (!Config.HLE)
