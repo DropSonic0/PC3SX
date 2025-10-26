@@ -15,8 +15,6 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "stdafx.h"
-
 #define _IN_KEY
 
 #include "externals.h"
@@ -25,128 +23,18 @@
 #include "draw.h"
 #include "key.h"
 
-#ifdef _WINDOWS
-
-#include "record.h"
-
 ////////////////////////////////////////////////////////////////////////
-// KeyBoard handler stuff
+// keyboard handler (UNIX)
 ////////////////////////////////////////////////////////////////////////
-
-WNDPROC                wpOrgWndProc=0;
-unsigned long          ulKeybits=0;
-char                   szGPUKeys[11];
-
-////////////////////////////////////////////////////////////////////////
-// keyboard handler
-////////////////////////////////////////////////////////////////////////
-
-void CALLBACK GPUshowScreenPic(unsigned char * pMem);
-void CALLBACK GPUgetScreenPic(unsigned char * pMem);
-
-LRESULT CALLBACK KeyWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
-{
- switch(message)
-  {
-   //--------------------------------------------------//
-   case WM_ACTIVATE:                                   // some scanline window mode fixing stuff
-   case WM_MOVE:
-    {
-     if(!iUseScanLines) break;
-     if(!iWindowMode)    break;
-     if(bIsFirstFrame)  break;
-     MoveScanLineArea(hwnd);
-    }break;
-   //--------------------------------------------------//
-   case WM_KEYDOWN:                                    // keydown
-    if(wParam==(WPARAM)szGPUKeys[2]) ulKeybits|=KEY_RESETTEXSTORE;
-    break;
-   //--------------------------------------------------//
-   case WM_SYSKEYUP:                                   // alt+enter
-    if(wParam==VK_RETURN) bChangeWinMode=TRUE;
-   break;
-   //--------------------------------------------------//
-   case WM_KEYUP:                                      // key up
-
-     if(iDebugMode && wParam==(WPARAM)szGPUKeys[9]) 
-      iFVDisplay=!iFVDisplay;
-
-     if(wParam==(WPARAM)szGPUKeys[0])
-      {
-       if(ulKeybits&KEY_SHOWFPS)
-        {
-         DestroyPic();
-         ulKeybits&=~KEY_SHOWFPS;
-         DoClearScreenBuffer();
-        }
-       else
-        {
-         ulKeybits|=KEY_SHOWFPS;
-         szDispBuf[0]=0;
-         BuildDispMenu(0);
-        }
-       break;
-      }
-     if(wParam==(WPARAM)szGPUKeys[1]) {ShowGpuPic();break;}
-
-     if(wParam==(WPARAM)szGPUKeys[6])
-	  {
-	   if(RECORD_RECORDING==TRUE)
-	    {RECORD_RECORDING=FALSE;RECORD_Stop();}
-	   else
-	    {RECORD_RECORDING=TRUE;RECORD_Start();}
-	   BuildDispMenu(0);
-	   break;
-	  }
-
-     if(wParam==(WPARAM)szGPUKeys[2]) {SwitchDispMenu(-1); break;}
-     if(wParam==(WPARAM)szGPUKeys[3]) {SwitchDispMenu(1);  break;}
-     if(wParam==(WPARAM)szGPUKeys[4]) {BuildDispMenu(-1);  break;}
-     if(wParam==(WPARAM)szGPUKeys[5]) {BuildDispMenu( 1);  break;}
-     if(wParam==(WPARAM)szGPUKeys[7]) {bVsync_Key = bVsync_Key==TRUE ? FALSE : TRUE;  BuildDispMenu(0);break;}
-     if(wParam==(WPARAM)szGPUKeys[8])         
-      {
-       iFastFwd = 1 - iFastFwd; 
-       bSkipNextFrame = FALSE; 
-       UseFrameSkip=iFastFwd;
-       BuildDispMenu(0);
-       break;
-      }
-    break;
-   //--------------------------------------------------//
-  }
- return wpOrgWndProc( hwnd, message, wParam, lParam );
-}
-
-////////////////////////////////////////////////////////////////////////
-
-void SetKeyHandler(void)
-{
- if(!wpOrgWndProc)                                     // setup keyhandler
-  {
-   wpOrgWndProc = (WNDPROC)GetWindowLong(hWGPU, GWL_WNDPROC );
-   SetWindowLong(hWGPU, GWL_WNDPROC, (long)KeyWndProc);
-  }
-}
-
-////////////////////////////////////////////////////////////////////////
-
-void ReleaseKeyHandler(void)
-{
- if(wpOrgWndProc)
-  SetWindowLong(hWGPU,GWL_WNDPROC,              // set old proc
-                (long)wpOrgWndProc);
- wpOrgWndProc = 0;                                      
-}
-
+#ifdef _MACGL
+#define VK_INSERT      114
+#define VK_HOME        115
+#define VK_PRIOR       116
+#define VK_NEXT        121
+#define VK_END         119
+#define VK_DEL         117
+#define VK_F5          96
 #else
-
-////////////////////////////////////////////////////////////////////////
-// LINUX VERSION
-////////////////////////////////////////////////////////////////////////
-
-#ifndef _SDL
-  	//X11
 #define VK_INSERT      65379
 #define VK_HOME        65360
 #define VK_PRIOR       65365
@@ -154,17 +42,7 @@ void ReleaseKeyHandler(void)
 #define VK_END         65367
 #define VK_DEL         65535
 #define VK_F5          65474
-#else		//SDL
-#define VK_INSERT      SDLK_INSERT
-#define VK_HOME        SDLK_HOME
-#define VK_PRIOR       SDLK_PAGEUP
-#define VK_NEXT        SDLK_PAGEDOWN
-#define VK_END         SDLK_END
-#define VK_DEL         SDLK_DELETE
-#define VK_F5          SDLK_F5
 #endif
-
-////////////////////////////////////////////////////////////////////////
 
 void GPUmakeSnapshot(void);
 
@@ -172,51 +50,21 @@ unsigned long          ulKeybits=0;
 
 void GPUkeypressed(int keycode)
 {
-#ifdef _FPSE
-char *keystate;
-
-	keystate=SDL_GetKeyState(NULL);
-
-
-   if(keystate[SDLK_F5])
-       GPUmakeSnapshot();
-
-
-   if(keystate[SDLK_INSERT])
-      {
-       if(iUseFixes) {iUseFixes=0;dwActFixes=0;}
-       else          {iUseFixes=1;dwActFixes=dwCfgFixes;}
-       SetFixes();
-       if(iFrameLimit==2) SetAutoFrameCap();
-      }
-
-   if(keystate[SDLK_DELETE])
-      {
-       if(ulKeybits&KEY_SHOWFPS)
-        {
-         ulKeybits&=~KEY_SHOWFPS;
-         DoClearScreenBuffer();
-        }
-       else
-        {
-         ulKeybits|=KEY_SHOWFPS;
-         szDispBuf[0]=0;
-         BuildDispMenu(0);
-        }
-      }
-
-  if(keystate[SDLK_PAGEUP]) BuildDispMenu(-1);
-  if(keystate[SDLK_PAGEDOWN])  BuildDispMenu( 1);
-  if(keystate[SDLK_END])   SwitchDispMenu(1);
-  if(keystate[SDLK_HOME])  SwitchDispMenu(-1);
-
-
-#else
  switch(keycode)
   {
+   case 0xFFC9:			//X11 key: F12
+   case ((1<<29) | 0xFF0D):	//special keycode from pcsx-df: alt-enter
+       bChangeWinMode=TRUE;
+       break;
+#ifndef _MACGL
+   case XK_section:	//special - accelerate
+       iFastFwd = ( iFastFwd != 0 ? 0 : 1 );
+       UseFrameLimit = ( UseFrameLimit != 0 ? 0 : 1 );
+       break;
+#endif
    case VK_F5:
        GPUmakeSnapshot();
-      break;
+       break;
 
    case VK_INSERT:
        if(iUseFixes) {iUseFixes=0;dwActFixes=0;}
@@ -227,11 +75,8 @@ char *keystate;
 
    case VK_DEL:
        if(ulKeybits&KEY_SHOWFPS)
-        {
          ulKeybits&=~KEY_SHOWFPS;
-         DoClearScreenBuffer();
-        }
-       else 
+       else
         {
          ulKeybits|=KEY_SHOWFPS;
          szDispBuf[0]=0;
@@ -243,28 +88,25 @@ char *keystate;
    case VK_NEXT:  BuildDispMenu( 1);            break;
    case VK_END:   SwitchDispMenu(1);            break;
    case VK_HOME:  SwitchDispMenu(-1);           break;
-   case 0x60:     
+#ifndef _MACGL // 0x60 is VK_F5 in OSX, so I put this here until I figure something better -npepinpe
+   case 0x60:
     {
-     iFastFwd = 1 - iFastFwd;  
-     bSkipNextFrame = FALSE; 
-     UseFrameSkip=iFastFwd;
+     iFastFwd = 1 - iFastFwd;
+     bSkipNextFrame = FALSE;
+     UseFrameSkip = iFastFwd;
      BuildDispMenu(0);
      break;
     }
-  }
+#else
+   default: { void HandleKey(int keycode); HandleKey(keycode); }
 #endif
+  }
 }
-
-////////////////////////////////////////////////////////////////////////
 
 void SetKeyHandler(void)
 {
 }
 
-////////////////////////////////////////////////////////////////////////
-
 void ReleaseKeyHandler(void)
 {
 }
-
-#endif

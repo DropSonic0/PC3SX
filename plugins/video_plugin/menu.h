@@ -25,4 +25,3 @@ void BuildDispMenu(int iInc);
 void SwitchDispMenu(int iStep);
 
 #endif // _GPU_MENU_H_
-

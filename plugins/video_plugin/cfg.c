@@ -15,12 +15,11 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "stdafx.h"
-#include "../../pcsxcore/psxcommon.h" // New include
-
 #define _IN_CFG
 
 #include <sys/stat.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #undef FALSE
 #undef TRUE
@@ -30,18 +29,9 @@
 #include "cfg.h"
 #include "gpu.h"
 
-extern PcsxConfig Config; // New extern declaration
-               
-/////////////////////////////////////////////////////////////////////////////
-// CONFIG FILE helpers.... used in (non-fpse) Linux and ZN Windows
-/////////////////////////////////////////////////////////////////////////////
+char * pConfigFile = NULL;
 
-#ifndef _FPSE
-
-#include <sys/stat.h>
-
-char * pConfigFile=NULL;
-
+// CONFIG FILE helpers....
 // some helper macros:
 
 #define GetValue(name, var) \
@@ -100,13 +90,13 @@ void ReadConfigFile()
       strcpy(t,pConfigFile);
  else
   {
-   sprintf(t,"%s/gpucfg/gpuPeopsSoftX.cfg");
-  in = fopen(t,"rb");
+   strcpy(t,"dfxvideo.cfg");
+   in = fopen(t,"rb");
    if (!in)
     {
-     strcpy(t,"gpuPeopsSoftX.cfg");
+     strcpy(t,"cfg/dfxvideo.cfg");
      in = fopen(t,"rb");
-     if(!in) sprintf(t,"%s/cfg/gpuPeopsSoftX.cfg");
+     if(!in) sprintf(t,"%s/.pcsxr/plugins/dfxvideo.cfg",getenv("HOME"));
      else    fclose(in);
     }
    else     fclose(in);
@@ -146,6 +136,10 @@ void ReadConfigFile()
  if(iShowFPS<0) iShowFPS=0;
  if(iShowFPS>1) iShowFPS=1;
 
+ GetValue("Maintain43", iMaintainAspect);
+ if(iMaintainAspect<0) iMaintainAspect=0;
+ if(iMaintainAspect>1) iMaintainAspect=1;
+
  GetValue("UseFrameLimit", UseFrameLimit);
  if(UseFrameLimit<0) UseFrameLimit=0;
  if(UseFrameLimit>1) UseFrameLimit=1;
@@ -172,40 +166,64 @@ void ReadConfigFile()
  free(pB);
 }
 
-#endif
-
-////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////
-// LINUX VERSION
-////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////
-// gtk linux stuff
-////////////////////////////////////////////////////////////////////////
-
 void ExecCfg(char *arg) {
+	char cfg[256];
+	struct stat buf;
 
+	strcpy(cfg, "./cfgDFXVideo");
+	if (stat(cfg, &buf) != -1) {
+		int pid = fork();
+		if (pid == 0) {
+			if (fork() == 0) {
+				execl(cfg, "cfgDFXVideo", arg, NULL);
+			}
+			exit(0);
+		} else if (pid > 0) {
+			waitpid(pid, NULL, 0);
+		}
+		return;
+	}
+
+	strcpy(cfg, "./cfg/cfgDFXVideo");
+	if (stat(cfg, &buf) != -1) {
+		int pid = fork();
+		if (pid == 0) {
+			if (fork() == 0) {
+				execl(cfg, "cfgDFXVideo", arg, NULL);
+			}
+			exit(0);
+		} else if (pid > 0) {
+			waitpid(pid, NULL, 0);
+		}
+		return;
+	}
+
+	sprintf(cfg, "%s/.pcsxr/plugins/cfg/cfgDFXVideo", getenv("HOME"));
+	if (stat(cfg, &buf) != -1) {
+		int pid = fork();
+		if (pid == 0) {
+			if (fork() == 0) {
+				execl(cfg, "cfgDFXVideo", arg, NULL);
+			}
+			exit(0);
+		} else if (pid > 0) {
+			waitpid(pid, NULL, 0);
+		}
+		return;
+	}
+
+	printf("ERROR: cfgDFXVideo file not found!\n");
 }
 
 void SoftDlgProc(void)
 {
-
+	ExecCfg("configure");
 }
-#ifndef _FPSE
-
-extern unsigned char revision;
-extern unsigned char build;
-#define RELEASE_DATE "12.06.2005"
 
 void AboutDlgProc(void)
 {
+	ExecCfg("about");
 }
-
-
-////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////
 
 void ReadConfig(void)
 {
@@ -214,56 +232,99 @@ void ReadConfig(void)
  iWinSize=MAKELONG(iResX,iResY);
  iColDepth=32;
  iWindowMode=1;
- UseFrameLimit=0;
+ iMaintainAspect=0;
+ UseFrameLimit=1;
  UseFrameSkip=0;
  iFrameLimit=2;
- fFrameRate=30.0f;
+ fFrameRate=200.0f;
  dwCfgFixes=0;
  iUseFixes=0;
  iUseNoStretchBlt=0;
  iUseDither=0;
  iShowFPS=0;
 
+ // read sets
+ ReadConfigFile();
+
  // additional checks
  if(!iColDepth)       iColDepth=32;
-
- // Override with values from global PcsxConfig
- UseFrameLimit = Config.GPUEnaFPSLimit;
-
- if (Config.GPUUserFPS > 0.0f) {
-  fFrameRate = Config.GPUUserFPS;
-  iFrameLimit = 1; // Use custom FPS
- } else {
-  // If UserFPS is 0 or negative, iFrameLimit will remain its default (e.g., 2 for auto),
-  // and fFrameRate will also be its default or determined by SetAutoFrameCap().
-  // Explicitly setting iFrameLimit to 2 for clarity if it wasn't already.
-  iFrameLimit = 2; // Use auto FPS detection
- }
-
  if(iUseFixes)        dwActFixes=dwCfgFixes;
  SetFixes();
 }
 
 void WriteConfig(void) {
 
+ struct stat buf;
+ FILE *out;char t[256];int len, size;
+ char * pB, * p; char t1[8];
+
+ if(pConfigFile) 
+      strcpy(t,pConfigFile);
+ else 
+  {
+   strcpy(t,"dfxvideo.cfg");
+   out = fopen(t,"rb");
+   if (!out) 
+    {
+     strcpy(t,"cfg/dfxvideo.cfg");
+     out = fopen(t,"rb");
+     if(!out) sprintf(t,"%s/.pcsxr/plugins/dfxvideo.cfg",getenv("HOME"));
+     else     fclose(out);
+    }
+   else     fclose(out);
+  }
+
+ if (stat(t, &buf) != -1) size = buf.st_size;
+ else size = 0;
+
+ out = fopen(t,"rb");
+ if (!out) {
   // defaults
   iResX=640;iResY=480;
   iColDepth=32;
   iWindowMode=1;
+  iMaintainAspect=0;
   UseFrameLimit=0;
   UseFrameSkip=0;
   iFrameLimit=2;
-  fFrameRate=30.0f;
+  fFrameRate=200.0f;
   dwCfgFixes=0;
   iUseFixes=0;
   iUseNoStretchBlt=0;
   iUseDither=0;
   iShowFPS=0;
+
+  size = 0;
+  pB=(char *)malloc(4096);
+  memset(pB,0,4096);
+ }
+ else {
+  pB=(char *)malloc(size+4096);
+  memset(pB,0,size+4096);
+
+  len = fread(pB, 1, size, out);
+  fclose(out);
+ }
+
+ SetValue("ResX", iResX);
+ SetValue("ResY", iResY);
+ SetValue("NoStretch", iUseNoStretchBlt);
+ SetValue("Dithering", iUseDither);
+ SetValue("FullScreen", !iWindowMode);
+ SetValue("ShowFPS", iShowFPS);
+ SetValue("Maintain43", iMaintainAspect);
+ SetValue("UseFrameLimit", UseFrameLimit);
+ SetValue("UseFrameSkip", UseFrameSkip);
+ SetValue("FPSDetection", iFrameLimit);
+ SetFloatValue("FrameRate", fFrameRate);
+ SetValue("CfgFixes", (unsigned int)dwCfgFixes);
+ SetValue("UseFixes", iUseFixes);
+
+ out = fopen(t,"wb");
+ if (!out) return;
+
+ len = fwrite(pB, 1, size, out);
+ fclose(out);
+
+ free(pB);
 }
-#endif
-
-
-
-
-
-

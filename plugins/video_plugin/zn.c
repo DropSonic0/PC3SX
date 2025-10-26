@@ -15,13 +15,11 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "stdafx.h"
-
 #define _IN_ZN
 
 #include "externals.h"
 
-// --------------------------------------------------- // 
+// --------------------------------------------------- //
 // - psx gpu plugin interface prototypes-------------- //
 // --------------------------------------------------- //
 
@@ -31,26 +29,26 @@ long CALLBACK GPUopen(HWND hwndGPU);
 long GPUopen(unsigned long * disp,const char * CapText,const char * CfgFile);
 #endif
 void CALLBACK GPUdisplayText(char * pText);
-void CALLBACK GPUdisplayFlags(unsigned long dwFlags);
+void CALLBACK GPUdisplayFlags(uint32_t dwFlags);
 void CALLBACK GPUmakeSnapshot(void);
 long CALLBACK GPUinit();
 long CALLBACK GPUclose();
 long CALLBACK GPUshutdown();
 void CALLBACK GPUcursor(int iPlayer,int x,int y);
 void CALLBACK GPUupdateLace(void);
-unsigned long CALLBACK GPUreadStatus(void);
-void CALLBACK GPUwriteStatus(unsigned long gdata);
-void CALLBACK GPUreadDataMem(unsigned long * pMem, int iSize);
-unsigned long CALLBACK GPUreadData(void);
-void CALLBACK GPUwriteDataMem(unsigned long * pMem, int iSize);
-void CALLBACK GPUwriteData(unsigned long gdata);
-void CALLBACK GPUsetMode(unsigned long gdata);
+uint32_t CALLBACK GPUreadStatus(void);
+void CALLBACK GPUwriteStatus(uint32_t gdata);
+void CALLBACK GPUreadDataMem(uint32_t * pMem, int iSize);
+uint32_t CALLBACK GPUreadData(void);
+void CALLBACK GPUwriteDataMem(uint32_t * pMem, int iSize);
+void CALLBACK GPUwriteData(uint32_t gdata);
+void CALLBACK GPUsetMode(uint32_t gdata);
 long CALLBACK GPUgetMode(void);
-long CALLBACK GPUdmaChain(unsigned long * baseAddrL, unsigned long addr);
+long CALLBACK GPUdmaChain(uint32_t * baseAddrL, uint32_t addr);
 long CALLBACK GPUconfigure(void);
 void CALLBACK GPUabout(void);
 long CALLBACK GPUtest(void);
-long CALLBACK GPUfreeze(unsigned long ulGetFreezeData,void * pF);
+long CALLBACK GPUfreeze(uint32_t ulGetFreezeData,void * pF);
 void CALLBACK GPUgetScreenPic(unsigned char * pMem);
 void CALLBACK GPUshowScreenPic(unsigned char * pMem);
 #ifndef _WINDOWS
@@ -61,7 +59,7 @@ void CALLBACK GPUkeypressed(int keycode);
 // - zn gpu interface -------------------------------- // 
 // --------------------------------------------------- // 
 
-unsigned long dwGPUVersion=0;
+uint32_t      dwGPUVersion=0;
 int           iGPUHeight=512;
 int           iGPUHeightMask=511;
 int           GlobalTextIL=0;
@@ -73,10 +71,10 @@ int           iTileCheat=0;
 
 typedef struct GPUOTAG
  {
-  unsigned long  Version;        // Version of structure - currently 1
-  long           hWnd;           // Window handle
-  unsigned long  ScreenRotation; // 0 = 0CW, 1 = 90CW, 2 = 180CW, 3 = 270CW = 90CCW
-  unsigned long  GPUVersion;     // 0 = a, 1 = b, 2 = c
+  uint32_t  Version;        // Version of structure - currently 1
+  unsigned long hWnd;           // Window handle
+  uint32_t  ScreenRotation; // 0 = 0CW, 1 = 90CW, 2 = 180CW, 3 = 270CW = 90CCW
+  uint32_t  GPUVersion;     // 0 = a, 1 = b, 2 = c
   const char*    GameName;       // NULL terminated string
   const char*    CfgFile;        // NULL terminated string
  } GPUConfiguration_t;
@@ -85,7 +83,7 @@ typedef struct GPUOTAG
 // --------------------------------------------------- // 
 // --------------------------------------------------- // 
 
-void CALLBACK ZN_GPUdisplayFlags(unsigned long dwFlags)
+void CALLBACK ZN_GPUdisplayFlags(uint32_t dwFlags)
 {
  GPUdisplayFlags(dwFlags);
 }
@@ -118,10 +116,9 @@ long CALLBACK ZN_GPUopen(void * vcfg)
  if(cfg->Version!=1) return -1;
 
 #ifdef _WINDOWS
- pConfigFile=(char *)cfg->CfgFile;                     // only used in this open, so we can store this temp pointer here without danger... don't access it later, though!
  lret=GPUopen((HWND)cfg->hWnd);
 #else
- lret=GPUopen(&cfg->hWnd,cfg->GameName,cfg->CfgFile);
+ lret = GPUopen(&cfg->hWnd, cfg->GameName, cfg->CfgFile);
 #endif
 
 /*
@@ -165,21 +162,21 @@ void CALLBACK ZN_GPUupdateLace(void)
 
 // --------------------------------------------------- // 
 
-unsigned long CALLBACK ZN_GPUreadStatus(void)
+uint32_t CALLBACK ZN_GPUreadStatus(void)
 {
  return GPUreadStatus();
 }
 
 // --------------------------------------------------- // 
 
-void CALLBACK ZN_GPUwriteStatus(unsigned long gdata)
+void CALLBACK ZN_GPUwriteStatus(uint32_t gdata)
 {
  GPUwriteStatus(gdata);
 }
 
 // --------------------------------------------------- // 
 
-long CALLBACK ZN_GPUdmaSliceOut(unsigned long *baseAddrL, unsigned long addr, unsigned long iSize)
+long CALLBACK ZN_GPUdmaSliceOut(uint32_t *baseAddrL, uint32_t addr, uint32_t iSize)
 {
  GPUreadDataMem(baseAddrL+addr,iSize);
  return 0;
@@ -187,14 +184,14 @@ long CALLBACK ZN_GPUdmaSliceOut(unsigned long *baseAddrL, unsigned long addr, un
 
 // --------------------------------------------------- // 
 
-unsigned long CALLBACK ZN_GPUreadData(void)
+uint32_t CALLBACK ZN_GPUreadData(void)
 {
  return GPUreadData();
 }
 
 // --------------------------------------------------- // 
 
-void CALLBACK ZN_GPUsetMode(unsigned long gdata)
+void CALLBACK ZN_GPUsetMode(uint32_t gdata)
 {
  GPUsetMode(gdata);
 }
@@ -208,21 +205,21 @@ long CALLBACK ZN_GPUgetMode(void)
 
 // --------------------------------------------------- // 
 
-long CALLBACK ZN_GPUdmaSliceIn(unsigned long *baseAddrL, unsigned long addr, unsigned long iSize)
+long CALLBACK ZN_GPUdmaSliceIn(uint32_t *baseAddrL, uint32_t addr, uint32_t iSize)
 {
  GPUwriteDataMem(baseAddrL+addr,iSize);
  return 0;
 }
 // --------------------------------------------------- // 
 
-void CALLBACK ZN_GPUwriteData(unsigned long gdata)
+void CALLBACK ZN_GPUwriteData(uint32_t gdata)
 {
  GPUwriteDataMem(&gdata,1);
 }
 
 // --------------------------------------------------- // 
 
-long CALLBACK ZN_GPUdmaChain(unsigned long * baseAddrL, unsigned long addr)
+long CALLBACK ZN_GPUdmaChain(uint32_t * baseAddrL, uint32_t addr)
 {
  return GPUdmaChain(baseAddrL,addr);
 }
@@ -236,7 +233,7 @@ long CALLBACK ZN_GPUtest(void)
 
 // --------------------------------------------------- // 
 
-long CALLBACK ZN_GPUfreeze(unsigned long ulGetFreezeData,void * pF)
+long CALLBACK ZN_GPUfreeze(uint32_t ulGetFreezeData,void * pF)
 {
  return GPUfreeze(ulGetFreezeData,pF);
 }
@@ -261,8 +258,7 @@ void CALLBACK ZN_GPUshowScreenPic(unsigned char * pMem)
 
 void CALLBACK ZN_GPUkeypressed(int keycode)
 {
-//Yoshihiro ^_^ Not needed on psp FuckOff !!!!!
-// GPUkeypressed(keycode);
+ GPUkeypressed(keycode);
 }
 
 #endif

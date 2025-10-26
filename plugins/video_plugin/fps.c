@@ -18,16 +18,10 @@
 #define _IN_FPS
 
 #include <unistd.h>
-#include <sched.h>
-#include <sys/ppu_thread.h>
 
 #include "externals.h"
 #include "fps.h"
 #include "gpu.h"
-#include <sys/timer.h>
-#include <sys/return_code.h>
-#include <sys/sys_time.h>
-#include <sys/time_util.h>
 
 // FPS stuff
 float          fFrameRateHz=0;
@@ -53,7 +47,7 @@ void CALLBACK GPUsetSpeed(float newSpeed) {
 }
 
 void CheckFrameRate(void)
-{                           
+{
  if(UseFrameSkip)                                      // skipping mode?
   {
    if(!(dwActFixes&0x80))                              // not old skipping mode?
@@ -67,64 +61,66 @@ void CheckFrameRate(void)
     }
    else if(UseFrameLimit) FrameCap();
    calcfps();                                          // -> calc fps display in skipping mode
-  }                                                  
+  }
  else                                                  // non-skipping mode:
   {
    if(UseFrameLimit) FrameCap();                       // -> do it
-  // if(ulKeybits&KEY_SHOWFPS) calcfps();                // -> and calc fps display
+   if(ulKeybits&KEY_SHOWFPS) calcfps();                // -> and calc fps display
   }
-}                      
-
-////////////////////////////////////////////////////////////////////////
-// LINUX VERSION
-////////////////////////////////////////////////////////////////////////
+}
 
 #define TIMEBASE 100000
 
 unsigned long timeGetTime()
 {
- return sys_time_get_system_time() / 10;
+ struct timeval tv;
+ gettimeofday(&tv, 0);                                 // well, maybe there are better ways
+ return tv.tv_sec * 100000 + tv.tv_usec/10;            // to do that, but at least it works
 }
 
 void FrameCap (void)
 {
-	static uint64_t next_time = 0; // Target time for the next frame in microseconds
-	uint64_t now_time;
-	uint64_t fr_interval_us;
-	int64_t time_to_wait;
+ static unsigned long curticks, lastticks, _ticks_since_last_update;
+ static unsigned int TicksToWait = 0;
+ unsigned int frTicks = dwFrameRateTicks / speed;
+ int overslept=0, tickstogo=0;
+ BOOL Waiting = TRUE;
 
-	// Convert dwFrameRateTicks (which is in 10us units) to microseconds (us)
-	fr_interval_us = (uint64_t)(dwFrameRateTicks / speed) * 10;
-	
-	now_time = sys_time_get_system_time();
+  {
+   curticks = timeGetTime();
+   _ticks_since_last_update = curticks - lastticks;
 
-	// Initialize or resync if we are way behind schedule (e.g., more than 4 frames)
-	// to prevent the emulator from trying to fast-forward uncontrollably.
-	if (next_time == 0 || now_time > next_time + (fr_interval_us * 4)) {
-		next_time = now_time;
-	}
-	
-	// Calculate the wait time until the next frame's target time
-	time_to_wait = next_time - now_time;
-
-	if (time_to_wait > 0)
-	{
-		// Hybrid sleep. If we have more than ~2ms to wait, call usleep.
-		// This avoids burning CPU in a busy-wait loop for long waits.
-		if (time_to_wait > 2000) {
-			sys_timer_usleep(time_to_wait - 1000); // Sleep until ~1ms before the target time
-		}
-
-		// Cooperative busy-wait for the remaining time to achieve higher precision.
-		// sys_ppu_thread_yield() allows other threads (like audio) to run.
-		while(sys_time_get_system_time() < next_time) {
-			sys_ppu_thread_yield();
-		}
-	}
-	
-	// Schedule the next frame from the last scheduled time to maintain a fixed step.
-	// This ensures a consistent emulation speed even if there are minor timing hiccups.
-	next_time += fr_interval_us;
+    if((_ticks_since_last_update > TicksToWait) ||
+       (curticks <lastticks))
+    {
+     lastticks = curticks;
+     overslept = _ticks_since_last_update - TicksToWait;
+     if((_ticks_since_last_update-TicksToWait) > frTicks)
+          TicksToWait=0;
+     else
+          TicksToWait=frTicks - overslept;
+    }
+   else
+    {
+     while (Waiting)
+      {
+       curticks = timeGetTime();
+       _ticks_since_last_update = curticks - lastticks;
+       tickstogo = TicksToWait - _ticks_since_last_update;
+       if ((_ticks_since_last_update > TicksToWait) ||
+           (curticks < lastticks) || tickstogo < overslept)
+        {
+         Waiting = FALSE;
+         lastticks = curticks;
+         overslept = _ticks_since_last_update - TicksToWait;
+         TicksToWait = frTicks - overslept;
+         return;
+        }
+	if (tickstogo >= 200 && !(dwActFixes&16))
+		usleep(tickstogo*10 - 200);
+      }
+    }
+  }
 }
 
 #define MAXSKIP 120
@@ -233,7 +229,7 @@ void FrameSkip(void)
 
 	tickstogo = dwWaitTime - _ticks_since_last_update;
 	if (tickstogo-overslept >= 200 && !(dwActFixes&16))
-		sys_timer_sleep(tickstogo*10 - 200);
+		usleep(tickstogo*10 - 200);
       }
     }
    overslept = _ticks_since_last_update - dwWaitTime;
@@ -348,13 +344,13 @@ void SetAutoFrameCap(void)
 
  if(dwActFixes&32)
   {
-   if (g_gpu.Interlaced)
-        fFrameRateHz = g_gpu.PAL?50.0f:60.0f;
-   else fFrameRateHz = g_gpu.PAL?25.0f:30.0f;
+   if (PSXDisplay.Interlaced)
+        fFrameRateHz = PSXDisplay.PAL?50.0f:60.0f;
+   else fFrameRateHz = PSXDisplay.PAL?25.0f:30.0f;
   }
  else
   {
-   fFrameRateHz = g_gpu.PAL?50.0f:59.94f;
+   fFrameRateHz = PSXDisplay.PAL?50.0f:59.94f;
    dwFrameRateTicks=(TIMEBASE*100 / (unsigned long)(fFrameRateHz*100));
   }
 }
@@ -369,5 +365,3 @@ void InitFPS(void)
  if(fFrameRateHz==0) fFrameRateHz=fFrameRate;          // set user framerate
  dwFrameRateTicks=(TIMEBASE / (unsigned long)fFrameRateHz);
 }
-
-

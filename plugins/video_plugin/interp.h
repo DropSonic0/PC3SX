@@ -210,7 +210,7 @@ static __inline unsigned int  interp_32_97(unsigned int  p1, unsigned int  p2)
 #define INTERP_U_LIMIT (0x07*4)
 #define INTERP_V_LIMIT (0x06*8)
 
-static int interp_16_diff(unsigned short p1, unsigned short p2)
+__inline static int interp_16_diff(unsigned short p1, unsigned short p2)
 {
   int r, g, b;
   int y, u, v;
@@ -244,7 +244,7 @@ static int interp_16_diff(unsigned short p1, unsigned short p2)
   return 0;
 }
 
-static int interp_32_diff(unsigned int  p1, unsigned int  p2)
+__inline static int interp_32_diff(unsigned int  p1, unsigned int  p2)
 {
   int r, g, b;
   int y, u, v;
@@ -272,7 +272,7 @@ static int interp_32_diff(unsigned int  p1, unsigned int  p2)
   return 0;
 }
 
-static void interp_set(unsigned bits_per_pixel)
+__inline static void interp_set(unsigned bits_per_pixel)
 {
   interp_bits_per_pixel = bits_per_pixel;
 
