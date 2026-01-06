@@ -29,9 +29,6 @@ PSGLGraphics::~PSGLGraphics()
 
 PSGLdeviceParameters PSGLGraphics::InitCommon(uint32_t resolutionId, uint16_t pal60Hz)
 {
-	if (resolutionId == CELL_VIDEO_OUT_RESOLUTION_576)
-		resolutionId = CELL_VIDEO_OUT_RESOLUTION_480;
-
 	printf("PSGLGraphics::InitCommon(%d, %d)\n", resolutionId, pal60Hz);
 	PSGLinitOptions options =
 	{
@@ -65,11 +62,32 @@ PSGLdeviceParameters PSGLGraphics::InitCommon(uint32_t resolutionId, uint16_t pa
 	if(resolutionId != NULL)
 	{
 		printf("PSGLGraphics::InitCommon()->resolutionId != NULL\n");
+
+		if (resolutionId == CELL_VIDEO_OUT_RESOLUTION_576)
+			resolutionId = CELL_VIDEO_OUT_RESOLUTION_480;
+
+		params.enable |= PSGL_DEVICE_PARAMETERS_WIDTH_HEIGHT;
+
+		switch (resolutionId)
+		{
+			case CELL_VIDEO_OUT_RESOLUTION_480:
+				params.enable |= PSGL_DEVICE_PARAMETERS_TV_STANDARD;
+				params.TVStandard = PSGL_TV_STANDARD_HD480P;
+				break;
+			case CELL_VIDEO_OUT_RESOLUTION_720:
+				params.enable |= PSGL_DEVICE_PARAMETERS_TV_STANDARD;
+				params.TVStandard = PSGL_TV_STANDARD_HD720P;
+				break;
+			case CELL_VIDEO_OUT_RESOLUTION_1080:
+				params.enable |= PSGL_DEVICE_PARAMETERS_TV_STANDARD;
+				params.TVStandard = PSGL_TV_STANDARD_HD1080P;
+				break;
+		}
+
 		//Resolution setting
 		CellVideoOutResolution resolution;
 		cellVideoOutGetResolution(resolutionId, &resolution);
 		
-		params.enable |= PSGL_DEVICE_PARAMETERS_WIDTH_HEIGHT;
 		params.width = resolution.width;
 		params.height = resolution.height;
 	}
