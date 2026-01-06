@@ -29,6 +29,9 @@ PSGLGraphics::~PSGLGraphics()
 
 PSGLdeviceParameters PSGLGraphics::InitCommon(uint32_t resolutionId, uint16_t pal60Hz)
 {
+	if (resolutionId == CELL_VIDEO_OUT_RESOLUTION_576)
+		resolutionId = CELL_VIDEO_OUT_RESOLUTION_480;
+
 	printf("PSGLGraphics::InitCommon(%d, %d)\n", resolutionId, pal60Hz);
 	PSGLinitOptions options =
 	{
