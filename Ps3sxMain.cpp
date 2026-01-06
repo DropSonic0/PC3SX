@@ -705,6 +705,8 @@ int main()
 	cellSysmoduleUnloadModule(CELL_SYSMODULE_SYSUTIL_GAME);
 	cellSysutilUnregisterCallback(0);  
     
+	sys_spu_finalize();
+
 	 return(-1);
 }
 
@@ -725,9 +727,7 @@ void spu_render(void *frame_buffer, int width, int height)
     sys_spu_thread_attribute_t thread_attr;
     sys_spu_thread_attribute_initialize(&thread_attr);
 
-    sys_spu_thread_argument_t args;
-    args.arg0 = (uint64_t)&control_block;
-    args.arg1 = args.arg2 = args.arg3 = 0;
+    sys_spu_thread_argument_t args = { (uint64_t)&control_block, 0, 0, 0 };
 
     sys_spu_image_t image;
     sys_spu_image_open(&image, _binary_spu_spu_renderer_elf_start);
@@ -737,5 +737,6 @@ void spu_render(void *frame_buffer, int width, int height)
 
     int cause, status;
     sys_spu_thread_group_join(group, &cause, &status);
+    sys_spu_thread_group_destroy(group);
     sys_spu_image_close(&image);
 }
