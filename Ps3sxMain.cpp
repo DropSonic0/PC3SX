@@ -11,8 +11,16 @@
 #include <pthread.h>
 #include <sysutil/sysutil_gamecontent.h>
 #include <stdlib.h> // For atoi, atof
+#include <sys/spu_initialize.h>
+#include "spu/spu_render.h"
+#include <sys/spu_image.h>
+#include <sys/spu_thread.h>
+#include <sys/spu_utility.h>
 
 SYS_PROCESS_PARAM(1001, 0x10000);
+
+// SPU program
+extern char _binary_spu_spu_renderer_elf_start[];
 
 PS3Graphics* Graphics;
 CellInputFacade* PS3input  = 0;
@@ -96,6 +104,7 @@ void RemoveSound(void)
 //Video Output Function
 void ps3sxSwapBuffer(unsigned char *pixels,int w,int h)
 {
+	// spu_render(pixels, w, h); // Disabled for now, as it only adds overhead.
 	Graphics->Draw(w,h,pixels);
 	Graphics->Swap();
 }
@@ -608,6 +617,7 @@ int main()
 	
 	struct stat st;
 	sys_spu_initialize(6, 1); 
+
 	cellSysutilRegisterCallback(0, (CellSysutilCallback)sysutil_callback, NULL); 
 
 	ret = cellSysmoduleLoadModule(CELL_SYSMODULE_FS);
@@ -697,4 +707,31 @@ int main()
 	 return(-1);
 }
 
+}
+
+void spu_render(void *frame_buffer, int width, int height)
+{
+    // Create a control block for the SPU, aligned to a 128-byte boundary.
+    SPU_Renderer_Control_Block control_block __attribute__ ((aligned (128)));
+    control_block.frame_buffer_ea = (uint64_t)frame_buffer;
+    control_block.width = width;
+    control_block.height = height;
+
+    sys_spu_thread_group_t group;
+    sys_spu_thread_group_create(&group, 1, 100, NULL);
+
+    sys_spu_thread_t thread;
+    sys_spu_thread_attribute_t thread_attr;
+    sys_spu_thread_attribute_initialize(&thread_attr);
+
+    sys_spu_image_t image;
+    sys_spu_image_open(&image, _binary_spu_spu_renderer_elf_start);
+
+    sys_spu_thread_initialize(&thread, group, 0, &image, &thread_attr, NULL);
+    sys_spu_thread_set_argument(&thread, (uint64_t)&control_block, 0, 0, 0);
+    sys_spu_thread_group_start(group);
+
+    int cause, status;
+    sys_spu_thread_group_join(group, &cause, &status);
+    sys_spu_image_close(&image);
 }

@@ -1,8 +1,13 @@
+# CELL_GPU_TYPE (currently RSX is only one option)
+CELL_GPU_TYPE = RSX
+#CELL_PSGL_VERSION is debug, dpm or opt
+CELL_PSGL_VERSION = opt
 
-# CELL_GPU_TYPE (currently RSX is only one option)  
-CELL_GPU_TYPE = RSX    
-#CELL_PSGL_VERSION is debug, dpm or opt  
-CELL_PSGL_VERSION = opt  
+# SPU settings
+SPU_PRX_SRCS_DIR := $(CURDIR)/PS3/spu
+SPU_PRX_SRCS := $(wildcard $(SPU_PRX_SRCS_DIR)/*.c)
+SPU_PRX_ELFS := $(patsubst $(SPU_PRX_SRCS_DIR)/%.c,$(OBJS_DIR)/%.spu.elf,$(SPU_PRX_SRCS))
+SPU_EMBED_OBJS := $(patsubst $(SPU_PRX_SRCS_DIR)/%.c,$(OBJS_DIR)/%.spu.o,$(SPU_PRX_SRCS))
 
 CELL_SDK ?= /usr/local/cell
 CELL_MK_DIR ?= $(CELL_SDK)/samples/mk
@@ -11,11 +16,11 @@ include $(CELL_MK_DIR)/sdk.makedef.mk
 CONTENT_ID = IV0002-PCSX00001_00-SAMPLE0000000001
 MKFSELF_NPDRM = $(CELL_SDK)/host-win32/bin/make_fself_npdrm
 MKPKG_NPDRM = $(CELL_SDK)/host-win32/bin/make_package_npdrm
-MAKE_EBOOT = scetool --sce-type=SELF --compress-data=TRUE --skip-sections=FALSE --key-revision=04 --self-ctrl-flags=4000000000000000000000000000000000000000000000000000000000000002 --self-auth-id=1010000001000003 --self-app-version=0001000000000000 --self-add-shdrs=TRUE --self-vendor-id=01000002 --self-type=NPDRM --self-fw-version=0003004000000000 --np-license-type=FREE --np-content-id=$(CONTENT_ID) --np-app-type=EXEC --np-real-fname=EBOOT.BIN --encrypt 
+MAKE_EBOOT = scetool --sce-type=SELF --compress-data=TRUE --skip-sections=FALSE --key-revision=04 --self-ctrl-flags=4000000000000000000000000000000000000000000000000000000000000002 --self-auth-id=1010000001000003 --self-app-version=0001000000000000 --self-add-shdrs=TRUE --self-vendor-id=01000002 --self-type=NPDRM --self-fw-version=0003004000000000 --np-license-type=FREE --np-content-id=$(CONTENT_ID) --np-app-type=EXEC --np-real-fname=EBOOT.BIN --encrypt
 
 PPU_OPTIMIZE_LV = -O2
 
-PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.cpp \
+PPU_SRCS		:= Ps3sxMain.cpp $(SPU_EMBED_OBJS) ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.cpp \
 	./ps3/input/cellInput.cpp ./ps3/graphics/PSGLGraphics.cpp ./ps3/fileio/FileBrowser.cpp\
 	./ps3/buffer.c ./ps3/resampler.c ./ps3/ini/ini.c ./ps3/ini/iniFile.cpp \
 	./pcsxcore/psxbios.c	\
@@ -86,9 +91,19 @@ PPU_LDFLAGS		= -Wl -finline-limit=5000
 PPU_CXXFLAGS		+=	-I. -I./ps3 -I./pcsxcore -I./pcsxcore/zlib -I./pcsxcore/ppc -I./ps3/threads -I./ps3/Audio -Ips3/input -Ips3/ini
 PPU_LIBS		    +=	$(CELL_TARGET_PATH)/ppu/lib/libgcm_cmd.a \
 					$(CELL_TARGET_PATH)/ppu/lib/libgcm_sys_stub.a $(CELL_TARGET_PATH)/ppu/lib/libfs_stub.a
-PPU_LDLIBS		+= 	-L$(CELL_SDK)/target/ppu/lib/PSGL/RSX/opt -lPSGL -lPSGLcgc -lcgc -lsysmodule_stub 
+PPU_LDLIBS		+= 	-L$(CELL_SDK)/target/ppu/lib/PSGL/RSX/opt -lPSGL -lPSGLcgc -lcgc -lsysmodule_stub
 PPU_LDLIBS		+=  -lresc_stub -lm -ldbgfont -lsysutil_stub -lio_stub -laudio_stub -lpthread -lsysutil_game_stub -lnet_stub
 include $(CELL_MK_DIR)/sdk.target.mk
+
+# Rule for SPU ELF
+$(OBJS_DIR)/%.spu.elf: $(SPU_PRX_SRCS_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(SPU_GCC) $(SPU_CFLAGS) $< -o $@
+
+# Rule for embedding SPU ELF into PPU object
+$(OBJS_DIR)/%.spu.o: $(OBJS_DIR)/%.spu.elf
+	@mkdir -p $(dir $@)
+	$(PPU_EMBED_SPU) $(SPU_LDFLAGS) $< $@
 
 $(VPSHADER_PPU_OBJS): $(OBJS_DIR)/%.ppu.o : %.vpo
 	@mkdir -p $(dir $(@))
