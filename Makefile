@@ -8,12 +8,17 @@ CELL_SDK ?= /usr/local/cell
 CELL_MK_DIR ?= $(CELL_SDK)/samples/mk
 include $(CELL_MK_DIR)/sdk.makedef.mk
 
+# Explicitly define SPU tools to avoid environment issues
+SPU_GCC = $(CELL_SDK)/host-win32/spu/bin/spu-lv2-gcc
+PPU_EMBED_SPU_ELF = $(CELL_SDK)/host-win32/ppu/bin/ppu-embed-spu-elf
+
 CONTENT_ID = IV0002-PCSX00001_00-SAMPLE0000000001
 MKFSELF_NPDRM = $(CELL_SDK)/host-win32/bin/make_fself_npdrm
 MKPKG_NPDRM = $(CELL_SDK)/host-win32/bin/make_package_npdrm
 MAKE_EBOOT = scetool --sce-type=SELF --compress-data=TRUE --skip-sections=FALSE --key-revision=04 --self-ctrl-flags=4000000000000000000000000000000000000000000000000000000000000002 --self-auth-id=1010000001000003 --self-app-version=0001000000000000 --self-add-shdrs=TRUE --self-vendor-id=01000002 --self-type=NPDRM --self-fw-version=0003004000000000 --np-license-type=FREE --np-content-id=$(CONTENT_ID) --np-app-type=EXEC --np-real-fname=EBOOT.BIN --encrypt 
 
 PPU_OPTIMIZE_LV = -O2
+SPU_CFLAGS = -O2
 
 # SPU sources
 SPU_SRCS_C      := PS3/spu/spu_hello.c
@@ -98,7 +103,7 @@ PPU_LIBS		+= $(SPU_OBJS)
 $(OBJS_DIR)/PS3/spu/%.spu.o: $(OBJS_DIR)/PS3/spu/%.spu.elf
 	@echo "Embedding SPU ELF into PPU object $@"
 	@mkdir -p $(dir $@)
-	ppu-embed-spu-elf $(subst /,_,$(subst .,_,$<)) $< $@
+	$(PPU_EMBED_SPU_ELF) $(subst /,_,$(subst .,_,$<)) $< $@
 
 # Rule to compile SPU C source to SPU ELF
 $(OBJS_DIR)/PS3/spu/%.spu.elf: PS3/spu/%.c

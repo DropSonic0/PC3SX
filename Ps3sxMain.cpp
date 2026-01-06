@@ -716,7 +716,6 @@ int main()
 	cellSysutilUnregisterCallback(0);  
     
 	sys_spu_finalize();
-	return(-1);
+	return(0);
 }
 
-}
