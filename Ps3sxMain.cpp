@@ -15,6 +15,7 @@
 #include "spu/spu_render.h"
 #include <sys/spu_image.h>
 #include <sys/spu_thread.h>
+#include <sys/spu_thread_group.h>
 #include <sys/spu_utility.h>
 
 SYS_PROCESS_PARAM(1001, 0x10000);
@@ -724,11 +725,14 @@ void spu_render(void *frame_buffer, int width, int height)
     sys_spu_thread_attribute_t thread_attr;
     sys_spu_thread_attribute_initialize(&thread_attr);
 
+    sys_spu_thread_argument_t args;
+    args.arg0 = (uint64_t)&control_block;
+    args.arg1 = args.arg2 = args.arg3 = 0;
+
     sys_spu_image_t image;
     sys_spu_image_open(&image, _binary_spu_spu_renderer_elf_start);
 
-    sys_spu_thread_initialize(&thread, group, 0, &image, &thread_attr, NULL);
-    sys_spu_thread_set_argument(&thread, (uint64_t)&control_block, 0, 0, 0);
+    sys_spu_thread_initialize(&thread, group, 0, &image, &thread_attr, &args);
     sys_spu_thread_group_start(group);
 
     int cause, status;
