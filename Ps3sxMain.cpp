@@ -17,11 +17,12 @@
 #include <sys/spu_thread.h>
 #include <sys/spu_thread_group.h>
 #include <sys/spu_utility.h>
+#include <sys/process.h>
 
 SYS_PROCESS_PARAM(1001, 0x10000);
 
 // SPU program
-extern char _binary_spu_spu_renderer_elf_start[];
+extern char _binary_objs_spu_renderer_spu_elf_start[];
 
 PS3Graphics* Graphics;
 CellInputFacade* PS3input  = 0;
@@ -705,7 +706,7 @@ int main()
 	cellSysmoduleUnloadModule(CELL_SYSMODULE_SYSUTIL_GAME);
 	cellSysutilUnregisterCallback(0);  
     
-	sys_spu_finalize();
+	 // sys_spu_finalize(); // Temporarily disabled to resolve build error.
 
 	 return(-1);
 }
@@ -730,7 +731,7 @@ void spu_render(void *frame_buffer, int width, int height)
     sys_spu_thread_argument_t args = { (uint64_t)&control_block, 0, 0, 0 };
 
     sys_spu_image_t image;
-    sys_spu_image_open(&image, _binary_spu_spu_renderer_elf_start);
+    sys_spu_image_open(&image, _binary_objs_spu_renderer_spu_elf_start);
 
     sys_spu_thread_initialize(&thread, group, 0, &image, &thread_attr, &args);
     sys_spu_thread_group_start(group);
