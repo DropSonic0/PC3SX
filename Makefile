@@ -10,7 +10,7 @@ include $(CELL_MK_DIR)/sdk.makedef.mk
 
 # Explicitly define SPU tools to avoid environment issues
 SPU_GCC = $(CELL_SDK)/host-win32/spu/bin/spu-lv2-gcc.exe
-PPU_EMBED_SPU_ELF = $(CELL_SDK)/host-win32/ppu/bin/ppu-embed-spu-elf.exe
+PPU_EMBED_SPU_ELF = $(CELL_SDK)/host-win32/bin/ppu-embed-spu-elf.exe
 
 CONTENT_ID = IV0002-PCSX00001_00-SAMPLE0000000001
 MKFSELF_NPDRM = $(CELL_SDK)/host-win32/bin/make_fself_npdrm
