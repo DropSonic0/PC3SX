@@ -715,6 +715,7 @@ int main()
 	cellSysmoduleUnloadModule(CELL_SYSMODULE_SYSUTIL_GAME);
 	cellSysutilUnregisterCallback(0);  
     
+	sys_spu_finalize();
 	return(-1);
 }
 
