@@ -706,8 +706,6 @@ int main()
 	cellSysmoduleUnloadModule(CELL_SYSMODULE_SYSUTIL_GAME);
 	cellSysutilUnregisterCallback(0);  
     
-	 // sys_spu_finalize(); // Temporarily disabled to resolve build error.
-
 	 return(-1);
 }
 
