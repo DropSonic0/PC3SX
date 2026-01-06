@@ -727,10 +727,8 @@ void spu_render(void *frame_buffer, int width, int height)
     sys_spu_thread_attribute_initialize(&thread_attr);
 
     sys_spu_thread_argument_t args;
+    sys_spu_thread_argument_initialize(args);
     args.arg1 = (uint64_t)&control_block;
-    args.arg2 = 0;
-    args.arg3 = 0;
-    args.arg4 = 0;
 
     sys_spu_image_t image;
     sys_spu_image_open(&image, _binary_objs_spu_renderer_spu_elf_start);
