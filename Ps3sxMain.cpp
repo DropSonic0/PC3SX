@@ -104,7 +104,7 @@ void RemoveSound(void)
 //Video Output Function
 void ps3sxSwapBuffer(unsigned char *pixels,int w,int h)
 {
-	// spu_render(pixels, w, h); // Disabled for now, as it only adds overhead.
+	spu_render(pixels, w, h);
 	Graphics->Draw(w,h,pixels);
 	Graphics->Swap();
 }

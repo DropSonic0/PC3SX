@@ -17,8 +17,19 @@ int main(uint64_t arg1_ea_control_block) {
     mfc_write_tag_mask(1 << MFC_TAG);
     mfc_read_tag_status_all();
 
-    // At this point, the SPU has the control block and could begin rendering.
-    // The actual rendering logic will be added in a future step.
-    // For now, we'll just return 0 to indicate that the data was received successfully.
+    // Visual confirmation: Draw a 10x10 red square in the top-left corner of the frame buffer.
+    // This demonstrates that the SPU can write to the video memory.
+    uint16_t red_pixel = 0xF800; // Red in RGB565 format
+    for (int y = 0; y < 10; y++) {
+        for (int x = 0; x < 10; x++) {
+            uint64_t pixel_ea = control_block.frame_buffer_ea + ((y * control_block.width) + x) * sizeof(uint16_t);
+            mfc_put(&red_pixel, pixel_ea, sizeof(uint16_t), MFC_TAG, 0, 0);
+        }
+    }
+
+    // Wait for all DMA transfers to complete.
+    mfc_write_tag_mask(1 << MFC_TAG);
+    mfc_read_tag_status_all();
+
     return 0;
 }
