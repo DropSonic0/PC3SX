@@ -16,7 +16,7 @@ MAKE_EBOOT = scetool --sce-type=SELF --compress-data=TRUE --skip-sections=FALSE 
 PPU_OPTIMIZE_LV = -O2
 
 # SPU sources
-SPU_SRCS_C      := ./PS3/spu/spu_hello.c
+SPU_SRCS_C      := PS3/spu/spu_hello.c
 SPU_ELFS        := $(patsubst %.c,$(OBJS_DIR)/%.spu.elf,$(SPU_SRCS_C))
 SPU_OBJS        := $(patsubst %.spu.elf,%.o,$(SPU_ELFS))
 
@@ -96,7 +96,7 @@ PPU_LDLIBS		+=  -lresc_stub -lm -ldbgfont -lsysutil_stub -lio_stub -laudio_stub 
 PPU_LIBS		+= $(SPU_OBJS)
 
 # Rule to compile SPU C source to SPU ELF
-$(OBJS_DIR)/%.spu.elf: ./PS3/spu/%.c
+$(OBJS_DIR)/PS3/spu/%.spu.elf: PS3/spu/%.c
 	@echo "Compiling SPU object $@"
 	@mkdir -p $(dir $@)
 	$(SPU_GCC) $(SPU_CFLAGS) -o $@ $<

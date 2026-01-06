@@ -619,13 +619,14 @@ int main()
 	sys_spu_thread_group_t group;
 	sys_spu_thread_t thread;
 	sys_spu_thread_argument_t arg = {0, 0, 0, 0};
+	int cause, status;
 
 	sys_spu_image_open(&spu_img, objs_PS3_spu_spu_hello_spu_elf);
 	sys_spu_thread_group_create(&group, 1, 100, NULL);
-	sys_spu_thread_initialize(&thread, &group, 0, &spu_img, &arg, NULL, 0, "hello_spu");
-	sys_spu_thread_group_start(&group);
-	sys_spu_thread_group_join(&group, NULL);
-	sys_spu_thread_group_destroy(&group);
+	sys_spu_thread_initialize(&thread, group, 0, &spu_img, NULL, &arg);
+	sys_spu_thread_group_start(group);
+	sys_spu_thread_group_join(group, &cause, &status);
+	sys_spu_thread_group_destroy(group);
 	sys_spu_image_close(&spu_img);
 
 	cellSysutilRegisterCallback(0, (CellSysutilCallback)sysutil_callback, NULL); 
@@ -714,7 +715,6 @@ int main()
 	cellSysmoduleUnloadModule(CELL_SYSMODULE_SYSUTIL_GAME);
 	cellSysutilUnregisterCallback(0);  
     
-	sys_spu_finalize();
 	return(-1);
 }
 
