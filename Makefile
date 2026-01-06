@@ -15,6 +15,11 @@ MAKE_EBOOT = scetool --sce-type=SELF --compress-data=TRUE --skip-sections=FALSE 
 
 PPU_OPTIMIZE_LV = -O2
 
+# SPU sources
+SPU_SRCS_C      := ./PS3/spu/spu_hello.c
+SPU_ELFS        := $(patsubst %.c,$(OBJS_DIR)/%.spu.elf,$(SPU_SRCS_C))
+SPU_OBJS        := $(patsubst %.spu.elf,%.o,$(SPU_ELFS))
+
 PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.cpp \
 	./ps3/input/cellInput.cpp ./ps3/graphics/PSGLGraphics.cpp ./ps3/fileio/FileBrowser.cpp\
 	./ps3/buffer.c ./ps3/resampler.c ./ps3/ini/ini.c ./ps3/ini/iniFile.cpp \
@@ -88,6 +93,23 @@ PPU_LIBS		    +=	$(CELL_TARGET_PATH)/ppu/lib/libgcm_cmd.a \
 					$(CELL_TARGET_PATH)/ppu/lib/libgcm_sys_stub.a $(CELL_TARGET_PATH)/ppu/lib/libfs_stub.a
 PPU_LDLIBS		+= 	-L$(CELL_SDK)/target/ppu/lib/PSGL/RSX/opt -lPSGL -lPSGLcgc -lcgc -lsysmodule_stub 
 PPU_LDLIBS		+=  -lresc_stub -lm -ldbgfont -lsysutil_stub -lio_stub -laudio_stub -lpthread -lsysutil_game_stub -lnet_stub
+PPU_LIBS		+= $(SPU_OBJS)
+
+# Rule to compile SPU C source to SPU ELF
+$(OBJS_DIR)/%.spu.elf: ./PS3/spu/%.c
+	@echo "Compiling SPU object $@"
+	@mkdir -p $(dir $@)
+	$(SPU_GCC) $(SPU_CFLAGS) -o $@ $<
+
+# Rule to embed SPU ELF into PPU object file
+$(OBJS_DIR)/%.spu.o: $(OBJS_DIR)/%.spu.elf
+	@echo "Embedding SPU object $@"
+	@mkdir -p $(dir $@)
+	ppu-embed-spu-elf $(subst /,_,$(subst .,_,$(subst $(OBJS_DIR)/,,$<))) $< $@
+
+# Add SPU objects as dependencies for the main target
+$(PPU_TARGET): $(SPU_OBJS)
+
 include $(CELL_MK_DIR)/sdk.target.mk
 
 $(VPSHADER_PPU_OBJS): $(OBJS_DIR)/%.ppu.o : %.vpo

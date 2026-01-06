@@ -11,6 +11,11 @@
 #include <pthread.h>
 #include <sysutil/sysutil_gamecontent.h>
 #include <stdlib.h> // For atoi, atof
+#include <sys/spu_initialize.h>
+#include <sys/spu_image.h>
+#include <sys/spu_thread.h>
+#include <sys/spu_thread_group.h>
+#include <sys/process.h>
 
 SYS_PROCESS_PARAM(1001, 0x10000);
 
@@ -607,7 +612,22 @@ int main()
     int i, ret;
 	
 	struct stat st;
-	sys_spu_initialize(6, 1); 
+	sys_spu_initialize(6, 1);
+
+	extern char objs_PS3_spu_spu_hello_spu_elf[];
+	sys_spu_image_t spu_img;
+	sys_spu_thread_group_t group;
+	sys_spu_thread_t thread;
+	sys_spu_thread_argument_t arg = {0, 0, 0, 0};
+
+	sys_spu_image_open(&spu_img, objs_PS3_spu_spu_hello_spu_elf);
+	sys_spu_thread_group_create(&group, 1, 100, NULL);
+	sys_spu_thread_initialize(&thread, &group, 0, &spu_img, &arg, NULL, 0, "hello_spu");
+	sys_spu_thread_group_start(&group);
+	sys_spu_thread_group_join(&group, NULL);
+	sys_spu_thread_group_destroy(&group);
+	sys_spu_image_close(&spu_img);
+
 	cellSysutilRegisterCallback(0, (CellSysutilCallback)sysutil_callback, NULL); 
 
 	ret = cellSysmoduleLoadModule(CELL_SYSMODULE_FS);
@@ -694,7 +714,8 @@ int main()
 	cellSysmoduleUnloadModule(CELL_SYSMODULE_SYSUTIL_GAME);
 	cellSysutilUnregisterCallback(0);  
     
-	 return(-1);
+	sys_spu_finalize();
+	return(-1);
 }
 
 }
