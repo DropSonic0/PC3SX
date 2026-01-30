@@ -6,7 +6,6 @@ LIBDIRS		:= ../libkammy
 LIBS		:= kammy sysmodule_stub netctl_stub net_stub fs_stub
 
 LV2DIR		:= ../lv2
-LV2BINS		:= ethdebug.bin
 
 INCLUDE		+= $(BUILDDIR) $(foreach dir,$(LIBDIRS),$(dir)/include)
 CFLAGS		:= -mp32 -DBIG_ENDIAN -DBYTE_ORDER \

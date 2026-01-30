@@ -165,7 +165,7 @@ void PS3Graphics::Draw(int width, int height, uint8_t* screen)
 		m_tex_width = width;
 		m_tex_height = height;
 
-		const int screen_pitch = m_tex_width * EMU_RENDER_BYTE_BY_PIXEL;
+		const int screen_pitch = (width * EMU_RENDER_BYTE_BY_PIXEL + 63) & ~63;
 
 		if (gl_buffer)
 		{
@@ -181,11 +181,12 @@ void PS3Graphics::Draw(int width, int height, uint8_t* screen)
 
 	Clear();
 	
-	const int screen_pitch = width * EMU_RENDER_BYTE_BY_PIXEL;
-	glBufferSubData(GL_TEXTURE_REFERENCE_BUFFER_SCE, 0, height * screen_pitch, screen);
-	glTextureReferenceSCE(GL_TEXTURE_2D, 1, width, height, 0, GL_ARGB_SCE, screen_pitch, 0);
-	UpdateCgParams(width, height, width, height);
+	const int aligned_pitch = (width * EMU_RENDER_BYTE_BY_PIXEL + 63) & ~63;
+	glBufferSubData(GL_TEXTURE_REFERENCE_BUFFER_SCE, 0, height * aligned_pitch, screen);
+	glTextureReferenceSCE(GL_TEXTURE_2D, 1, width, height, 0, GL_ARGB_SCE, aligned_pitch, 0);
 	
+	UpdateCgParams(width, height, width, height);
+
 	glDrawArrays(GL_QUADS, 0, 4); 
 	glFlush();
 	
@@ -410,7 +411,7 @@ int32_t PS3Graphics::PSGLInit()
 
 	glGenBuffers(2, vbo);
 
-	const int screen_pitch = m_tex_width * EMU_RENDER_BYTE_BY_PIXEL;
+	const int screen_pitch = (m_tex_width * EMU_RENDER_BYTE_BY_PIXEL + 63) & ~63;
 	glBindBuffer(GL_TEXTURE_REFERENCE_BUFFER_SCE, vbo[0]);
 	glBufferData(GL_TEXTURE_REFERENCE_BUFFER_SCE, m_tex_height * screen_pitch, gl_buffer, GL_STREAM_DRAW);
 
