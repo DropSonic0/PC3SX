@@ -288,7 +288,7 @@ void ReadConfig(void)
   iResX=640;iResY=480;
   iColDepth=32;
   iWindowMode=1;
-  UseFrameLimit=0;
+  UseFrameLimit=1;
   UseFrameSkip=0;
   iFrameLimit=2;
   fFrameRate=59.94f;
@@ -310,7 +310,7 @@ void WriteConfig(void) {
   iResX=640;iResY=480;
   iColDepth=32;
   iWindowMode=1;
-  UseFrameLimit=0;
+  UseFrameLimit=1;
   UseFrameSkip=0;
   iFrameLimit=2;
   fFrameRate=59.94f;

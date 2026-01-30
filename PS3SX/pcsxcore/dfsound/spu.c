@@ -564,7 +564,7 @@ static void *MAINThread(void *arg)
      Sleep(PAUSE_W);                                   // sleep for x ms (win)
 #else
      if(iUseTimer) return 0;                           // linux no-thread mode? bye
-     sys_timer_sleep(PAUSE_L);                                  // else sleep for x ms (linux)
+     sys_timer_usleep(PAUSE_L);                                 // else sleep for x ms (linux)
 #endif
 
      if(dwNewChannel) iSecureStart=1;                  // if a new channel kicks in (or, of course, sound buffer runs low), we will leave the loop
@@ -710,7 +710,7 @@ static void *MAINThread(void *arg)
 #ifdef _WINDOWS
                      Sleep(1);
 #else
-                     sys_timer_sleep(1000L);
+                     sys_timer_usleep(1000L);
 #endif
 
                 }
@@ -1076,7 +1076,7 @@ void RemoveTimer(void)
  if(!iUseTimer)                                        // linux tread?
   {
    int i=0;
-   while(!bThreadEnded && i<2000) {sys_timer_sleep(1000L);i++;} // -> wait until thread has ended
+   while(!bThreadEnded && i<2000) {sys_timer_usleep(1000L);i++;} // -> wait until thread has ended
    if(thread!=-1) {pthread_detach(thread);thread=-1;}  // -> cancel thread anyway
   }
 #endif

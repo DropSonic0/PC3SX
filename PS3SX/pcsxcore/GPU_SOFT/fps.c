@@ -145,7 +145,7 @@ void FrameCap (void)
          return;
         }
 	if (tickstogo >= 200 && !(dwActFixes&16))
-		sys_timer_sleep(tickstogo*10 - 200);
+		sys_timer_usleep(tickstogo*10 - 200);
       }
     }
   }
@@ -258,7 +258,7 @@ void FrameSkip(void)
 
 	tickstogo = dwWaitTime - _ticks_since_last_update;
 	if (tickstogo-overslept >= 200 && !(dwActFixes&16))
-		sys_timer_sleep(tickstogo*10 - 200);
+		sys_timer_usleep(tickstogo*10 - 200);
       }
     }
    overslept = _ticks_since_last_update - dwWaitTime;
