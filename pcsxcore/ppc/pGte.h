@@ -34,6 +34,8 @@ static const unsigned char psxCP2time[64] = {
 	1, 1,  1,  1,  1,  6, 5,  39 // 38
 };
 
+void InvalidateCPURegs();
+
 #define CP2_FUNC(f) \
 void gte##f(); \
 static void rec##f() { \
@@ -41,7 +43,6 @@ static void rec##f() { \
 	iFlushRegs(0); \
 	LIW(0, (u32)psxRegs.code); \
 	STW(0, OFFSET(&psxRegs, &psxRegs.code), GetHWRegSpecial(PSXREGS)); \
-	FlushAllHWReg(); \
 	CALLFunc((u32)gte##f); \
 	cop2readypc = pc + (psxCP2time[_fFunct_(psxRegs.code)] << 2); \
 }
@@ -50,10 +51,9 @@ static void rec##f() { \
 void gte##f(); \
 static void rec##f() { \
 	if (pc < cop2readypc) idlecyclecount += (cop2readypc - pc) >> 2; \
-	iFlushRegs(0); \
+	InvalidateCPURegs(); \
 	LIW(0, (u32)psxRegs.code); \
 	STW(0, OFFSET(&psxRegs, &psxRegs.code), GetHWRegSpecial(PSXREGS)); \
-	FlushAllHWReg(); \
 	CALLFunc((u32)gte##f); \
 	cop2readypc = pc + (psxCP2time[_fFunct_(psxRegs.code)] << 2); \
 }
@@ -65,11 +65,11 @@ CP2_FUNC(CTC2);
 CP2_FUNC(LWC2);
 CP2_FUNC(SWC2);
 CP2_FUNCNC(RTPS);
-CP2_FUNC(OP);
+CP2_FUNCNC(OP);
 CP2_FUNCNC(NCLIP);
-CP2_FUNC(DPCS);
-CP2_FUNC(INTPL);
-CP2_FUNC(MVMVA);
+CP2_FUNCNC(DPCS);
+CP2_FUNCNC(INTPL);
+CP2_FUNCNC(MVMVA);
 CP2_FUNCNC(NCDS);
 CP2_FUNCNC(NCDT);
 CP2_FUNCNC(CDP);
@@ -77,14 +77,14 @@ CP2_FUNCNC(NCCS);
 CP2_FUNCNC(CC);
 CP2_FUNCNC(NCS);
 CP2_FUNCNC(NCT);
-CP2_FUNC(SQR);
-CP2_FUNC(DCPL);
+CP2_FUNCNC(SQR);
+CP2_FUNCNC(DCPL);
 CP2_FUNCNC(DPCT);
 CP2_FUNCNC(AVSZ3);
 CP2_FUNCNC(AVSZ4);
 CP2_FUNCNC(RTPT);
-CP2_FUNC(GPF);
-CP2_FUNC(GPL);
+CP2_FUNCNC(GPF);
+CP2_FUNCNC(GPL);
 CP2_FUNCNC(NCCT);
 
 #ifdef __cplusplus
