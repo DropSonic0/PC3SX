@@ -25,10 +25,10 @@ extern "C" {
 
 typedef void* HWND;
 #define CALLBACK
-#include "../plugins/Plugins.h"
+#include "../plugins/plugins.h"
 
-#include "PSEmu_Plugin_Defs.h"
-#include "Decode_XA.h"
+#include "psemu_plugin_defs.h"
+#include "decode_xa.h"
 
 
 int  LoadPlugins();

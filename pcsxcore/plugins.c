@@ -19,10 +19,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Plugins.h"
+#include "plugins.h"
 #include "spu.h"
-#include "PsxCommon.h"
-#include "../plugins/Plugins.h"
+#include "psxcommon.h"
+#include "../plugins/plugins.h"
 
 #ifdef __WIN32__
 #pragma warning(disable:4244)

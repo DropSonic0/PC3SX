@@ -22,7 +22,7 @@
 * Handles all CD-ROM registers and functions.
 */
 
-#include "CdRom.h"
+#include "cdrom.h"
 
 cdrStruct cdr;
 
@@ -93,14 +93,14 @@ static struct CdrStat stat;
 static struct SubQ *subq;
 
 #define CDR_INT(eCycle) { \
-	psxRegs.interrupt|= 0x4; \
-	psxRegs.intCycle[2].cycle = eCycle; \
-	psxRegs.intCycle[2].sCycle = psxRegs.cycle; }
+	psxRegs.interrupt |= (1 << PSXINT_CDR); \
+	psxRegs.intCycle[PSXINT_CDR].cycle = eCycle; \
+	psxRegs.intCycle[PSXINT_CDR].sCycle = psxRegs.cycle; }
 
 #define CDREAD_INT(eCycle) { \
-	psxRegs.interrupt|= 0x40000; \
-	psxRegs.intCycle[2+16].cycle = eCycle; \
-	psxRegs.intCycle[2+16].sCycle = psxRegs.cycle; }
+	psxRegs.interrupt |= (1 << PSXINT_CDREAD); \
+	psxRegs.intCycle[PSXINT_CDREAD].cycle = eCycle; \
+	psxRegs.intCycle[PSXINT_CDREAD].sCycle = psxRegs.cycle; }
 
 #define StartReading(type) { \
    	cdr.Reading = type; \
@@ -112,7 +112,7 @@ static struct SubQ *subq;
 #define StopReading() { \
 	if (cdr.Reading) { \
 		cdr.Reading = 0; \
-		psxRegs.interrupt&=~0x40000; \
+		psxRegs.interrupt &= ~(1 << PSXINT_CDREAD); \
 	} \
 }
 
@@ -1010,6 +1010,11 @@ void cdrWrite3(unsigned char rt) {
 			default: break;
 		}
 	}
+}
+
+void cdrDmaInterrupt() {
+	HW_DMA3_CHCR &= SWAP32(~0x01000000);
+	DMA_INTERRUPT(3);
 }
 
 void psxDma3(u32 madr, u32 bcr, u32 chcr) {

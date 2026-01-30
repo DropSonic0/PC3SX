@@ -21,11 +21,11 @@
 * R3000A CPU functions.
 */
 
-#include "R3000A.h"
-#include "PsxHw.h"
-#include "PsxDma.h"
-#include "CdRom.h"
-#include "Mdec.h"
+#include "r3000a.h"
+#include "psxhw.h"
+#include "psxdma.h"
+#include "cdrom.h"
+#include "mdec.h"
 
 R3000Acpu *psxCpu;
 psxRegisters psxRegs;
@@ -115,39 +115,63 @@ void psxBranchTest() {
 		psxRcntUpdate();
 
 	if (psxRegs.interrupt) {
-		if ((psxRegs.interrupt & 0x80) && (!Config.Sio)) { // sio
-			if ((psxRegs.cycle - psxRegs.intCycle[7].sCycle) >= psxRegs.intCycle[7].cycle) {
-				psxRegs.interrupt&=~0x80;
+		if ((psxRegs.interrupt & (1 << PSXINT_SIO)) && (!Config.Sio)) {
+			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_SIO].sCycle) >= psxRegs.intCycle[PSXINT_SIO].cycle) {
+				psxRegs.interrupt &= ~(1 << PSXINT_SIO);
 				sioInterrupt();
 			}
 		}
-		if (psxRegs.interrupt & 0x04) { // cdr
-			if ((psxRegs.cycle - psxRegs.intCycle[2].sCycle) >= psxRegs.intCycle[2].cycle) {
-				psxRegs.interrupt&=~0x04;
+		if (psxRegs.interrupt & (1 << PSXINT_CDR)) {
+			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_CDR].sCycle) >= psxRegs.intCycle[PSXINT_CDR].cycle) {
+				psxRegs.interrupt &= ~(1 << PSXINT_CDR);
 				cdrInterrupt();
 			}
 		}
-		if (psxRegs.interrupt & 0x040000) { // cdr read
-			if ((psxRegs.cycle - psxRegs.intCycle[2+16].sCycle) >= psxRegs.intCycle[2+16].cycle) {
-				psxRegs.interrupt&=~0x040000;
+		if (psxRegs.interrupt & (1 << PSXINT_CDREAD)) {
+			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_CDREAD].sCycle) >= psxRegs.intCycle[PSXINT_CDREAD].cycle) {
+				psxRegs.interrupt &= ~(1 << PSXINT_CDREAD);
 				cdrReadInterrupt();
 			}
 		}
-		if (psxRegs.interrupt & 0x01000000) { // gpu dma
-			if ((psxRegs.cycle - psxRegs.intCycle[3+24].sCycle) >= psxRegs.intCycle[3+24].cycle) {
-				psxRegs.interrupt&=~0x01000000;
+		if (psxRegs.interrupt & (1 << PSXINT_GPUDMA)) {
+			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_GPUDMA].sCycle) >= psxRegs.intCycle[PSXINT_GPUDMA].cycle) {
+				psxRegs.interrupt &= ~(1 << PSXINT_GPUDMA);
 				gpuInterrupt();
 			}
 		}
-		if (psxRegs.interrupt & 0x02000000) { // mdec out dma
-			if ((psxRegs.cycle - psxRegs.intCycle[5+24].sCycle) >= psxRegs.intCycle[5+24].cycle) {
-				psxRegs.interrupt&=~0x02000000;
+		if (psxRegs.interrupt & (1 << PSXINT_MDECOUTDMA)) {
+			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_MDECOUTDMA].sCycle) >= psxRegs.intCycle[PSXINT_MDECOUTDMA].cycle) {
+				psxRegs.interrupt &= ~(1 << PSXINT_MDECOUTDMA);
 				mdec1Interrupt();
+			}
+		}
+		if (psxRegs.interrupt & (1 << PSXINT_SPUDMA)) {
+			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_SPUDMA].sCycle) >= psxRegs.intCycle[PSXINT_SPUDMA].cycle) {
+				psxRegs.interrupt &= ~(1 << PSXINT_SPUDMA);
+				spuInterrupt();
+			}
+		}
+		if (psxRegs.interrupt & (1 << PSXINT_MDECINDMA)) {
+			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_MDECINDMA].sCycle) >= psxRegs.intCycle[PSXINT_MDECINDMA].cycle) {
+				psxRegs.interrupt &= ~(1 << PSXINT_MDECINDMA);
+				mdec0Interrupt();
+			}
+		}
+		if (psxRegs.interrupt & (1 << PSXINT_GPUOTCDMA)) {
+			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_GPUOTCDMA].sCycle) >= psxRegs.intCycle[PSXINT_GPUOTCDMA].cycle) {
+				psxRegs.interrupt &= ~(1 << PSXINT_GPUOTCDMA);
+				gpuotcInterrupt();
+			}
+		}
+		if (psxRegs.interrupt & (1 << PSXINT_CDRDMA)) {
+			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_CDRDMA].sCycle) >= psxRegs.intCycle[PSXINT_CDRDMA].cycle) {
+				psxRegs.interrupt &= ~(1 << PSXINT_CDRDMA);
+				cdrDmaInterrupt();
 			}
 		}
 
 		if (psxRegs.interrupt & 0x80000000) {
-			psxRegs.interrupt&=~0x80000000;
+			psxRegs.interrupt &= ~0x80000000;
 			psxTestHWInts();
 		}
 	}
