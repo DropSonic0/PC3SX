@@ -26,7 +26,7 @@
 #include "Mdec.h"
 #include "CdRom.h"
 
-void psxHwReset() {
+void psxHwReset(void) {
     if (Config.Sio) psxHu32ref(0x1070) |= SWAP32(0x80);
     if (Config.SpuIrq) psxHu32ref(0x1070) |= SWAP32(0x200);
 

@@ -1,5 +1,5 @@
 
-#include "../PsxCommon.h"
+#include "../psxcommon.h"
 #include "reguse.h"
 
 #include "../R3000A.h"

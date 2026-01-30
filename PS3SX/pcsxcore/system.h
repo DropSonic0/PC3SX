@@ -23,10 +23,10 @@
 
 int SysInit(void);							// Init mem and plugins
 void SysReset(void);						// Resets mem
-void SysPrintf(char *fmt, ...);			// Printf used by bios syscalls
-void SysMessage(char *fmt, ...);		// Message used to print msg to users
-void *SysLoadLibrary(char *lib);		// Loads Library
-void *SysLoadSym(void *lib, char *sym);	// Loads Symbol from Library
+void SysPrintf(const char *fmt, ...);			// Printf used by bios syscalls
+void SysMessage(const char *fmt, ...);		// Message used to print msg to users
+void *SysLoadLibrary(const char *lib);		// Loads Library
+void *SysLoadSym(void *lib, const char *sym);	// Loads Symbol from Library
 const char *SysLibError(void);				// Gets previous error loading sysbols
 void SysCloseLibrary(void *lib);		// Closes Library
 void SysUpdate(void);						// Called on VBlank (to update i.e. pads)

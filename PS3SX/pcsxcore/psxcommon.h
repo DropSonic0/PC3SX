@@ -57,7 +57,7 @@ typedef uintptr_t uptr;
 
 /* Local includes */
 #include "system.h"
-#include "debug.h"
+#include "Debug.h"
 
 /* Ryan TODO WTF is this? */
 #if defined (__LINUX__) || defined (__MACOSX__)|| defined (__ppc__)

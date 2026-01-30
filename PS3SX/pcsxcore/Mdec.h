@@ -21,7 +21,7 @@
 #ifndef __MDEC_H__
 #define __MDEC_H__
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
 #include "R3000A.h"
 #include "PsxHw.h"
 #include "PsxDma.h"

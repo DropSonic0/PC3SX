@@ -21,7 +21,7 @@
 #ifndef __GTE_H__
 #define __GTE_H__
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
 #include "R3000A.h"
 
 void gteMFC2();

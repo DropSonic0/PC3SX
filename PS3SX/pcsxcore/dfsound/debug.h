@@ -1,5 +1,5 @@
 /***************************************************************************
-                           debug.h  -  description
+                           Debug.h  -  description
                              -------------------
     begin                : Wed May 15 2002
     copyright            : (C) 2002 by Pete Bernert

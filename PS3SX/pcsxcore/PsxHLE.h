@@ -21,10 +21,10 @@
 #ifndef __PSXHLE_H__
 #define __PSXHLE_H__
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
 #include "R3000A.h"
 #include "plugins.h"
 
-extern void (*psxHLEt[256])();
+extern void (*psxHLEt[256])(void);
 
 #endif /* __PSXHLE_H__ */

@@ -100,7 +100,7 @@
 #include "cfg.h"
 #include "dsoundoss.h"
 #include "regs.h"
-#include "debug.h"
+#include "Debug.h"
 #include "record.h"
 #include "resource.h"
 #include "swap.h"

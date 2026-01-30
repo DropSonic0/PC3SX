@@ -22,7 +22,7 @@
 * R3000A disassembler.
 */
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
 
 char ostr[256];
 

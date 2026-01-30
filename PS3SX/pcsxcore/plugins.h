@@ -23,7 +23,7 @@
 
 typedef void* HWND;
 #define CALLBACK
-#include "Plugin.h"
+#include "plugin.h"
 
 #include "PSEmu_Plugin_Defs.h"
 #include "Decode_XA.h"

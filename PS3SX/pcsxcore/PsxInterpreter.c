@@ -22,7 +22,7 @@
 * PSX assembly interpreter.
 */
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
 #include "R3000A.h"
 #include "Gte.h"
 #include "PsxHLE.h"

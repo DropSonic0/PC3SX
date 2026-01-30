@@ -21,7 +21,7 @@
 #ifndef __PSXDMA_H__
 #define __PSXDMA_H__
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
 #include "R3000A.h"
 #include "PsxHw.h"
 #include "PsxMem.h"

@@ -24,11 +24,16 @@
 extern "C" {
 #endif
 
-#include "PsxCommon.h"
-#include "R3000A.h"
-#include "PsxMem.h"
-#include "plugins.h"
+#include "psxcommon.h"
 
+typedef struct
+{
+    u32 mode, target;
+    u32 rate, irq, counterState, irqState;
+    u32 cycle, cycleStart;
+} psxCounter;
+
+extern psxCounter psxCounters[4];
 extern u32 psxNextCounter, psxNextsCounter;
 
 void psxRcntInit(void);
@@ -41,6 +46,8 @@ void psxRcntWtarget(u32 index, u32 value);
 u32 psxRcntRcount(u32 index);
 u32 psxRcntRmode(u32 index);
 u32 psxRcntRtarget(u32 index);
+
+void psxUpdateVSyncRate(void);
 
 int psxRcntFreeze(gzFile f, int Mode);
 

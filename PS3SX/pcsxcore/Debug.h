@@ -19,7 +19,7 @@
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
 
 
 extern char *disRNameCP0[];

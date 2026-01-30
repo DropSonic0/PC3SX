@@ -22,7 +22,7 @@
 #include <time.h>
 #include <sys/types.h>
 
-#include "../PsxCommon.h"
+#include "../psxcommon.h"
 #include "../psxmem.h"
 #include "../psxcounters.h"
 #include "ppc.h"

@@ -26,10 +26,11 @@
 #include <time.h>
 #include <sys/types.h>
 
-#include "../PsxCommon.h"
+#include "../psxcommon.h"
 #include "ppc.h"
 #include "reguse.h"
 #include "../R3000A.h"
+#include "../PsxCounters.h"
 #include "../PsxHLE.h"
 
 /* defines */
@@ -102,10 +103,7 @@
 #define HWUSAGE_PSXREG    0x100
 
 /* externals */
-extern void SysRunGui();
-extern void SysMessage(char *fmt, ...);
-extern void SysReset();
-extern void SysPrintf(char *fmt, ...);
+#include "../system.h"
 extern int stop;
 
 /* structs */

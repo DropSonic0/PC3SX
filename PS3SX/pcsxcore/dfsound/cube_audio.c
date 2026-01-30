@@ -12,7 +12,7 @@
 
 #include "stdafx.h"
 #include "externals.h"
-#include "../PsxCommon.h"
+#include "../psxcommon.h"
 
 ////////////////////////////////////////////////////////////////////////
 // cube audio globals

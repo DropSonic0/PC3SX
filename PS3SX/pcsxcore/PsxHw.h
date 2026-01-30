@@ -21,10 +21,10 @@
 #ifndef __PSXHW_H__
 #define __PSXHW_H__
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
 #include "R3000A.h"
 #include "PsxMem.h"
-#include "Sio.h"
+#include "sio.h"
 #include "PsxCounters.h"
 
 #define HW_DMA0_MADR (psxHu32ref(0x1080)) // MDEC in DMA

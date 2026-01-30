@@ -21,7 +21,7 @@
 #ifndef __SPU_H__
 #define __SPU_H__
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
 #include "plugins.h"
 #include "R3000A.h"
 #include "PsxMem.h"

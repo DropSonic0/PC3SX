@@ -21,7 +21,7 @@
 #ifndef __R3000A_H__
 #define __R3000A_H__
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
 #include "PsxMem.h"
 #include "PsxCounters.h"
 #include "PsxBios.h"

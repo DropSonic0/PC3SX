@@ -23,7 +23,7 @@
 #include <time.h>
 #include <sys/types.h>
 
-#include "../PsxCommon.h"
+#include "../psxcommon.h"
 #include "ppc.h"
 #include "reguse.h"
 #include "pR3000A.h"
@@ -290,7 +290,7 @@ static int GetHWRegFromCPUReg(int cpureg)
 }
 
 // this function operates on cpu registers
-void SetDstCPUReg(int cpureg)
+static void SetDstCPUReg(int cpureg)
 {
 	DstCPUReg = cpureg;
 }
@@ -722,7 +722,7 @@ static void SetBranch() {
 		LIW(PutHWRegSpecial(ARG1), _Rt_);
                 LIW(GetHWRegSpecial(PSXPC), pc);
 		FlushAllHWReg();
-		CALLFunc((u32)psxDelayTest);
+		CALLFunc((void*)psxDelayTest);
 
 		Return();
 		return;
@@ -739,7 +739,7 @@ static void SetBranch() {
 	count = idlecyclecount + (pc - pcold)/4;
         ADDI(PutHWRegSpecial(CYCLECOUNT), GetHWRegSpecial(CYCLECOUNT), count);
 	FlushAllHWReg();
-	CALLFunc((u32)psxBranchTest);
+	CALLFunc((void*)psxBranchTest);
 	
 	// TODO: don't return if target is compiled
 	Return();
@@ -763,7 +763,7 @@ static void iJump(u32 branchPC) {
 		LIW(PutHWRegSpecial(ARG1), _Rt_);
 		LIW(GetHWRegSpecial(PSXPC), pc);
 		FlushAllHWReg();
-		CALLFunc((u32)psxDelayTest);
+		CALLFunc((void*)psxDelayTest);
                 
 		Return();
 		return;
@@ -782,13 +782,13 @@ static void iJump(u32 branchPC) {
             ADDI(PutHWRegSpecial(CYCLECOUNT), GetHWRegSpecial(CYCLECOUNT), count);
         //}
 	FlushAllHWReg();
-	CALLFunc((u32)psxBranchTest);
+	CALLFunc((void*)psxBranchTest);
 
 	if (!Config.HLE && Config.PsxOut &&
 	    ((branchPC & 0x1fffff) == 0xa0 ||
 	     (branchPC & 0x1fffff) == 0xb0 ||
 	     (branchPC & 0x1fffff) == 0xc0))
-	  CALLFunc((u32)psxJumpTest);
+	  CALLFunc((void*)psxJumpTest);
 
 	// always return for now...
 	//Return();
@@ -843,7 +843,7 @@ static void iBranch(u32 branchPC, int savectx) {
 		LIW(PutHWRegSpecial(ARG1), _Rt_);
                 LIW(GetHWRegSpecial(PSXPC), pc);
 		FlushAllHWReg();
-		CALLFunc((u32)psxDelayTest);
+		CALLFunc((void*)psxDelayTest);
 
 		Return();
 		return;
@@ -864,7 +864,7 @@ static void iBranch(u32 branchPC, int savectx) {
             ADDI(PutHWRegSpecial(CYCLECOUNT), GetHWRegSpecial(CYCLECOUNT), count);
         //}
 	FlushAllHWReg();
-	CALLFunc((u32)psxBranchTest);
+	CALLFunc((void*)psxBranchTest);
 	
 	// always return for now...
 	//Return();
@@ -909,7 +909,7 @@ static void iBranch(u32 branchPC, int savectx) {
 }
 
 
-void iDumpRegs() {
+void iDumpRegs(void) {
 	int i, j;
 
 	printf("%08x %08x\n", psxRegs.pc, psxRegs.cycle);
@@ -920,7 +920,7 @@ void iDumpRegs() {
 	}
 }
 
-void iDumpBlock(char *ptr) {
+static void iDumpBlock(char *ptr) {
 /*	FILE *f;
 	u32 i;
 
@@ -945,7 +945,7 @@ static void rec##f() { \
 	STW(GetHWRegSpecial(ARG1), OFFSET(&psxRegs, &psxRegs.code), GetHWRegSpecial(PSXREGS)); \
 	LIW(PutHWRegSpecial(PSXPC), (u32)pc); \
 	FlushAllHWReg(); \
-	CALLFunc((u32)psx##f); \
+	CALLFunc((void*)psx##f); \
 /*	branch = 2; */\
 }
 
@@ -957,7 +957,7 @@ static void rec##f() { \
         STW(GetHWRegSpecial(ARG1), OFFSET(&psxRegs, &psxRegs.code), GetHWRegSpecial(PSXREGS)); \
         LIW(PutHWRegSpecial(PSXPC), (u32)pc); \
         FlushAllHWReg(); \
-	CALLFunc((u32)psx##f); \
+	CALLFunc((void*)psx##f); \
 	branch = 2; \
 	iRet(); \
 }
@@ -970,7 +970,7 @@ static void rec##f() { \
         STW(GetHWRegSpecial(ARG1), OFFSET(&psxRegs, &psxRegs.code), GetHWRegSpecial(PSXREGS)); \
         LIW(PutHWRegSpecial(PSXPC), (u32)pc); \
         FlushAllHWReg(); \
-	CALLFunc((u32)psx##f); \
+	CALLFunc((void*)psx##f); \
 	branch = 2; \
 	iRet(); \
 }
@@ -983,7 +983,7 @@ static void rec##f() { \
 	LIW(0, (u32)psxRegs.code); \
 	STW(0, OFFSET(&psxRegs, &psxRegs.code), GetHWRegSpecial(PSXREGS)); \
 	FlushAllHWReg(); \
-	CALLFunc ((u32)gte##f); \
+	CALLFunc ((void*)gte##f); \
 	cop2readypc = pc + (psxCP2time[_fFunct_(psxRegs.code)]<<2); \
 }
 
@@ -992,7 +992,7 @@ void gte##f(); \
 static void rec##f() { \
 	if (pc < cop2readypc) idlecyclecount += ((cop2readypc - pc)>>2); \
 	iFlushRegs(0); \
-	CALLFunc ((u32)gte##f); \
+	CALLFunc ((void*)gte##f); \
 /*	branch = 2; */\
 	cop2readypc = pc + psxCP2time[_fFunct_(psxRegs.code)]; \
 }
@@ -1014,8 +1014,8 @@ static int recInit() {
 }
 
 static void recReset() {
-	memset(recRAM, 0, 0x200000);
-	memset(recROM, 0, 0x080000);
+	memset((void*)recRAM, 0, 0x200000);
+	memset((void*)recROM, 0, 0x080000);
 
 	ppcInit();
 	ppcSetPtr((u32 *)recMem);
@@ -1413,7 +1413,7 @@ static void recSLTU() {
 * Format:  OP rs, rt                                     *
 *********************************************************/
 
-int DoShift(u32 k)
+static int DoShift(u32 k)
 {
 	u32 i;
 	for (i=0; i<30; i++) {
@@ -1748,7 +1748,7 @@ static void recLB() {
     }
 	
 	preMemRead();
-	CALLFunc((u32)psxMemRead8);
+	CALLFunc((void*)psxMemRead8);
 	if (_Rt_) {
 		EXTSB(PutHWReg32(_Rt_), GetHWRegSpecial(RETVAL));
 		DisposeHWReg(GetSpecialIndexFromHWRegs(RETVAL));
@@ -1786,7 +1786,7 @@ static void recLBU() {
     }
         
 	preMemRead();
-	CALLFunc((u32)psxMemRead8);
+	CALLFunc((void*)psxMemRead8);
 	
 	if (_Rt_) {
 		SetDstCPUReg(3);
@@ -1827,7 +1827,7 @@ static void recLH() {
 	}
     
 	preMemRead();
-	CALLFunc((u32)psxMemRead16);
+	CALLFunc((void*)psxMemRead16);
 	if (_Rt_) {
 		EXTSH(PutHWReg32(_Rt_), GetHWRegSpecial(RETVAL));
 		DisposeHWReg(GetSpecialIndexFromHWRegs(RETVAL));
@@ -1869,7 +1869,7 @@ static void recLHU() {
 					LIW(PutHWRegSpecial(ARG1), addr);
 					DisposeHWReg(iRegs[_Rt_].reg);
 					InvalidateCPURegs();
-					CALLFunc((u32)SPU_readRegister);
+					CALLFunc((void*)SPU_readRegister);
 					
 					SetDstCPUReg(3);
 					PutHWReg32(_Rt_);
@@ -1883,7 +1883,7 @@ static void recLHU() {
 						LIW(PutHWRegSpecial(ARG1), (addr >> 4) & 0x3);
 						DisposeHWReg(iRegs[_Rt_].reg);
 						InvalidateCPURegs();
-						CALLFunc((u32)psxRcntRcount);
+						CALLFunc((void*)psxRcntRcount);
 						
 						SetDstCPUReg(3);
 						PutHWReg32(_Rt_);
@@ -1908,7 +1908,7 @@ static void recLHU() {
 	}
 	
 	preMemRead();
-	CALLFunc((u32)psxMemRead16);
+	CALLFunc((void*)psxMemRead16);
 	if (_Rt_) {
 		SetDstCPUReg(3);
 		PutHWReg32(_Rt_);
@@ -1964,7 +1964,7 @@ static void recLW() {
 
 					DisposeHWReg(iRegs[_Rt_].reg);
 					InvalidateCPURegs();
-					CALLFunc((u32)GPU_readData);
+					CALLFunc((void*)GPU_readData);
 					
 					SetDstCPUReg(3);
 					PutHWReg32(_Rt_);
@@ -1975,7 +1975,7 @@ static void recLW() {
 
 					DisposeHWReg(iRegs[_Rt_].reg);
 					InvalidateCPURegs();
-					CALLFunc((u32)GPU_readStatus);
+					CALLFunc((void*)GPU_readStatus);
 					
 					SetDstCPUReg(3);
 					PutHWReg32(_Rt_);
@@ -1986,7 +1986,7 @@ static void recLW() {
 	}
 
 	preMemRead();
-	CALLFunc((u32)psxMemRead32);
+	CALLFunc((void*)psxMemRead32);
 	if (_Rt_) {
 		SetDstCPUReg(3);
 		PutHWReg32(_Rt_);
@@ -2027,7 +2027,7 @@ static void recSB() {
 	}*/
 
 	preMemWrite(1);
-	CALLFunc((u32)psxMemWrite8);
+	CALLFunc((void*)psxMemWrite8);
 }
 
 static void recSH() {
@@ -2074,7 +2074,7 @@ static void recSH() {
 	}*/
 
 	preMemWrite(2);
-	CALLFunc((u32)psxMemWrite16);
+	CALLFunc((void*)psxMemWrite16);
 }
 
 static void recSW() {
@@ -2150,7 +2150,7 @@ static void recSW() {
 	B_DST(b1);*/
 #endif
 	preMemWrite(4);
-	CALLFunc((u32)psxMemWrite32);
+	CALLFunc((void*)psxMemWrite32);
 	
 	//B_DST(b2);
 }
@@ -2241,7 +2241,7 @@ static void recSYSCALL() {
 	LIW(PutHWRegSpecial(ARG1), 0x20);
 	LIW(PutHWRegSpecial(ARG2), (branch == 1 ? 1 : 0));
 	FlushAllHWReg();
-	CALLFunc ((u32)psxException);
+	CALLFunc ((void*)psxException);
 
 	branch = 2;
 	iRet();
@@ -2659,7 +2659,7 @@ static void recMTC0() {
 		iFlushRegs(0);
 		LIW(PutHWRegSpecial(PSXPC), (u32)pc);
 		FlushAllHWReg();
-		CALLFunc((u32)psxTestSWInts);
+		CALLFunc((void*)psxTestSWInts);
 /*		if(_Rd_ == 12) {
 		  LWZ(0, OFFSET(&psxRegs, &psxRegs.interrupt), GetHWRegSpecial(PSXREGS));
 		  ORIS(0, 0, 0x8000);
@@ -2712,16 +2712,16 @@ static void recHLE() {
 	FlushAllHWReg();
 	
 	if ((psxRegs.code & 0x3ffffff) == (psxRegs.code & 0x7)) {
-		CALLFunc((u32)psxHLEt[psxRegs.code & 0x7]);
+		CALLFunc((void*)psxHLEt[psxRegs.code & 0x7]);
 	} else {
 		// somebody else must have written to current opcode for this to happen!!!!
-		CALLFunc((u32)psxHLEt[0]); // call dummy function
+		CALLFunc((void*)psxHLEt[0]); // call dummy function
 	}
 	
 	count = idlecyclecount + (pc - pcold)/4 + 20;
 	ADDI(PutHWRegSpecial(CYCLECOUNT), GetHWRegSpecial(CYCLECOUNT), count);
 	FlushAllHWReg();
-	CALLFunc((u32)psxBranchTest);
+	CALLFunc((void*)psxBranchTest);
 	Return();
 	
 	branch = 2;
@@ -2781,7 +2781,7 @@ static void (*recCP2BSC[32])() = {
 	recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL
 };
 
-static void MakeItExecutable(u8* ptr,int size) {
+static void MakeItExecutable(u8* ptr,u32 size) {
  	while((u32)ptr < size) {
  		__dcbst(ptr);
  		__icbi(ptr);
