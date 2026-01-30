@@ -20,34 +20,35 @@
 #include "ppc.h"
 
 
-int psxCP2time[64] = {
-        2,  16, 1,  1,  1,  1, 8,  1,  // 00
-        1,  1,  1,  1,  6,  1, 1,  1,  // 08
-        8,  8,  8,  19, 13, 1, 44, 1,  // 10
-        1,  1,  1,  17, 11, 1, 14, 1,  // 18
-        30, 1,  1,  1,  1,  1, 1,  1,  // 20
-        5,  8,  17, 1,  1,  5, 6,  1,  // 28
-        23, 1,  1,  1,  1,  1, 1,  1,  // 30
-        1,  1,  1,  1,  1,  6, 5,  39  // 38
+static const unsigned char psxCP2time[64] = {
+	2, 16, 1,  1,  1,  1, 8,  1, // 00
+	1, 1,  1,  1,  6,  1, 1,  1, // 08
+	8, 8,  8,  19, 13, 1, 44, 1, // 10
+	1, 1,  1,  17, 11, 1, 14, 1, // 18
+	30, 1, 1,  1,  1,  1, 1,  1, // 20
+	5, 8,  17, 1,  1,  5, 6,  1, // 28
+	23, 1, 1,  1,  1,  1, 1,  1, // 30
+	1, 1,  1,  1,  1,  6, 5,  39 // 38
 };
 
 #define CP2_FUNC(f) \
 static void rec##f() { \
-	if (pc < cop2readypc) idlecyclecount += (cop2readypc - pc)>>2; \
+	if (pc < cop2readypc) idlecyclecount += (cop2readypc - pc) >> 2; \
 	iFlushRegs(); \
 	LIW(r9, (u32)psxRegs.code); \
 	STWRtoPR(&psxRegs.code, r9); \
-	CALLFunc ((u32)gte##f); \
-	cop2readypc = pc + (psxCP2time[_fFunct_(psxRegs.code)]<<2); \
+	CALLFunc((u32)gte##f); \
+	cop2readypc = pc + (psxCP2time[_fFunct_(psxRegs.code)] << 2); \
 }
 
 #define CP2_FUNCNC(f) \
 static void rec##f() { \
-	if (pc < cop2readypc) idlecyclecount += ((cop2readypc - pc)>>2); \
+	if (pc < cop2readypc) idlecyclecount += (cop2readypc - pc) >> 2; \
 	iFlushRegs(); \
-	CALLFunc ((u32)gte##f); \
-/*	branch = 2; */\
-	cop2readypc = pc + psxCP2time[_fFunct_(psxRegs.code)]; \
+	LIW(r9, (u32)psxRegs.code); \
+	STWRtoPR(&psxRegs.code, r9); \
+	CALLFunc((u32)gte##f); \
+	cop2readypc = pc + (psxCP2time[_fFunct_(psxRegs.code)] << 2); \
 }
 
 // GTE function callers
