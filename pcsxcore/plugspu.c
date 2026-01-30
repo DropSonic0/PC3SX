@@ -14,8 +14,8 @@
 
 //typedef char HWND;
 
-#include "PSEmu_Plugin_Defs.h"
-#include "Decode_XA.h"
+#include "psemu_plugin_defs.h"
+#include "decode_xa.h"
 
 static char *LibName = "LinuzAppz SpuNull Driver";
 /*

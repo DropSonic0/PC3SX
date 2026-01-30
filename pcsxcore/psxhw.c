@@ -22,9 +22,9 @@
 * Functions for PSX hardware control.
 */
 
-#include "PsxHw.h"
-#include "Mdec.h"
-#include "CdRom.h"
+#include "psxhw.h"
+#include "mdec.h"
+#include "cdrom.h"
 
 void psxHwReset() {
 //if(use_vm){

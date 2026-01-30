@@ -42,9 +42,9 @@
 /* Ryan TODO: I'd rather not use GLib in here */
 
 #include <stdlib.h>
-#include "PsxMem.h"
-#include "R3000A.h"
-#include "PsxHw.h"
+#include "psxmem.h"
+#include "r3000a.h"
+#include "psxhw.h"
 
 extern void SysMessage(const char *fmt, ...);
 
