@@ -128,9 +128,9 @@ extern u8* psxMemRLUT[0x10000] __attribute__((aligned(32)));
 #define PSXREC
 #endif
 
-int  psxMemInit();
-void psxMemReset();
-void psxMemShutdown();
+int psxMemInit(void);
+void psxMemReset(void);
+void psxMemShutdown(void);
 
 u8   psxMemRead8 (u32 mem);
 u16  psxMemRead16(u32 mem);

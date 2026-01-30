@@ -26,14 +26,14 @@
 #include "PsxHw.h"
 #include "PsxDma.h"
 
-void mdecInit();
+void mdecInit(void);
 void mdecWrite0(u32 data);
 void mdecWrite1(u32 data);
-u32  mdecRead0();
-u32  mdecRead1();
+u32  mdecRead0(void);
+u32  mdecRead1(void);
 void psxDma0(u32 madr, u32 bcr, u32 chcr);
 void psxDma1(u32 madr, u32 bcr, u32 chcr);
-void mdec1Interrupt();
+void mdec1Interrupt(void);
 int  mdecFreeze(gzFile f, int Mode);
 
 #endif /* __MDEC_H__ */

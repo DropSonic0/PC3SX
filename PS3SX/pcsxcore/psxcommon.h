@@ -88,8 +88,6 @@ typedef uintptr_t uptr;
 extern int Log;
 void __Log(char *fmt, ...);
 
-void __Log(char *fmt, ...);
-
 typedef struct {
 	char Gpu[256];
 	char Spu[256];
