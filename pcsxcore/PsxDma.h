@@ -14,11 +14,11 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
-#ifndef __PSXDMA_H__
-#define __PSXDMA_H__
+#ifndef PSXDMA_H
+#define PSXDMA_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,40 +30,42 @@ extern "C" {
 #include "psxmem.h"
 
 #define GPUDMA_INT(eCycle) { \
-	psxRegs.interrupt |= 0x01000000; \
-	psxRegs.intCycle[3+24].cycle = eCycle; \
-	psxRegs.intCycle[3+24].sCycle = psxRegs.cycle; \
-}
-
-#define MDECOUTDMA_INT(eCycle) { \
-	psxRegs.interrupt |= 0x02000000; \
-	psxRegs.intCycle[5+24].cycle = eCycle; \
-	psxRegs.intCycle[5+24].sCycle = psxRegs.cycle; \
+	psxRegs.interrupt |= (1 << PSXINT_GPUDMA); \
+	psxRegs.intCycle[PSXINT_GPUDMA].cycle = eCycle; \
+	psxRegs.intCycle[PSXINT_GPUDMA].sCycle = psxRegs.cycle; \
 }
 
 #define SPUDMA_INT(eCycle) { \
-	psxRegs.interrupt |= 0x03000000; \
-	psxRegs.intCycle[6+24].cycle = eCycle; \
-	psxRegs.intCycle[6+24].sCycle = psxRegs.cycle; \
+	psxRegs.interrupt |= (1 << PSXINT_SPUDMA); \
+	psxRegs.intCycle[PSXINT_SPUDMA].cycle = eCycle; \
+	psxRegs.intCycle[PSXINT_SPUDMA].sCycle = psxRegs.cycle; \
+}
+
+#define MDECOUTDMA_INT(eCycle) { \
+	psxRegs.interrupt |= (1 << PSXINT_MDECOUTDMA); \
+	psxRegs.intCycle[PSXINT_MDECOUTDMA].cycle = eCycle; \
+	psxRegs.intCycle[PSXINT_MDECOUTDMA].sCycle = psxRegs.cycle; \
 }
 
 #define MDECINDMA_INT(eCycle) { \
-	psxRegs.interrupt |= 0x04000000; \
-	psxRegs.intCycle[7+24].cycle = eCycle; \
-	psxRegs.intCycle[7+24].sCycle = psxRegs.cycle; \
+	psxRegs.interrupt |= (1 << PSXINT_MDECINDMA); \
+	psxRegs.intCycle[PSXINT_MDECINDMA].cycle = eCycle; \
+	psxRegs.intCycle[PSXINT_MDECINDMA].sCycle = psxRegs.cycle; \
 }
 
 #define GPUOTCDMA_INT(eCycle) { \
-	psxRegs.interrupt |= 0x05000000; \
-	psxRegs.intCycle[8+24].cycle = eCycle; \
-	psxRegs.intCycle[8+24].sCycle = psxRegs.cycle; \
+	psxRegs.interrupt |= (1 << PSXINT_GPUOTCDMA); \
+	psxRegs.intCycle[PSXINT_GPUOTCDMA].cycle = eCycle; \
+	psxRegs.intCycle[PSXINT_GPUOTCDMA].sCycle = psxRegs.cycle; \
 }
 
 #define CDRDMA_INT(eCycle) { \
-	psxRegs.interrupt |= 0x06000000; \
-	psxRegs.intCycle[9+24].cycle = eCycle; \
-	psxRegs.intCycle[9+24].sCycle = psxRegs.cycle; \
+	psxRegs.interrupt |= (1 << PSXINT_CDRDMA); \
+	psxRegs.intCycle[PSXINT_CDRDMA].cycle = eCycle; \
+	psxRegs.intCycle[PSXINT_CDRDMA].sCycle = psxRegs.cycle; \
 }
+
+/* DMA5 = N/A (PIO) */
 
 void psxDma3(u32 madr, u32 bcr, u32 chcr);
 void psxDma4(u32 madr, u32 bcr, u32 chcr);
@@ -77,4 +79,3 @@ void cdrDmaInterrupt();
 }
 #endif
 #endif
-
