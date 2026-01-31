@@ -57,6 +57,67 @@ extern "C"
 int NeedReset = 0;
 int Running =0;
 long LoadCdBios = 0;
+int wanna_leave = 0;
+
+// Mednafen compatibility functions
+extern "C" {
+	void* MDFNDC_AllocateExec(uint32_t aSize) {
+		return memalign(128, aSize);
+	}
+
+	void MDFNDC_FreeExec(void* aData, uint32_t aSize) {
+		free(aData);
+	}
+
+	uint32_t MDFNDC_GetTime() {
+		return (uint32_t)time(NULL);
+	}
+
+	void MDFND_Message(const char *msg) {
+		SysPrintf("%s", msg);
+	}
+
+	void MDFN_printf(const char *fmt, ...) {
+		va_list list;
+		char msg[512];
+		va_start(list, fmt);
+		vsnprintf(msg, 512, fmt, list);
+		va_end(list);
+		SysPrintf("%s", msg);
+	}
+
+	void MDFND_PrintError(const char *fmt, ...) {
+		va_list list;
+		char msg[512];
+		va_start(list, fmt);
+		vsnprintf(msg, 512, fmt, list);
+		va_end(list);
+		SysPrintf("Error: %s", msg);
+	}
+
+	// Memory based file interface for savestates (Satisfying MDFNPS3 requirements)
+	// smFile is defined as void* in psxcommon.h
+
+	smFile smopen(const char *path, const char *mode) {
+		return (smFile)fopen(path, mode);
+	}
+
+	off_t smseek(smFile file, off_t offset, int whence) {
+		return fseek((FILE*)file, (long)offset, whence);
+	}
+
+	int smclose(smFile file) {
+		return fclose((FILE*)file);
+	}
+
+	int smwrite(smFile file, const void* buf, unsigned int len) {
+		return fwrite(buf, 1, len, (FILE*)file);
+	}
+
+	int smread(smFile file, void* buf, unsigned int len) {
+		return fread(buf, 1, len, (FILE*)file);
+	}
+}
 
 //Sound Function
 unsigned long SoundGetBytesBuffered(void)
@@ -643,10 +704,13 @@ int main()
 	switch(RomType){
 	 case 1: 
 		 RunEXE();
+		 break;
 	 case 2: 
 		 RunCD();
+		 break;
 	 default:
 		 RunBios();
+		 break;
 	}
 
 	SysPrintf("done \n");
