@@ -56,10 +56,10 @@ typedef long (CALLBACK* SIO1open)(HWND);
 #include "psemu_plugin_defs.h"
 #include "decode_xa.h"
 
-int LoadPlugins();
-void ReleasePlugins();
-int OpenPlugins();
-void ClosePlugins();
+int LoadPlugins(void);
+void ReleasePlugins(void);
+int OpenPlugins(void);
+void ClosePlugins(void);
 
 typedef unsigned long (CALLBACK* PSEgetLibType)(void);
 typedef unsigned long (CALLBACK* PSEgetLibVersion)(void);

@@ -31,8 +31,8 @@ extern "C" {
 
 extern u32 psxNextCounter, psxNextsCounter;
 
-void psxRcntInit();
-void psxRcntUpdate();
+void psxRcntInit(void);
+void psxRcntUpdate(void);
 
 void psxRcntWcount(u32 index, u32 value);
 void psxRcntWmode(u32 index, u32 value);

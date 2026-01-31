@@ -59,7 +59,7 @@ void SignalExit(int sig) {
 
 void SPUirq(void);
 
-void OpenPlugins() {
+void OpenPlugins(void) {
 	int ret;
 
     SysPrintf("start OpenPlugins()\n");
@@ -84,7 +84,7 @@ void OpenPlugins() {
 
 }
 
-void ClosePlugins() {
+void ClosePlugins(void) {
 	int ret;
 
 	ret = CDR_close();
@@ -99,7 +99,7 @@ void ClosePlugins() {
 	if (ret != 0) { SysMessage ("Error Closing GPU Plugin\n"); exit(1); }
 }
 
-void ResetPlugins() {
+void ResetPlugins(void) {
 	int ret;
 
 	CDR_shutdown();

@@ -126,9 +126,9 @@ extern u8 **psxMemRLUT;
 #define PSXREC
 #endif
 
-int psxMemInit();
-void psxMemReset();
-void psxMemShutdown();
+int psxMemInit(void);
+void psxMemReset(void);
+void psxMemShutdown(void);
 
 #ifdef MDFNPS3
 void MDFNPCSXGetBios(uint8_t* aBuffer);

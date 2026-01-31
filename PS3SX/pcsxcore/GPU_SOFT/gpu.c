@@ -301,7 +301,7 @@ void DoTextSnapShot(int iNum)
 
 ////////////////////////////////////////////////////////////////////////
 
-void CALLBACK GPUmakeSnapshot(void)                    // snapshot of whole vram
+void CALLBACK SOFTGPUmakeSnapshot(void)                    // snapshot of whole vram
 {
  FILE *bmpfile;
  char filename[256];     
@@ -378,7 +378,7 @@ void CALLBACK GPUmakeSnapshot(void)                    // snapshot of whole vram
 // INIT, will be called after lib load... well, just do some var init...
 ////////////////////////////////////////////////////////////////////////
  
-long CALLBACK GPUinit()                                // GPU INIT
+long CALLBACK SOFTGPUinit(void)                                // GPU INIT
 {
  memset(ulStatusControl,0,256*sizeof(uint32_t));  // init save state scontrol field
 
@@ -441,7 +441,7 @@ long CALLBACK GPUinit()                                // GPU INIT
 ////////////////////////////////////////////////////////////////////////
 
 
-long GPUopen(unsigned long * disp,char * CapText,char * CfgFile)
+long SOFTGPUopen(unsigned long * disp,char * CapText,char * CfgFile)
 {
  unsigned long d;
 
@@ -469,7 +469,7 @@ long GPUopen(unsigned long * disp,char * CapText,char * CfgFile)
 // time to leave...
 ////////////////////////////////////////////////////////////////////////
 
-long CALLBACK GPUclose()                               // GPU CLOSE
+long CALLBACK SOFTGPUclose(void)                               // GPU CLOSE
 {
 
  CloseDisplay();                                       // shutdown direct draw
@@ -481,7 +481,7 @@ long CALLBACK GPUclose()                               // GPU CLOSE
 // I shot the sheriff
 ////////////////////////////////////////////////////////////////////////
 
-long CALLBACK GPUshutdown()                            // GPU SHUTDOWN
+long CALLBACK SOFTGPUshutdown(void)                            // GPU SHUTDOWN
 {
  free(psxVSecure);
 
@@ -784,7 +784,7 @@ void CALLBACK GPUcursor(int iPlayer,int x,int y)
 // update lace is called evry VSync
 ////////////////////////////////////////////////////////////////////////
 
-void CALLBACK GPUupdateLace(void)                      // VSYNC
+void CALLBACK SOFTGPUupdateLace(void)                      // VSYNC
 {
  if(!(dwActFixes&1))
   lGPUstatusRet^=0x80000000;                           // odd/even bit
@@ -824,7 +824,7 @@ void CALLBACK GPUupdateLace(void)                      // VSYNC
 ////////////////////////////////////////////////////////////////////////
 
 
-uint32_t CALLBACK GPUreadStatus(void)             // READ STATUS
+uint32_t CALLBACK SOFTGPUreadStatus(void)             // READ STATUS
 {
  if(dwActFixes&1)
   {
@@ -844,7 +844,7 @@ uint32_t CALLBACK GPUreadStatus(void)             // READ STATUS
 // these are always single packet commands.
 ////////////////////////////////////////////////////////////////////////
 
-void CALLBACK GPUwriteStatus(uint32_t gdata)      // WRITE STATUS
+void CALLBACK SOFTGPUwriteStatus(uint32_t gdata)      // WRITE STATUS
 {
  uint32_t lCommand=(gdata>>24)&0xff;
 
@@ -1133,7 +1133,7 @@ __inline void FinishedVRAMRead(void)
 // core read from vram
 ////////////////////////////////////////////////////////////////////////
 
-void CALLBACK GPUreadDataMem(uint32_t * pMem, int iSize)
+void CALLBACK SOFTGPUreadDataMem(uint32_t * pMem, int iSize)
 {
  int i;
 
@@ -1197,7 +1197,7 @@ ENDREAD:
 
 ////////////////////////////////////////////////////////////////////////
 
-uint32_t CALLBACK GPUreadData(void)
+uint32_t CALLBACK SOFTGPUreadData(void)
 {
  uint32_t l;
  GPUreadDataMem(&l,1);
@@ -1279,7 +1279,7 @@ const unsigned char primTableCX[256] =
     0,0,0,0,0,0,0,0
 };
 
-void CALLBACK GPUwriteDataMem(uint32_t * pMem, int iSize)
+void CALLBACK SOFTGPUwriteDataMem(uint32_t * pMem, int iSize)
 {
  unsigned char command;
  uint32_t gdata=0;
@@ -1402,7 +1402,7 @@ ENDVRAM:
 
 ////////////////////////////////////////////////////////////////////////
 
-void CALLBACK GPUwriteData(uint32_t gdata)
+void CALLBACK SOFTGPUwriteData(uint32_t gdata)
 {
  PUTLE32(&gdata, gdata);
  GPUwriteDataMem(&gdata,1);
@@ -1432,7 +1432,7 @@ long CALLBACK GPUgetMode(void)
 // call config dlg
 ////////////////////////////////////////////////////////////////////////
 
-long CALLBACK GPUconfigure(void)
+long CALLBACK SOFTGPUconfigure(void)
 {
  SoftDlgProc();
 
@@ -1466,7 +1466,7 @@ __inline BOOL CheckForEndlessLoop(unsigned long laddr)
  return FALSE;
 }
 
-long CALLBACK GPUdmaChain(uint32_t * baseAddrL, uint32_t addr)
+long CALLBACK SOFTGPUdmaChain(uint32_t * baseAddrL, uint32_t addr)
 {
  uint32_t dmaMem;
  unsigned char * baseAddrB;
@@ -1504,7 +1504,7 @@ long CALLBACK GPUdmaChain(uint32_t * baseAddrL, uint32_t addr)
 ////////////////////////////////////////////////////////////////////////
 
 
-void CALLBACK GPUabout(void)                           // ABOUT
+void CALLBACK SOFTGPUabout(void)                           // ABOUT
 {
  AboutDlgProc();
  return;
@@ -1514,7 +1514,7 @@ void CALLBACK GPUabout(void)                           // ABOUT
 // We are ever fine ;)
 ////////////////////////////////////////////////////////////////////////
 
-long CALLBACK GPUtest(void)
+long CALLBACK SOFTGPUtest(void)
 {
  // if test fails this function should return negative value for error (unable to continue)
  // and positive value for warning (can continue but output might be crappy)
@@ -1535,7 +1535,7 @@ typedef struct GPUFREEZETAG
 
 ////////////////////////////////////////////////////////////////////////
 
-long CALLBACK GPUfreeze(uint32_t ulGetFreezeData,GPUFreeze_t * pF)
+long CALLBACK SOFTGPUfreeze(uint32_t ulGetFreezeData,GPUFreeze_t * pF)
 {
  //----------------------------------------------------//
  if(ulGetFreezeData==2)                                // 2: info, which save slot is selected? (just for display)
@@ -1926,7 +1926,7 @@ void GPUgetScreenPic(unsigned char * pMem)
 // release your picture data and stop displaying
 // the screen pic
 
-void CALLBACK GPUshowScreenPic(unsigned char * pMem)
+void CALLBACK SOFTGPUshowScreenPic(unsigned char * pMem)
 {
  DestroyPic();                                         // destroy old pic data
  if(pMem==0) return;                                   // done
