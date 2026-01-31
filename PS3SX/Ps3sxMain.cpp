@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "cell.h"
 #include <vector>
 #include "rom_list.h"
@@ -58,66 +59,6 @@ int NeedReset = 0;
 int Running =0;
 long LoadCdBios = 0;
 int wanna_leave = 0;
-
-// Mednafen compatibility functions
-extern "C" {
-	void* MDFNDC_AllocateExec(uint32_t aSize) {
-		return memalign(128, aSize);
-	}
-
-	void MDFNDC_FreeExec(void* aData, uint32_t aSize) {
-		free(aData);
-	}
-
-	uint32_t MDFNDC_GetTime() {
-		return (uint32_t)time(NULL);
-	}
-
-	void MDFND_Message(const char *msg) {
-		SysPrintf("%s", msg);
-	}
-
-	void MDFN_printf(const char *fmt, ...) {
-		va_list list;
-		char msg[512];
-		va_start(list, fmt);
-		vsnprintf(msg, 512, fmt, list);
-		va_end(list);
-		SysPrintf("%s", msg);
-	}
-
-	void MDFND_PrintError(const char *fmt, ...) {
-		va_list list;
-		char msg[512];
-		va_start(list, fmt);
-		vsnprintf(msg, 512, fmt, list);
-		va_end(list);
-		SysPrintf("Error: %s", msg);
-	}
-
-	// Memory based file interface for savestates (Satisfying MDFNPS3 requirements)
-	// smFile is defined as void* in psxcommon.h
-
-	smFile smopen(const char *path, const char *mode) {
-		return (smFile)fopen(path, mode);
-	}
-
-	off_t smseek(smFile file, off_t offset, int whence) {
-		return fseek((FILE*)file, (long)offset, whence);
-	}
-
-	int smclose(smFile file) {
-		return fclose((FILE*)file);
-	}
-
-	int smwrite(smFile file, const void* buf, unsigned int len) {
-		return fwrite(buf, 1, len, (FILE*)file);
-	}
-
-	int smread(smFile file, void* buf, unsigned int len) {
-		return fread(buf, 1, len, (FILE*)file);
-	}
-}
 
 //Sound Function
 unsigned long SoundGetBytesBuffered(void)
@@ -723,4 +664,65 @@ int main()
 	 return(-1);
 }
 
+}
+
+// Mednafen compatibility functions
+extern "C" {
+	void* MDFNDC_AllocateExec(uint32_t aSize) {
+		return memalign(128, aSize);
+	}
+
+	void MDFNDC_FreeExec(void* aData, uint32_t aSize) {
+		(void)aSize;
+		free(aData);
+	}
+
+	uint32_t MDFNDC_GetTime() {
+		return (uint32_t)time(NULL);
+	}
+
+	void MDFND_Message(const char *msg) {
+		SysPrintf("%s", msg);
+	}
+
+	void MDFN_printf(const char *fmt, ...) {
+		va_list list;
+		char msg[512];
+		va_start(list, fmt);
+		vsnprintf(msg, 512, fmt, list);
+		va_end(list);
+		SysPrintf("%s", msg);
+	}
+
+	void MDFND_PrintError(const char *fmt, ...) {
+		va_list list;
+		char msg[512];
+		va_start(list, fmt);
+		vsnprintf(msg, 512, fmt, list);
+		va_end(list);
+		SysPrintf("Error: %s", msg);
+	}
+
+	// Memory based file interface for savestates (Satisfying MDFNPS3 requirements)
+	// smFile is defined as void* in psxcommon.h
+
+	void* smopen(const char *path, const char *mode) {
+		return (void*)fopen(path, mode);
+	}
+
+	off_t smseek(void* file, off_t offset, int whence) {
+		return (off_t)fseek((FILE*)file, (long)offset, whence);
+	}
+
+	int smclose(void* file) {
+		return fclose((FILE*)file);
+	}
+
+	int smwrite(void* file, const void* buf, unsigned int len) {
+		return (int)fwrite(buf, 1, len, (FILE*)file);
+	}
+
+	int smread(void* file, void* buf, unsigned int len) {
+		return (int)fread(buf, 1, len, (FILE*)file);
+	}
 }

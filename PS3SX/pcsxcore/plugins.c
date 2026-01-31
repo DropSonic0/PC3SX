@@ -23,6 +23,8 @@
 
 #include "plugins.h"
 
+extern void SysPrintf(const char *fmt, ...);
+
 static char IsoFile[MAXPATHLEN] = "";
 static s64 cdOpenCaseTime = 0;
 
@@ -188,7 +190,7 @@ extern unsigned short pkSPUreadDMA(void);
 extern void pkSPUwriteDMAMem(unsigned short *, int);
 extern void pkSPUreadDMAMem(unsigned short *, int);
 extern void pkSPUplayADPCMchannel(xa_decode_t *);
-extern void pkSPUasync(unsigned long);
+extern void pkSPUasync(uint32_t);
 extern void pkSPUregisterCallback(void (CALLBACK *callback)(void));
 extern long pkSPUfreeze(uint32_t, SPUFreeze_t *);
 
