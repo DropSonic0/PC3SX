@@ -48,13 +48,11 @@ extern "C"
 {
 
 #include "psxcommon.h"
-#include "Sio.h"
+#include "sio.h"
 #include "PlugCD.h"
 #include "plugins.h"
 #include "misc.h"
-#include "R3000a.h"
-
-void SysPrintf(char *fmt, ...);
+#include "r3000a.h"
 
 int NeedReset = 0;
 int Running =0;
@@ -351,7 +349,7 @@ void InitConfig()
 	strcpy(Config.BiosDir, Iniconfig.biospath);
 	
 	//Set Bios
-	sprintf(Config.BiosDir, "%s/scph1001.bin",Iniconfig.biospath);
+	strcpy(Config.Bios, "scph1001.bin");
 
 	sprintf(Config.Mcd1, "%s/Mcd001.mcr",Iniconfig.savpath);
 	sprintf(Config.Mcd2, "%s/Mcd002.mcr",Iniconfig.savpath);
@@ -366,7 +364,7 @@ int SysInit()
     SysPrintf("start SysInit()\n");
 
     SysPrintf("psxInit()\n");
-	psxInit();
+	EmuInit();
 
     SysPrintf("LoadPlugins()\n");
 	LoadPlugins();
@@ -378,16 +376,16 @@ int SysInit()
 
 void SysReset() {
     SysPrintf("start SysReset()\n");
-	psxReset();
+	EmuReset();
 	SysPrintf("end SysReset()\n");
 }
 
-void SysPrintf(char *fmt, ...) {
+void SysPrintf(const char *fmt, ...) {
     va_list list;
     char msg[512];
 
     va_start(list, fmt);
-    vsprintf(msg, fmt, list);
+    vsnprintf(msg, 512, fmt, list);
     va_end(list);
 
 	dprintf_console(msg);
@@ -396,15 +394,15 @@ void SysPrintf(char *fmt, ...) {
 		fputs(msg, emuLog);
 		fflush(emuLog);
 	}
-	printf(msg);
+	printf("%s", msg);
 }
 
-void SysMessage(char *fmt, ...) {
+void SysMessage(const char *fmt, ...) {
 	va_list list;
     char msg[512];
 
     va_start(list, fmt);
-    vsprintf(msg, fmt, list);
+    vsnprintf(msg, 512, fmt, list);
     va_end(list);
 
 	dprintf_console(msg);
@@ -414,21 +412,24 @@ void SysMessage(char *fmt, ...) {
 		fflush(emuLog);
 		fclose(emuLog);
 	}
-	printf(msg);
+	printf("%s", msg);
 }
 
-void *SysLoadLibrary(char *lib) {
-		return lib;
+void *SysLoadLibrary(const char *lib) {
+		return (void*)lib;
 }
 
-void *SysLoadSym(void *lib, char *sym) {
+void *SysLoadSym(void *lib, const char *sym) {
+	(void)sym;
 	return lib; //smhzc
 }
 
 const char *SysLibError() {
+	return NULL;
 }
 
 void SysCloseLibrary(void *lib) {
+	(void)lib;
 }
 
 // Called periodically from the emu thread
@@ -444,7 +445,7 @@ void SysRunGui()
 
 // Close mem and plugins
 void SysClose() {
-	psxShutdown();
+	EmuShutdown();
 	ReleasePlugins();
 }
 
@@ -521,6 +522,7 @@ static int handler(void* user, const char* section, const char* name,const char*
     }else if (MATCH("psxbios", "biospath")) {
         pconfig->biospath = strdup(value);
     }
+	return 1;
 }
 
 void CreatFolder(char* folders)

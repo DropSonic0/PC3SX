@@ -15,10 +15,14 @@ MAKE_EBOOT = scetool --sce-type=SELF --compress-data=TRUE --skip-sections=FALSE 
 
 PPU_OPTIMIZE_LV = -O2
 
-PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.cpp \
-	./ps3/input/cellInput.cpp ./ps3/graphics/PSGLGraphics.cpp ./ps3/fileio/FileBrowser.cpp\
-	./ps3/buffer.c ./ps3/resampler.c ./ps3/ini/ini.c ./ps3/ini/iniFile.cpp \
+PPU_SRCS		:= Ps3sxMain.cpp ./PS3/ps3audio.cpp ./PS3/ps3video.cpp ./PS3/rom_list.cpp \
+	./PS3/input/cellInput.cpp ./PS3/graphics/PSGLGraphics.cpp ./PS3/fileio/FileBrowser.cpp\
+	./PS3/buffer.c ./PS3/resampler.c ./PS3/Ini/ini.c ./PS3/Ini/IniFile.cpp \
 	./pcsxcore/psxbios.c	\
+	./pcsxcore/psxcommon.c	\
+	./pcsxcore/cheat.c	\
+	./pcsxcore/ppf.c	\
+	./pcsxcore/psxgpu.c	\
 	./pcsxcore/cdrom.c	\
 	./pcsxcore/psxcounters.c	\
 	./pcsxcore/psxdma.c	\
@@ -73,13 +77,13 @@ PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.
 
 PPU_TARGET		=	ps3sx.elf
 
-PPU_CPPFLAGS	+= -D__BIGENDIAN__ -D__ppc__ -D_BIG_ENDIAN -DBIG_ENDIAN -D'PACKAGE_VERSION="0.3"' -DPS3_SDK_3_41 -DPSGL
+PPU_CPPFLAGS	+= -D__BIGENDIAN__ -D__ppc__ -D_BIG_ENDIAN -DBIG_ENDIAN -D'PACKAGE_VERSION="0.3"' -DPS3_SDK_3_41 -DPSGL -DMDFNPS3
 
 PPU_ASFLAGS		+=
 
 PPU_LDFLAGS		= -Wl -finline-limit=5000
 
-PPU_CXXFLAGS		+=	-I. -I./ps3 -I./pcsxcore -I./pcsxcore/zlib -I./pcsxcore/ppc -I./ps3/threads -I./ps3/Audio -Ips3/input -Ips3/ini
+PPU_CXXFLAGS		+=	-I. -I./PS3 -I./pcsxcore -I./pcsxcore/zlib -I./pcsxcore/ppc -I./PS3/threads -I./PS3/Audio -IPS3/input -IPS3/Ini
 PPU_LIBS		    +=	$(CELL_TARGET_PATH)/ppu/lib/libgcm_cmd.a \
 					$(CELL_TARGET_PATH)/ppu/lib/libgcm_sys_stub.a $(CELL_TARGET_PATH)/ppu/lib/libfs_stub.a
 PPU_LDLIBS		+= 	-L$(CELL_SDK)/target/ppu/lib/PSGL/RSX/opt -lPSGL -lPSGLcgc -lcgc -lsysmodule_stub 

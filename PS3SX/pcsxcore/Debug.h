@@ -1,38 +1,51 @@
-/*  Pcsx - Pc Psx Emulator
- *  Copyright (C) 1999-2003  Pcsx Team
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
+/***************************************************************************
+ *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
+ ***************************************************************************/
 
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
-#include "PsxCommon.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+enum breakpoint_types {
+	BE, BR1, BR2, BR4, BW1, BW2, BW4
+};
+
+void StartDebugger();
+void StopDebugger();
+
+void DebugVSync();
+void ProcessDebug();
+
+void DebugCheckBP(u32 address, enum breakpoint_types type);
+
+void PauseDebugger();
+void ResumeDebugger();
 
 extern char *disRNameCP0[];
 
 char* disR3000AF(u32 code, u32 pc);
 
-FILE *emuLog;
-
-//#define GTE_DUMP
-
-#ifdef GTE_DUMP
-FILE *gteLog;
-#endif
+/* 
+ * Specficies which logs should be activated.
+ */
 
 //#define LOG_STDOUT
 
@@ -53,4 +66,7 @@ FILE *gteLog;
 #define EMU_LOG __Log
 #endif
 
-#endif /* __DEBUG_H__ */
+#ifdef __cplusplus
+}
+#endif
+#endif
