@@ -10,6 +10,7 @@
 #include "ini.h"
 #include <unistd.h> 
 #include <pthread.h>
+#include <sys/time.h>
 #include <sysutil/sysutil_gamecontent.h>
 
 SYS_PROCESS_PARAM(1001, 0x10000);
@@ -678,7 +679,13 @@ extern "C" {
 	}
 
 	uint32_t MDFNDC_GetTime() {
-		return (uint32_t)time(NULL);
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		return (uint32_t)((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
+	}
+
+	void MDFND_Sleep(uint32_t ms) {
+		usleep(ms * 1000);
 	}
 
 	void MDFND_Message(const char *msg) {
@@ -724,5 +731,27 @@ extern "C" {
 
 	int smread(void* file, void* buf, unsigned int len) {
 		return (int)fread(buf, 1, len, (FILE*)file);
+	}
+
+	//A Buffer holding the BIOS
+	static uint8_t BiosBuffer[1024 * 512];
+	static bool BiosLoaded = false;
+
+	//Get the bios buffer
+	void MDFNPCSXGetBios(uint8_t* aBuffer)
+	{
+		if (!BiosLoaded) {
+			char biosPath[256];
+			sprintf(biosPath, "%s/%s", Iniconfig.biospath, "scph1001.bin");
+			FILE* f = fopen(biosPath, "rb");
+			if (f) {
+				fread(BiosBuffer, 1, 512 * 1024, f);
+				fclose(f);
+				BiosLoaded = true;
+			} else {
+				SysPrintf("Error: Could not load BIOS from %s\n", biosPath);
+			}
+		}
+		memcpy(aBuffer, BiosBuffer, 1024 * 512);
 	}
 }

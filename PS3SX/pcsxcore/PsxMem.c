@@ -112,10 +112,6 @@ int psxMemInit() {
 	return 0;
 }
 
-#ifdef MDFNPS3 //Change bios loader
-extern void MDFNPCSXGetBios(uint8_t* aBuffer);
-#endif
-
 void psxMemReset() {
 	FILE *f = NULL;
 	char bios[1024];
@@ -125,6 +121,10 @@ void psxMemReset() {
 
 	// Load BIOS
 	if (strcmp(Config.Bios, "HLE") != 0) {
+#ifdef MDFNPS3
+		MDFNPCSXGetBios((uint8_t*)psxR);
+		Config.HLE = FALSE;
+#else
 		sprintf(bios, "%s/%s", Config.BiosDir, Config.Bios);
 		f = fopen(bios, "rb");
 
@@ -137,6 +137,7 @@ void psxMemReset() {
 			fclose(f);
 			Config.HLE = FALSE;
 		}
+#endif
 	} else Config.HLE = TRUE;
 }
 
