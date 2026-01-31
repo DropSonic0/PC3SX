@@ -196,6 +196,10 @@ extern long MDFNSPUfreeze(uint32_t, SPUFreeze_t *);
 
 extern long PAD__readPort1(PadDataS*);
 extern long PAD__readPort2(PadDataS*);
+extern long PAD__init(long);
+extern long PAD__shutdown(void);
+extern long PAD__open(unsigned long *);
+extern long PAD__close(void);
 
 void CALLBACK GPU__displayText(char *pText) {
 	SysPrintf("%s\n", pText);
@@ -258,14 +262,23 @@ int LoadPlugins(void) {
     SPU_async = (SPUasync) MDFNSPUasync;
     SPU_freeze = (SPUfreeze) MDFNSPUfreeze;
 
+	PAD1_init = (PADinit) PAD__init;
+	PAD1_shutdown = (PADshutdown) PAD__shutdown;
+	PAD1_open = (PADopen) PAD__open;
+	PAD1_close = (PADclose) PAD__close;
 	PAD1_readPort1 = (PADreadPort1) PAD__readPort1;
+
+	PAD2_init = (PADinit) PAD__init;
+	PAD2_shutdown = (PADshutdown) PAD__shutdown;
+	PAD2_open = (PADopen) PAD__open;
+	PAD2_close = (PADclose) PAD__close;
 	PAD2_readPort2 = (PADreadPort2) PAD__readPort2;
 
 	CDR_init();
 	GPU_init();
 	SPU_init();
-	
-	// PAD initialization if needed
+	PAD1_init(1);
+	PAD2_init(2);
 	
 	return 0;
 }
@@ -274,6 +287,8 @@ void ReleasePlugins(void) {
 	CDR_shutdown();
 	GPU_shutdown();
 	SPU_shutdown();
+	PAD1_shutdown();
+	PAD2_shutdown();
 }
 
 void SetIsoFile(const char *filename) {

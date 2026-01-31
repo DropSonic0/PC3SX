@@ -14,9 +14,9 @@ long PAD__shutdown(void) {
 	return 0;
 }
 
-long PAD__open(void)
+long PAD__open(unsigned long *disp)
 {
-
+	(void)disp;
 	SysPrintf("start PAD1_open()\n");
 
 	return 0;
