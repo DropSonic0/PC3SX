@@ -169,6 +169,7 @@ extern long CALLBACK GPUconfigure(void);
 extern long CALLBACK GPUtest(void);
 extern void CALLBACK GPUabout(void);
 extern void CALLBACK GPUmakeSnapshot(void);
+extern long CALLBACK GPUfreeze(uint32_t, GPUFreeze_t *);
 
 extern long CDR__open(void);
 extern long CDR__init(void);
@@ -208,11 +209,6 @@ void CALLBACK GPUbusy( int ticks )
     psxRegs.intCycle[PSXINT_GPUBUSY].sCycle = psxRegs.cycle;
 }
 
-long CALLBACK GPU__freeze(unsigned long ulGetFreezeData, GPUFreeze_t *pF) {
-    // Basic implementation to avoid crash
-    return 0;
-}
-
 void CALLBACK clearDynarec(void) {
 	psxCpu->Reset();
 }
@@ -236,7 +232,7 @@ int LoadPlugins() {
 	GPU_test = (GPUtest) GPUtest;
 	GPU_about = (GPUabout) GPUabout;
 	GPU_makeSnapshot = (GPUmakeSnapshot) GPUmakeSnapshot;
-    GPU_freeze = (GPUfreeze) GPU__freeze;
+    GPU_freeze = (GPUfreeze) GPUfreeze;
 
 	CDR_init = (CDRinit) CDR__init;
 	CDR_shutdown = (CDRshutdown) CDR__shutdown;
