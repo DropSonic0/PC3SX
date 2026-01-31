@@ -1088,11 +1088,13 @@ static int allocMem() {
 	if (psxRecLUT==NULL)
 		psxRecLUT = (u32*) malloc(0x010000 * 4);
 
+	if (psxRecLUT) memset(psxRecLUT, 0, 0x010000 * 4);
+
 #ifndef MDFNPS3 //Memory allocation
 	recMem = (char*) malloc(RECMEM_SIZE);
 #else
 	SysPrintf("allocMem: MDFNDC_AllocateExec\n");
-	recMem = (void*)MDFNDC_AllocateExec(RECMEM_SIZE);
+	recMem = (char*)MDFNDC_AllocateExec(RECMEM_SIZE);
 #endif
         //recMem = mmap(NULL, RECMEM_SIZE, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1,  0);
 	recRAM = (char*) malloc(0x200000);
@@ -1108,6 +1110,7 @@ static int allocMem() {
 	memcpy(psxRecLUT + 0xa000, psxRecLUT, 0x80 * 4);
 
 	for (i=0; i<0x08; i++) psxRecLUT[i + 0xbfc0] = (u32)&recROM[i << 16];
+	memcpy(psxRecLUT + 0x9fc0, psxRecLUT + 0xbfc0, 0x08 * 4);
 	
 	return 0;
 }
@@ -1148,14 +1151,20 @@ __inline static void execute() {
 	void (**recFunc)();
 	char *p;
 
-	p =	(char*)PC_REC(psxRegs.pc);
-	/*if (p != NULL)*/ recFunc = (void (**)()) (u32)p;
-	/*else { recError(); return; }*/
+	u32 pc_base = psxRecLUT[psxRegs.pc >> 16];
+	if (pc_base == 0) {
+		SysPrintf("execute: PC_REC returned NULL for PC %08x\n", psxRegs.pc);
+		recError();
+		return;
+	}
+
+	p =	(char*)(pc_base + (psxRegs.pc & 0xffff));
+	recFunc = (void (**)()) (uptr)p;
 
 	if (*recFunc == 0) {
 		recRecompile();
 	}
-	recRun(*recFunc, (u32)&psxRegs, (u32)&psxM);
+	recRun(*recFunc, (uptr)&psxRegs, (uptr)&psxM);
 }
 
 #ifndef MDFNPS3 //Leave on command
@@ -3550,7 +3559,7 @@ done:;
 	__asm__ __volatile__("isync");
 #endif
 	
-#if 1
+#if 0
 	sprintf((char *)ppcPtr, "PC=%08x", pcold);
 	ppcPtr += strlen((char *)ppcPtr);
 #endif

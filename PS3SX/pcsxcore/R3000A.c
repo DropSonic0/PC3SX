@@ -283,11 +283,14 @@ void psxExecuteBios() {
 	uint32_t timeout = 0;
 	while (psxRegs.pc != 0x80030000) {
 		psxCpu->ExecuteBlock();
+		if (timeout % 100000 == 0) {
+			SysPrintf("psxExecuteBios: PC=%08x blocks=%d\n", psxRegs.pc, timeout);
+		}
 		if (psxRegs.pc == 0x00000000) {
 			SysPrintf("psxExecuteBios: PC reached 0! Likely crash.\n");
 			break;
 		}
-		if (timeout++ > 500000) {
+		if (timeout++ > 5000000) {
 			SysPrintf("psxExecuteBios: Timeout reached! BIOS might be hung.\n");
 			break;
 		}

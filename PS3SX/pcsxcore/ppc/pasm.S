@@ -32,9 +32,12 @@ C(.recRun):
 #endif
 	/* prologue code */
 	mflr	0
-	stmw	13, -(32-13)*4(1)
+#ifdef MDFNPS3
+	stw		2, 40(1)	/* Save original TOC in caller frame */
+#endif
+	stmw	13, -76(1)	/* Save r13-r31 (below sp) */
 	stw		0, 4(1)
-	stwu	1, -((32-13)*4+8)(1)
+	stwu	1, -96(1)	/* Create frame (84 bytes aligned to 16 = 96) */
 	
 	/* execute code */
 	mtctr	3
@@ -57,10 +60,13 @@ C(.returnPC):
 returnPC_recomp:
 #endif
 	// end code
-	lwz		0, (32-13)*4+8+4(1)
-	addi	1, 1, (32-13)*4+8
+	lwz		0, 96+4(1)	/* Restore LR from frame info */
+	addi	1, 1, 96	/* Back to old frame */
 	mtlr	0
-	lmw		13, -(32-13)*4(1)
+	lmw		13, -76(1)	/* Restore r13-r31 */
+#ifdef MDFNPS3
+	lwz		2, 40(1)	/* Restore original TOC */
+#endif
 	blr
 //}*/
 
