@@ -461,11 +461,11 @@
 #define LID(REG, IMM) \
 { \
     uint64_t _lid_imm = (uint64_t)(IMM); \
-    LIS(REG, (_lid_imm >> 48)); \
-    if (((_lid_imm >> 32) & 0xffff) != 0) ORI(REG, REG, (_lid_imm >> 32)); \
+    LIS(REG, ((_lid_imm >> 48) & 0xffff)); \
+    ORI(REG, REG, ((_lid_imm >> 32) & 0xffff)); \
     SLDI(REG, REG, 32); \
-    ORIS(REG, REG, (_lid_imm >> 16)); \
-    ORI(REG, REG, _lid_imm); \
+    ORIS(REG, REG, ((_lid_imm >> 16) & 0xffff)); \
+    ORI(REG, REG, (_lid_imm & 0xffff)); \
 }
 
 /* floating point ops */

@@ -15,7 +15,7 @@ extern "C" {
 #include "../psxcommon.h"
 #include "ppc_mnemonics.h"
 
-#define NUM_HW_REGISTERS 28
+#define NUM_HW_REGISTERS 26
 
 /* general defines */
 #define write8(val)  *(u8 *)ppcPtr = val; ppcPtr++;
@@ -53,6 +53,7 @@ extern "C" {
         MTCTR(0); \
         BCTRL(); \
     } \
+    LD(2, 40, 1); \
 }
 #else
 #define CALLFunc(FUNC) \

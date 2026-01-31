@@ -1175,6 +1175,9 @@ __inline static void execute(void) {
 		recRecompile();
 	}
 	recRun(*(uptr*)recFunc, (uptr)&psxRegs, (uptr)&psxM);
+	if (execCount < 100 || execCount % 10000 == 0) {
+		SysPrintf("execute: returned from recRun, PC=%08x\n", psxRegs.pc);
+	}
 }
 
 #ifndef MDFNPS3 //Leave on command
