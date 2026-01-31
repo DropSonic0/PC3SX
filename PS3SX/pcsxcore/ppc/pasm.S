@@ -54,7 +54,6 @@ C(.recRun):
 	std		16, 128(1)
 	std		15, 120(1)
 	std		14, 112(1)
-	std		13, 104(1)
 #else
 	stmw	13, -76(1)
 	stw		0, 4(1)
@@ -99,7 +98,6 @@ C(.returnPC):
 	ld		16, 128(1)
 	ld		15, 120(1)
 	ld		14, 112(1)
-	ld		13, 104(1)
 	ld		1, 0(1)		/* Restore SP */
 	ld		0, 16(1)	/* Restore LR */
 	mtlr	0

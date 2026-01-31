@@ -1157,7 +1157,7 @@ __inline static void execute(void) {
 	void (**recFunc)(void);
 	char *p;
 
-	if (++execCount % 10000 == 0) {
+	if (++execCount < 100 || execCount % 10000 == 0) {
 		SysPrintf("execute: PC=%08x, blocks=%d\n", psxRegs.pc, execCount);
 	}
 
