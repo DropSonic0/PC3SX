@@ -1200,7 +1200,7 @@ ENDREAD:
 uint32_t CALLBACK SOFTGPUreadData(void)
 {
  uint32_t l;
- GPUreadDataMem(&l,1);
+ SOFTGPUreadDataMem(&l,1);
  return lGPUdataRet;
 }
 
@@ -1405,7 +1405,7 @@ ENDVRAM:
 void CALLBACK SOFTGPUwriteData(uint32_t gdata)
 {
  PUTLE32(&gdata, gdata);
- GPUwriteDataMem(&gdata,1);
+ SOFTGPUwriteDataMem(&gdata,1);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1488,7 +1488,7 @@ long CALLBACK SOFTGPUdmaChain(uint32_t * baseAddrL, uint32_t addr)
 
    dmaMem=addr+4;
 
-   if(count>0) GPUwriteDataMem(&baseAddrL[dmaMem>>2],count);
+   if(count>0) SOFTGPUwriteDataMem(&baseAddrL[dmaMem>>2],count);
 
    addr = GETLE32(&baseAddrL[addr>>2])&0xffffff;
   }
@@ -1568,15 +1568,15 @@ long CALLBACK SOFTGPUfreeze(uint32_t ulGetFreezeData,GPUFreeze_t * pF)
 
 // RESET TEXTURE STORE HERE, IF YOU USE SOMETHING LIKE THAT
 
- GPUwriteStatus(ulStatusControl[0]);
- GPUwriteStatus(ulStatusControl[1]);
- GPUwriteStatus(ulStatusControl[2]);
- GPUwriteStatus(ulStatusControl[3]);
- GPUwriteStatus(ulStatusControl[8]);                   // try to repair things
- GPUwriteStatus(ulStatusControl[6]);
- GPUwriteStatus(ulStatusControl[7]);
- GPUwriteStatus(ulStatusControl[5]);
- GPUwriteStatus(ulStatusControl[4]);
+ SOFTGPUwriteStatus(ulStatusControl[0]);
+ SOFTGPUwriteStatus(ulStatusControl[1]);
+ SOFTGPUwriteStatus(ulStatusControl[2]);
+ SOFTGPUwriteStatus(ulStatusControl[3]);
+ SOFTGPUwriteStatus(ulStatusControl[8]);                   // try to repair things
+ SOFTGPUwriteStatus(ulStatusControl[6]);
+ SOFTGPUwriteStatus(ulStatusControl[7]);
+ SOFTGPUwriteStatus(ulStatusControl[5]);
+ SOFTGPUwriteStatus(ulStatusControl[4]);
 
  return 1;
 }
@@ -1846,7 +1846,7 @@ void PaintPicDot(unsigned char * p,unsigned char c)
 
 extern char * Xpixels;
 
-void GPUgetScreenPic(unsigned char * pMem)
+void CALLBACK SOFTGPUgetScreenPic(unsigned char * pMem)
 {
  unsigned short c;unsigned char * pf;int x,y;
 
