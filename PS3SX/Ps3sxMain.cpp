@@ -29,6 +29,7 @@ int CpuConfig = 0;
 
 static bool runbios = 0;
 char rom_path[256];
+char usrdirPath[256];
 
 void InitPS3()
 {
@@ -393,7 +394,12 @@ void SysPrintf(const char *fmt, ...) {
     va_end(list);
 
 	dprintf_console(msg);
-	if(emuLog == NULL) emuLog = fopen("/dev_hdd0/emuLog.txt","wb");
+	if(emuLog == NULL) {
+		char logPath[512];
+		sprintf(logPath, "%s/log.txt", usrdirPath);
+		emuLog = fopen(logPath,"ab");
+		if(emuLog) cellFsChmod(logPath, 0666);
+	}
 	if(emuLog) {
 		fputs(msg, emuLog);
 		fflush(emuLog);
@@ -410,11 +416,17 @@ void SysMessage(const char *fmt, ...) {
     va_end(list);
 
 	dprintf_console(msg);
-	if(emuLog == NULL) emuLog = fopen("/dev_hdd0/emuLog.txt","wb");
+	if(emuLog == NULL) {
+		char logPath[512];
+		sprintf(logPath, "%s/log.txt", usrdirPath);
+		emuLog = fopen(logPath,"ab");
+		if(emuLog) cellFsChmod(logPath, 0666);
+	}
 	if(emuLog) {
 		fputs(msg, emuLog);
 		fflush(emuLog);
 		fclose(emuLog);
+		emuLog = NULL;
 	}
 	printf("%s", msg);
 }
@@ -593,9 +605,10 @@ int main()
 	PS3input->Init();
 	
 	printf("InitPS3 done\n");
+	strcpy(usrdirPath, "/dev_hdd0/game/PCSX00001/USRDIR");
+
 	unsigned int type = 0;
 	unsigned int attributes = 0;
-	char usrdirPath[255];
 	char contentInfoPath[255];
 	// we must use cellGameBootCheck before cellGameContentPermit
 	ret = cellGameBootCheck(&type, &attributes, NULL, NULL);
@@ -609,7 +622,14 @@ int main()
 		SysPrintf("cellGameContentPermit failed %X\n",ret);
 		strcpy(usrdirPath, "/dev_hdd0/game/PCSX00001/USRDIR");
 	}
-	
+
+	char initialLogPath[512];
+	sprintf(initialLogPath, "%s/log.txt", usrdirPath);
+	FILE *f = fopen(initialLogPath, "wb");
+	if (f) {
+		cellFsChmod(initialLogPath, 0666);
+		fclose(f);
+	}
 	
 	char ConfigPath[255];
 	sprintf(ConfigPath, "%s/Ps3sxConf.ini", usrdirPath);
