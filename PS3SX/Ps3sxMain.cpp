@@ -680,7 +680,7 @@ extern "C" {
 
 	uint32_t MDFNDC_GetTime() {
 		sys_time_sec_t sec;
-		uint64_t nsec;
+		sys_time_nsec_t nsec;
 		sys_time_get_current_time(&sec, &nsec);
 		return (uint32_t)((sec * 1000) + (nsec / 1000000));
 	}
