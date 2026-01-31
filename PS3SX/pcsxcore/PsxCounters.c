@@ -154,7 +154,7 @@ u32 _psxRcntRcount( u32 index )
 /******************************************************************************/
 
 static
-void psxRcntSet()
+void psxRcntSet(void)
 {
     s32 countToUpdate;
     u32 i;

@@ -60,7 +60,7 @@ u8 **psxMemRLUT = NULL;
 0xbfc0_0000-0xbfc7_ffff		BIOS Mirror (512K) Uncached
 */
 
-int psxMemInit() {
+int psxMemInit(void) {
 	int i;
 
 	psxMemRLUT = (u8 **)malloc(0x10000 * sizeof(void *));
@@ -112,7 +112,7 @@ int psxMemInit() {
 	return 0;
 }
 
-void psxMemReset() {
+void psxMemReset(void) {
 	FILE *f = NULL;
 	char bios[1024];
 
@@ -150,7 +150,7 @@ void psxMemReset() {
 	} else Config.HLE = TRUE;
 }
 
-void psxMemShutdown() {
+void psxMemShutdown(void) {
 #ifndef MDFNPS3 //No special method for allocating memory
 	munmap(psxM, 0x00220000);
 #else

@@ -26,7 +26,7 @@
 #include "cdrom.h"
 #include "psxgpu.h"
 
-void psxHwReset() {
+void psxHwReset(void) {
 	SysPrintf("psxHwReset: starting\n");
 	SysPrintf("psxHwReset: memset psxH\n");
 	memset(psxH, 0, 0x10000);
