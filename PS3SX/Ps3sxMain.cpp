@@ -326,6 +326,12 @@ long PAD__readPort2(PadDataS* pad)
 	return PSE_PAD_ERR_SUCCESS;
 }
 
+long PAD__init(long port) { return 0; }
+long PAD__shutdown(void) { return 0; }
+long PAD__open(unsigned long *disp) { return 0; }
+long PAD__close(void) { return 0; }
+long PAD__query(void) { return 3; }
+
 //end Pad
 
 void InitConfig()

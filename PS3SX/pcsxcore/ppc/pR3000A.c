@@ -878,13 +878,15 @@ static void iJump(u32 branchPC) {
 	//Return();
 		
 	// maybe just happened an interruption, check so
+	int hwpc = GetHWRegSpecial(PSXPC);
+	LWZ(HWRegisters[hwpc].code, OFFSET(&psxRegs, &psxRegs.pc), GetHWRegSpecial(PSXREGS));
 	LIW(0, branchPC);
-	CMPLW(GetHWRegSpecial(PSXPC), 0);
+	CMPLW(HWRegisters[hwpc].code, 0);
 	BNE_L(b1);
 	
 	LIP(3, PC_REC(branchPC));
-	LWZ(3, 0, 3);
-	CMPLWI(3, 0);
+	LD(3, 0, 3);
+	CMPLDI(3, 0);
 	BNE_L(b2);
 	
 	B_DST(b1);
@@ -953,13 +955,15 @@ static void iBranch(u32 branchPC, int savectx) {
 	// always return for now...
 	//Return();
 
+	int hwpc = GetHWRegSpecial(PSXPC);
+	LWZ(HWRegisters[hwpc].code, OFFSET(&psxRegs, &psxRegs.pc), GetHWRegSpecial(PSXREGS));
 	LIW(0, branchPC);
-	CMPLW(GetHWRegSpecial(PSXPC), 0);
+	CMPLW(HWRegisters[hwpc].code, 0);
 	BNE_L(b1);
 	
 	LIP(3, PC_REC(branchPC));
-	LWZ(3, 0, 3);
-	CMPLWI(3, 0);
+	LD(3, 0, 3);
+	CMPLDI(3, 0);
 	BNE_L(b2);
 	
 	B_DST(b1);

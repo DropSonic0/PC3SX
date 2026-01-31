@@ -200,6 +200,7 @@ extern long PAD__init(long);
 extern long PAD__shutdown(void);
 extern long PAD__open(unsigned long *);
 extern long PAD__close(void);
+extern long PAD__query(void);
 
 void CALLBACK GPU__displayText(char *pText) {
 	SysPrintf("%s\n", pText);
@@ -266,12 +267,14 @@ int LoadPlugins(void) {
 	PAD1_shutdown = (PADshutdown) PAD__shutdown;
 	PAD1_open = (PADopen) PAD__open;
 	PAD1_close = (PADclose) PAD__close;
+	PAD1_query = (PADquery) PAD__query;
 	PAD1_readPort1 = (PADreadPort1) PAD__readPort1;
 
 	PAD2_init = (PADinit) PAD__init;
 	PAD2_shutdown = (PADshutdown) PAD__shutdown;
 	PAD2_open = (PADopen) PAD__open;
 	PAD2_close = (PADclose) PAD__close;
+	PAD2_query = (PADquery) PAD__query;
 	PAD2_readPort2 = (PADreadPort2) PAD__readPort2;
 
 	CDR_init();

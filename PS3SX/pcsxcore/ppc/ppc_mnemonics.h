@@ -35,6 +35,10 @@
 	{int _reg = (REG); int _dst=(REG_DST); \
         INSTR = (0x80000000 | (_dst << 21) | (_reg << 16) | ((OFFSET) & 0xffff));}
 
+#define LD(REG_DST, OFFSET, REG) \
+	{int _reg = (REG); int _dst=(REG_DST); \
+        INSTR = (0xE8000000 | (_dst << 21) | (_reg << 16) | ((OFFSET) & 0xfffc));}
+
 #define LWZX(REG_DST, REG, REG_OFF) \
 	{int _reg = (REG), _off = (REG_OFF); int _dst=(REG_DST); \
         INSTR = (0x7C00002E | (_dst << 21) | (_reg << 16) | (_off << 11));}
@@ -73,6 +77,10 @@
 #define STW(REG_SRC, OFFSET, REG) \
 	{int _reg = (REG), _src=(REG_SRC); \
         INSTR = (0x90000000 | (_src << 21) | (_reg << 16) | ((OFFSET) & 0xffff));}
+
+#define STD(REG_SRC, OFFSET, REG) \
+	{int _reg = (REG), _src=(REG_SRC); \
+        INSTR = (0xF8000000 | (_src << 21) | (_reg << 16) | ((OFFSET) & 0xfffc));}
 
 #define STWBRX(REG_SRC, REG, REG_OFF) \
 	{int _reg = (REG), _src=(REG_SRC), _off = (REG_OFF); \
@@ -280,9 +288,17 @@
 	{int _reg = (REG); \
         INSTR = (0x2B800000 | (_reg << 16) | ((IMM) & 0xffff));}
 
+#define CMPLDI(REG, IMM) \
+	{int _reg = (REG); \
+        INSTR = (0x28200000 | (_reg << 16) | ((IMM) & 0xffff));}
+
 #define CMPLW(REG1, REG2) \
 	{int _reg1 = (REG1), _reg2 = (REG2); \
         INSTR = (0x7C000040 | (_reg1 << 16) | (_reg2 << 11));}
+
+#define CMPLD(REG1, REG2) \
+	{int _reg1 = (REG1), _reg2 = (REG2); \
+        INSTR = (0x7C200040 | (_reg1 << 16) | (_reg2 << 11));}
 
 #define CMPLW1(REG1, REG2) \
 	{int _reg1 = (REG1), _reg2 = (REG2); \
