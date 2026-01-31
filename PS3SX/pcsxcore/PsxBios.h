@@ -34,14 +34,14 @@ extern char *biosA0n[256];
 extern char *biosB0n[256];
 extern char *biosC0n[256];
 
-void psxBiosInit();
-void psxBiosShutdown();
-void psxBiosException();
+void psxBiosInit(void);
+void psxBiosShutdown(void);
+void psxBiosException(void);
 void psxBiosFreeze(int Mode);
 
-extern void (*biosA0[256])();
-extern void (*biosB0[256])();
-extern void (*biosC0[256])();
+extern void (*biosA0[256])(void);
+extern void (*biosB0[256])(void);
+extern void (*biosC0[256])(void);
 
 extern boolean hleSoftCall;
 

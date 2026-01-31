@@ -28,7 +28,7 @@ extern "C" {
 #include "r3000a.h"
 #include "plugins.h"
 
-extern void (*psxHLEt[256])();
+extern void (*psxHLEt[256])(void);
 
 #ifdef __cplusplus
 }

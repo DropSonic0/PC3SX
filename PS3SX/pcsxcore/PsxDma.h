@@ -70,10 +70,10 @@ extern "C" {
 void psxDma3(u32 madr, u32 bcr, u32 chcr);
 void psxDma4(u32 madr, u32 bcr, u32 chcr);
 void psxDma6(u32 madr, u32 bcr, u32 chcr);
-void spuInterrupt();
-void mdec0Interrupt();
-void gpuotcInterrupt();
-void cdrDmaInterrupt();
+void spuInterrupt(void);
+void mdec0Interrupt(void);
+void gpuotcInterrupt(void);
+void cdrDmaInterrupt(void);
 
 #ifdef __cplusplus
 }

@@ -9,27 +9,27 @@ static PSX::SPU::SPU psxspu;
 
 extern "C"
 {
-	unsigned short CALLBACK				SPUreadDMA				(void)															{assert(false); return 0;}
-	void CALLBACK						SPUreadDMAMem			(unsigned short * pusPSXMem,int iSize)							{psxspu.DMARead(pusPSXMem, iSize);}
-	void CALLBACK						SPUwriteDMA				(unsigned short val)											{assert(false);}
-	void CALLBACK						SPUwriteDMAMem			(unsigned short * pusPSXMem,int iSize)							{psxspu.DMAWrite(pusPSXMem, iSize);}
-	void CALLBACK						SPUregisterCallback		(void (CALLBACK *callback)(void))								{irqCallback = callback;}
-	void CALLBACK						SPUregisterCDDAVolume	(void (CALLBACK *CDDAVcallback)(unsigned short,unsigned short))	{cddavCallback = CDDAVcallback;}
-	long CALLBACK						SPUtest					(void)															{return 0;}
-	long CALLBACK						SPUconfigure			(void)															{return 0;}
-	void CALLBACK						SPUabout				(void)															{}
-	void CALLBACK						SPUupdate				(void)															{assert(false);}
-	long CALLBACK						SPUinit					(void)															{return 0;}
-	long								SPUopen					(void)															{return 0;}
-	long CALLBACK						SPUclose				(void)															{return 0;}
-	long CALLBACK						SPUshutdown				(void)															{return 0;}
-	void CALLBACK						SPUplayADPCMchannel		(xa_decode_t *xap)												{psxspu.Streamer.FeedXA(xap);}
-	void CALLBACK						SPUplayCDDAchannel		(short *pcm, int nbytes)										{psxspu.Streamer.FeedCDDA(pcm, nbytes);}
-	void CALLBACK						SPUwriteRegister		(unsigned long reg, unsigned short val)							{psxspu.WriteRegister(reg, val);}
-	unsigned short CALLBACK				SPUreadRegister			(unsigned long reg)												{return psxspu.ReadRegister(reg);}
-	void CALLBACK						SPUasync				(unsigned int aCycles)											{psxspu.Process(aCycles);}
+	unsigned short CALLBACK				MDFNSPUreadDMA				(void)															{assert(false); return 0;}
+	void CALLBACK						MDFNSPUreadDMAMem			(unsigned short * pusPSXMem,int iSize)							{psxspu.DMARead(pusPSXMem, iSize);}
+	void CALLBACK						MDFNSPUwriteDMA				(unsigned short val)											{assert(false);}
+	void CALLBACK						MDFNSPUwriteDMAMem			(unsigned short * pusPSXMem,int iSize)							{psxspu.DMAWrite(pusPSXMem, iSize);}
+	void CALLBACK						MDFNSPUregisterCallback		(void (CALLBACK *callback)(void))								{irqCallback = callback;}
+	void CALLBACK						MDFNSPUregisterCDDAVolume	(void (CALLBACK *CDDAVcallback)(unsigned short,unsigned short))	{cddavCallback = CDDAVcallback;}
+	long CALLBACK						MDFNSPUtest					(void)															{return 0;}
+	long CALLBACK						MDFNSPUconfigure			(void)															{return 0;}
+	void CALLBACK						MDFNSPUabout				(void)															{}
+	void CALLBACK						MDFNSPUupdate				(void)															{assert(false);}
+	long CALLBACK						MDFNSPUinit					(void)															{return 0;}
+	long								MDFNSPUopen					(void)															{return 0;}
+	long CALLBACK						MDFNSPUclose				(void)															{return 0;}
+	long CALLBACK						MDFNSPUshutdown				(void)															{return 0;}
+	void CALLBACK						MDFNSPUplayADPCMchannel		(xa_decode_t *xap)												{psxspu.Streamer.FeedXA(xap);}
+	void CALLBACK						MDFNSPUplayCDDAchannel		(short *pcm, int nbytes)										{psxspu.Streamer.FeedCDDA(pcm, nbytes);}
+	void CALLBACK						MDFNSPUwriteRegister		(unsigned long reg, unsigned short val)							{psxspu.WriteRegister(reg, val);}
+	unsigned short CALLBACK				MDFNSPUreadRegister			(unsigned long reg)												{return psxspu.ReadRegister(reg);}
+	void CALLBACK						MDFNSPUasync				(uint32_t aCycles)												{psxspu.Process(aCycles);}
 	
-	long CALLBACK						SPUfreeze				(uint32_t ulFreezeMode,SPUFreeze_t * pF)
+	long CALLBACK						MDFNSPUfreeze				(uint32_t ulFreezeMode,SPUFreeze_t * pF)
 	{
 		if(!pF) return 0;
 

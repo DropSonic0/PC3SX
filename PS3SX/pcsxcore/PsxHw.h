@@ -63,7 +63,7 @@ extern "C" {
 		psxHu32ref(0x1070) |= SWAP32(8);            \
 	}
 
-void psxHwReset();
+void psxHwReset(void);
 u8 psxHwRead8(u32 add);
 u16 psxHwRead16(u32 add);
 u32 psxHwRead32(u32 add);

@@ -55,9 +55,9 @@ namespace	PSX
 		{
 			public:
 									Channel					(SPU& aParent) :
-					Parent(aParent), ADSR(*this), Sample(*this), Filter(*this),
 					DecodeStream(0), HasDecodeBuffer(false), SamplePosition(0), SampleIncrement(0),
-					bReverb(0), bRVBActive(0), bNoise(0), bFMod(0), RawPitch(0)
+					bReverb(0), bRVBActive(0), bNoise(0), bFMod(0), RawPitch(0),
+					Parent(aParent), ADSR(*this), Sample(*this), Filter(*this)
 				{
 
 				}

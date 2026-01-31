@@ -17,26 +17,6 @@
  *                                                                         *
  ***************************************************************************/
 
-//ROBO: Rename functions with plugin kludge tag
-#define SPUinit pkSPUinit
-#define SPUshutdown pkSPUshutdown
-#define SPUclose pkSPUclose
-#define SPUplaySample pkSPUplaySample 
-#define SPUwriteRegister pkSPUwriteRegister
-#define SPUreadRegister pkSPUreadRegister
-#define SPUwriteDMA pkSPUwriteDMA
-#define SPUreadDMA pkSPUreadDMA
-#define SPUwriteDMAMem pkSPUwriteDMAMem
-#define SPUreadDMAMem pkSPUreadDMAMem
-#define SPUplayADPCMchannel pkSPUplayADPCMchannel
-#define SPUregisterCallback pkSPUregisterCallback
-#define SPUconfigure pkSPUconfigure
-#define SPUtest pkSPUtest
-#define SPUabout pkSPUabout
-#define SPUfreeze pkSPUfreeze
-#define SPUasync pkSPUasync
-#define SPUplayCDDAchannel pkSPUplayCDDAchannel
-#define SPUopen pkSPUopen
 
 #include <stdio.h>
 #include <stdlib.h>

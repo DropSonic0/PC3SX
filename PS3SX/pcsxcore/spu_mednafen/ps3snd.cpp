@@ -15,7 +15,7 @@ void SoundFeedSample(uint16_t left, uint16_t right)
 
 	if (audio_buffer_pos >= AUDIO_BUFFER_SIZE)
 	{
-		cellAudioPortWrite(audio_buffer, AUDIO_BUFFER_SIZE * 2);
+		cellAudioPortWrite((const audio_input_t*)audio_buffer, AUDIO_BUFFER_SIZE * 2);
 		audio_buffer_pos = 0;
 	}
 }

@@ -30,12 +30,12 @@ extern "C" {
 #include "psxbios.h"
 
 typedef struct {
-	int  (*Init)();
-	void (*Reset)();
-	void (*Execute)();		/* executes up to a break */
-	void (*ExecuteBlock)();	/* executes up to a jump */
+	int  (*Init)(void);
+	void (*Reset)(void);
+	void (*Execute)(void);		/* executes up to a break */
+	void (*ExecuteBlock)(void);	/* executes up to a jump */
 	void (*Clear)(u32 Addr, u32 Size);
-	void (*Shutdown)();
+	void (*Shutdown)(void);
 } R3000Acpu;
 
 extern R3000Acpu *psxCpu;
@@ -322,16 +322,16 @@ static inline u32 *Read_ICache(u32 pc, boolean isolate) {
 
 #define _SetLink(x)     psxRegs.GPR.r[x] = _PC_ + 4;       // Sets the return address in the link register
 
-int  psxInit();
-void psxReset();
-void psxShutdown();
+int  psxInit(void);
+void psxReset(void);
+void psxShutdown(void);
 void psxException(u32 code, u32 bd);
-void psxBranchTest();
-void psxExecuteBios();
+void psxBranchTest(void);
+void psxExecuteBios(void);
 int  psxTestLoadDelay(int reg, u32 tmp);
 void psxDelayTest(int reg, u32 bpc);
-void psxTestSWInts();
-void psxJumpTest();
+void psxTestSWInts(void);
+void psxJumpTest(void);
 
 #ifdef __cplusplus
 }

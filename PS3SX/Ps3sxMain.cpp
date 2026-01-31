@@ -10,6 +10,7 @@
 #include "ini.h"
 #include <unistd.h> 
 #include <pthread.h>
+#include <sys/timer.h>
 #include <sysutil/sysutil_gamecontent.h>
 
 SYS_PROCESS_PARAM(1001, 0x10000);
@@ -332,10 +333,11 @@ void InitConfig()
 
 	Config.PsxAuto = 1; //Autodetect
 	Config.HLE	   = Settings.HLE; //Use HLE
-	Config.Xa      = 0; //disable xa decoding (audio)
+	Config.Xa      = 1; //enable xa decoding (audio)
 	Config.Sio     = 0; //disable sio interrupt ?
-	Config.Mdec    = 0; //movie decode
-	Config.Cdda    = 0; //diable cdda playback
+	Config.Mdec    = 1; //movie decode
+	Config.Cdda    = 1; //enable cdda playback
+	Config.SlowBoot = 0;
 	
 	Config.Cpu	   = Settings.CPU;// interpreter 1 :  dynarec 0
 
@@ -678,7 +680,14 @@ extern "C" {
 	}
 
 	uint32_t MDFNDC_GetTime() {
-		return (uint32_t)time(NULL);
+		sys_time_sec_t sec;
+		sys_time_nsec_t nsec;
+		sys_time_get_current_time(&sec, &nsec);
+		return (uint32_t)((sec * 1000) + (nsec / 1000000));
+	}
+
+	void MDFND_Sleep(uint32_t ms) {
+		sys_timer_usleep(ms * 1000);
 	}
 
 	void MDFND_Message(const char *msg) {
@@ -724,5 +733,28 @@ extern "C" {
 
 	int smread(void* file, void* buf, unsigned int len) {
 		return (int)fread(buf, 1, len, (FILE*)file);
+	}
+
+	//A Buffer holding the BIOS
+	static uint8_t BiosBuffer[1024 * 512];
+	static bool BiosLoaded = false;
+
+	//Get the bios buffer
+	void MDFNPCSXGetBios(uint8_t* aBuffer)
+	{
+		if (!BiosLoaded) {
+			char biosPath[256];
+			sprintf(biosPath, "%s/%s", Iniconfig.biospath, "scph1001.bin");
+			FILE* f = fopen(biosPath, "rb");
+			if (f) {
+				fread(BiosBuffer, 1, 512 * 1024, f);
+				fclose(f);
+				BiosLoaded = true;
+			} else {
+				SysPrintf("Error: Could not load BIOS from %s\n", biosPath);
+				memset(BiosBuffer, 0, 512 * 1024);
+			}
+		}
+		memcpy(aBuffer, BiosBuffer, 1024 * 512);
 	}
 }

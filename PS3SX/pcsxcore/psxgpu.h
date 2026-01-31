@@ -6,10 +6,10 @@ extern "C"
 {
 #endif
 
-int gpuReadStatus();
+int gpuReadStatus(void);
 
 void psxDma2(u32 madr, u32 bcr, u32 chcr);
-void gpuInterrupt();
+void gpuInterrupt(void);
 
 #ifdef __cplusplus
 }

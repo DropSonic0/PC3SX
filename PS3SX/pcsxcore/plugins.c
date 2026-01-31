@@ -23,8 +23,6 @@
 
 #include "plugins.h"
 
-extern void SysPrintf(const char *fmt, ...);
-
 static char IsoFile[MAXPATHLEN] = "";
 static s64 cdOpenCaseTime = 0;
 
@@ -153,22 +151,23 @@ SIO1shutdown          SIO1_shutdown;
 #endif
 
 // Prototypes for static plugins
-extern long CALLBACK GPUinit(void);
-extern long CALLBACK GPUopen(unsigned long *, char *, char *);
-extern long CALLBACK GPUshutdown(void);
-extern long CALLBACK GPUclose(void);
-extern void CALLBACK GPUwriteStatus(unsigned long);
-extern void CALLBACK GPUwriteData(unsigned long);
-extern void CALLBACK GPUwriteDataMem(unsigned long *, int);
-extern unsigned long CALLBACK GPUreadStatus(void);
-extern unsigned long CALLBACK GPUreadData(void);
-extern void CALLBACK GPUreadDataMem(unsigned long *, int);
-extern long CALLBACK GPUdmaChain(unsigned long *,unsigned long);
-extern void CALLBACK GPUupdateLace(void);
-extern long CALLBACK GPUconfigure(void);
-extern long CALLBACK GPUtest(void);
-extern void CALLBACK GPUabout(void);
-extern void CALLBACK GPUmakeSnapshot(void);
+extern long CALLBACK SOFTGPUinit(void);
+extern long CALLBACK SOFTGPUopen(unsigned long *, char *, char *);
+extern long CALLBACK SOFTGPUshutdown(void);
+extern long CALLBACK SOFTGPUclose(void);
+extern void CALLBACK SOFTGPUwriteStatus(uint32_t);
+extern void CALLBACK SOFTGPUwriteData(uint32_t);
+extern void CALLBACK SOFTGPUwriteDataMem(uint32_t *, int);
+extern uint32_t CALLBACK SOFTGPUreadStatus(void);
+extern uint32_t CALLBACK SOFTGPUreadData(void);
+extern void CALLBACK SOFTGPUreadDataMem(uint32_t *, int);
+extern long CALLBACK SOFTGPUdmaChain(uint32_t *,uint32_t);
+extern void CALLBACK SOFTGPUupdateLace(void);
+extern long CALLBACK SOFTGPUconfigure(void);
+extern long CALLBACK SOFTGPUtest(void);
+extern void CALLBACK SOFTGPUabout(void);
+extern void CALLBACK SOFTGPUmakeSnapshot(void);
+extern long CALLBACK SOFTGPUfreeze(uint32_t, GPUFreeze_t *);
 
 extern long CDR__open(void);
 extern long CDR__init(void);
@@ -179,20 +178,21 @@ extern long CDR__getTD(unsigned char, unsigned char *);
 extern long CDR__readTrack(unsigned char *);
 extern unsigned char *CDR__getBuffer(void);
 
-extern long pkSPUinit(void);
-extern long pkSPUshutdown(void);
-extern long pkSPUopen(void);
-extern long pkSPUclose(void);
-extern void pkSPUwriteRegister(unsigned long, unsigned short);
-extern unsigned short pkSPUreadRegister(unsigned long);
-extern void pkSPUwriteDMA(unsigned short);
-extern unsigned short pkSPUreadDMA(void);
-extern void pkSPUwriteDMAMem(unsigned short *, int);
-extern void pkSPUreadDMAMem(unsigned short *, int);
-extern void pkSPUplayADPCMchannel(xa_decode_t *);
-extern void pkSPUasync(uint32_t);
-extern void pkSPUregisterCallback(void (CALLBACK *callback)(void));
-extern long pkSPUfreeze(uint32_t, SPUFreeze_t *);
+extern long MDFNSPUinit(void);
+extern long MDFNSPUshutdown(void);
+extern long MDFNSPUopen(void);
+extern long MDFNSPUclose(void);
+extern void MDFNSPUwriteRegister(unsigned long, unsigned short);
+extern unsigned short MDFNSPUreadRegister(unsigned long);
+extern void MDFNSPUwriteDMA(unsigned short);
+extern unsigned short MDFNSPUreadDMA(void);
+extern void MDFNSPUwriteDMAMem(unsigned short *, int);
+extern void MDFNSPUreadDMAMem(unsigned short *, int);
+extern void MDFNSPUplayADPCMchannel(xa_decode_t *);
+extern void MDFNSPUplayCDDAchannel(short *, int);
+extern void MDFNSPUasync(uint32_t);
+extern void MDFNSPUregisterCallback(void (CALLBACK *callback)(void));
+extern long MDFNSPUfreeze(uint32_t, SPUFreeze_t *);
 
 extern long PAD__readPort1(PadDataS*);
 extern long PAD__readPort2(PadDataS*);
@@ -208,35 +208,30 @@ void CALLBACK GPUbusy( int ticks )
     psxRegs.intCycle[PSXINT_GPUBUSY].sCycle = psxRegs.cycle;
 }
 
-long CALLBACK GPU__freeze(unsigned long ulGetFreezeData, GPUFreeze_t *pF) {
-    // Basic implementation to avoid crash
-    return 0;
-}
-
 void CALLBACK clearDynarec(void) {
 	psxCpu->Reset();
 }
 
-int LoadPlugins() {
+int LoadPlugins(void) {
 	// Static loading for PS3
-	GPU_init = (GPUinit) GPUinit;
-	GPU_open = (GPUopen) GPUopen;
-	GPU_shutdown = (GPUshutdown) GPUshutdown;
-	GPU_close = (GPUclose) GPUclose;
-	GPU_readData = (GPUreadData) GPUreadData;
-	GPU_readDataMem = (GPUreadDataMem) GPUreadDataMem;
-	GPU_readStatus = (GPUreadStatus) GPUreadStatus;
-	GPU_writeData = (GPUwriteData) GPUwriteData;
-	GPU_writeDataMem = (GPUwriteDataMem) GPUwriteDataMem;
-	GPU_writeStatus = (GPUwriteStatus) GPUwriteStatus;
-	GPU_dmaChain = (GPUdmaChain) GPUdmaChain;
-	GPU_updateLace = (GPUupdateLace) GPUupdateLace;
+	GPU_init = (GPUinit) SOFTGPUinit;
+	GPU_open = (GPUopen) SOFTGPUopen;
+	GPU_shutdown = (GPUshutdown) SOFTGPUshutdown;
+	GPU_close = (GPUclose) SOFTGPUclose;
+	GPU_readData = (GPUreadData) SOFTGPUreadData;
+	GPU_readDataMem = (GPUreadDataMem) SOFTGPUreadDataMem;
+	GPU_readStatus = (GPUreadStatus) SOFTGPUreadStatus;
+	GPU_writeData = (GPUwriteData) SOFTGPUwriteData;
+	GPU_writeDataMem = (GPUwriteDataMem) SOFTGPUwriteDataMem;
+	GPU_writeStatus = (GPUwriteStatus) SOFTGPUwriteStatus;
+	GPU_dmaChain = (GPUdmaChain) SOFTGPUdmaChain;
+	GPU_updateLace = (GPUupdateLace) SOFTGPUupdateLace;
 	GPU_displayText = (GPUdisplayText) GPU__displayText;
-	GPU_configure = (GPUconfigure) GPUconfigure;
-	GPU_test = (GPUtest) GPUtest;
-	GPU_about = (GPUabout) GPUabout;
-	GPU_makeSnapshot = (GPUmakeSnapshot) GPUmakeSnapshot;
-    GPU_freeze = (GPUfreeze) GPU__freeze;
+	GPU_configure = (GPUconfigure) SOFTGPUconfigure;
+	GPU_test = (GPUtest) SOFTGPUtest;
+	GPU_about = (GPUabout) SOFTGPUabout;
+	GPU_makeSnapshot = (GPUmakeSnapshot) SOFTGPUmakeSnapshot;
+    GPU_freeze = (GPUfreeze) SOFTGPUfreeze;
 
 	CDR_init = (CDRinit) CDR__init;
 	CDR_shutdown = (CDRshutdown) CDR__shutdown;
@@ -247,20 +242,21 @@ int LoadPlugins() {
 	CDR_readTrack = (CDRreadTrack) CDR__readTrack;
 	CDR_getBuffer = (CDRgetBuffer) CDR__getBuffer;
 
-	SPU_init = (SPUinit) pkSPUinit;
-	SPU_shutdown = (SPUshutdown) pkSPUshutdown;
-	SPU_open = (SPUopen) pkSPUopen;
-	SPU_close = (SPUclose) pkSPUclose;
-	SPU_writeRegister = (SPUwriteRegister) pkSPUwriteRegister;
-	SPU_readRegister = (SPUreadRegister) pkSPUreadRegister;
-	SPU_writeDMA = (SPUwriteDMA) pkSPUwriteDMA;
-	SPU_readDMA = (SPUreadDMA) pkSPUreadDMA;
-	SPU_writeDMAMem = (SPUwriteDMAMem) pkSPUwriteDMAMem;
-	SPU_readDMAMem = (SPUreadDMAMem) pkSPUreadDMAMem;
-	SPU_playADPCMchannel = (SPUplayADPCMchannel) pkSPUplayADPCMchannel;
-	SPU_registerCallback = (SPUregisterCallback) pkSPUregisterCallback;
-    SPU_async = (SPUasync) pkSPUasync;
-    SPU_freeze = (SPUfreeze) pkSPUfreeze;
+	SPU_init = (SPUinit) MDFNSPUinit;
+	SPU_shutdown = (SPUshutdown) MDFNSPUshutdown;
+	SPU_open = (SPUopen) MDFNSPUopen;
+	SPU_close = (SPUclose) MDFNSPUclose;
+	SPU_writeRegister = (SPUwriteRegister) MDFNSPUwriteRegister;
+	SPU_readRegister = (SPUreadRegister) MDFNSPUreadRegister;
+	SPU_writeDMA = (SPUwriteDMA) MDFNSPUwriteDMA;
+	SPU_readDMA = (SPUreadDMA) MDFNSPUreadDMA;
+	SPU_writeDMAMem = (SPUwriteDMAMem) MDFNSPUwriteDMAMem;
+	SPU_readDMAMem = (SPUreadDMAMem) MDFNSPUreadDMAMem;
+	SPU_playADPCMchannel = (SPUplayADPCMchannel) MDFNSPUplayADPCMchannel;
+	SPU_playCDDAchannel = (SPUplayCDDAchannel) MDFNSPUplayCDDAchannel;
+	SPU_registerCallback = (SPUregisterCallback) MDFNSPUregisterCallback;
+    SPU_async = (SPUasync) MDFNSPUasync;
+    SPU_freeze = (SPUfreeze) MDFNSPUfreeze;
 
 	PAD1_readPort1 = (PADreadPort1) PAD__readPort1;
 	PAD2_readPort2 = (PADreadPort2) PAD__readPort2;
@@ -274,7 +270,7 @@ int LoadPlugins() {
 	return 0;
 }
 
-void ReleasePlugins() {
+void ReleasePlugins(void) {
 	CDR_shutdown();
 	GPU_shutdown();
 	SPU_shutdown();
@@ -296,6 +292,6 @@ boolean UsingIso(void) {
 	return (IsoFile[0] != '\0');
 }
 
-void SetCdOpenCaseTime(s64 time) {
-	cdOpenCaseTime = time;
+void SetCdOpenCaseTime(s64 time_val) {
+	cdOpenCaseTime = time_val;
 }

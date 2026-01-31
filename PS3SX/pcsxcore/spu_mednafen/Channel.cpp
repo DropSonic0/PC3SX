@@ -214,6 +214,7 @@ void				PSX::SPU::Channel::TurnOff					()
 
 void				PSX::SPU::Channel::Mix						(int ch, int32_t* aLeftSum, int32_t* aRightSum)
 {
+	(void)ch;
 	//Update frequency
 	UpdateFrequency();
 
