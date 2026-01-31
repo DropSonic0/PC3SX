@@ -9,8 +9,10 @@
 #ifdef MDFNPS3
 .section .opd, "aw"
 .align 3
+.globl recRun
 recRun:
     .long .recRun, .TOC.@tocbase32
+.globl returnPC
 returnPC:
     .long .returnPC, .TOC.@tocbase32
 #endif
@@ -51,6 +53,8 @@ C(returnPC):
 #else
         .globl  C(.returnPC)
 C(.returnPC):
+        .globl  returnPC_recomp
+returnPC_recomp:
 #endif
 	// end code
 	lwz		0, (32-13)*4+8+4(1)

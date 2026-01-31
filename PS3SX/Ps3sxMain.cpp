@@ -59,7 +59,7 @@ extern "C"
 int NeedReset = 0;
 int Running =0;
 long LoadCdBios = 0;
-int wanna_leave = 0;
+extern int wanna_leave;
 
 //Sound Function
 unsigned long SoundGetBytesBuffered(void)
