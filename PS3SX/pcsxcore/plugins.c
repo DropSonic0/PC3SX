@@ -23,6 +23,8 @@
 
 #include "plugins.h"
 
+extern void SysPrintf(const char *fmt, ...);
+
 static char IsoFile[MAXPATHLEN] = "";
 static s64 cdOpenCaseTime = 0;
 
@@ -177,20 +179,20 @@ extern long CDR__getTD(unsigned char, unsigned char *);
 extern long CDR__readTrack(unsigned char *);
 extern unsigned char *CDR__getBuffer(void);
 
-extern long SPU_d_init(void);
-extern long SPU_d_shutdown(void);
-extern long SPU_d_open(void);
-extern long SPU_d_close(void);
-extern void SPU_d_writeRegister(unsigned long, unsigned short);
-extern unsigned short SPU_d_readRegister(unsigned long);
-extern void SPU_d_writeDMA(unsigned short);
-extern unsigned short SPU_d_readDMA(void);
-extern void SPU_d_writeDMAMem(unsigned short *, int);
-extern void SPU_d_readDMAMem(unsigned short *, int);
-extern void SPU_d_playADPCMchannel(xa_decode_t *);
-extern void SPU_d_async(unsigned long);
-extern void SPU_d_registerCallback(void (CALLBACK *callback)(void));
-extern long SPU_d_freeze(uint32_t, SPUFreeze_t *);
+extern long pkSPUinit(void);
+extern long pkSPUshutdown(void);
+extern long pkSPUopen(void);
+extern long pkSPUclose(void);
+extern void pkSPUwriteRegister(unsigned long, unsigned short);
+extern unsigned short pkSPUreadRegister(unsigned long);
+extern void pkSPUwriteDMA(unsigned short);
+extern unsigned short pkSPUreadDMA(void);
+extern void pkSPUwriteDMAMem(unsigned short *, int);
+extern void pkSPUreadDMAMem(unsigned short *, int);
+extern void pkSPUplayADPCMchannel(xa_decode_t *);
+extern void pkSPUasync(uint32_t);
+extern void pkSPUregisterCallback(void (CALLBACK *callback)(void));
+extern long pkSPUfreeze(uint32_t, SPUFreeze_t *);
 
 extern long PAD__readPort1(PadDataS*);
 extern long PAD__readPort2(PadDataS*);
@@ -245,20 +247,20 @@ int LoadPlugins() {
 	CDR_readTrack = (CDRreadTrack) CDR__readTrack;
 	CDR_getBuffer = (CDRgetBuffer) CDR__getBuffer;
 
-	SPU_init = (SPUinit) SPU_d_init;
-	SPU_shutdown = (SPUshutdown) SPU_d_shutdown;
-	SPU_open = (SPUopen) SPU_d_open;
-	SPU_close = (SPUclose) SPU_d_close;
-	SPU_writeRegister = (SPUwriteRegister) SPU_d_writeRegister;
-	SPU_readRegister = (SPUreadRegister) SPU_d_readRegister;
-	SPU_writeDMA = (SPUwriteDMA) SPU_d_writeDMA;
-	SPU_readDMA = (SPUreadDMA) SPU_d_readDMA;
-	SPU_writeDMAMem = (SPUwriteDMAMem) SPU_d_writeDMAMem;
-	SPU_readDMAMem = (SPUreadDMAMem) SPU_d_readDMAMem;
-	SPU_playADPCMchannel = (SPUplayADPCMchannel) SPU_d_playADPCMchannel;
-	SPU_registerCallback = (SPUregisterCallback) SPU_d_registerCallback;
-    SPU_async = (SPUasync) SPU_d_async;
-    SPU_freeze = (SPUfreeze) SPU_d_freeze;
+	SPU_init = (SPUinit) pkSPUinit;
+	SPU_shutdown = (SPUshutdown) pkSPUshutdown;
+	SPU_open = (SPUopen) pkSPUopen;
+	SPU_close = (SPUclose) pkSPUclose;
+	SPU_writeRegister = (SPUwriteRegister) pkSPUwriteRegister;
+	SPU_readRegister = (SPUreadRegister) pkSPUreadRegister;
+	SPU_writeDMA = (SPUwriteDMA) pkSPUwriteDMA;
+	SPU_readDMA = (SPUreadDMA) pkSPUreadDMA;
+	SPU_writeDMAMem = (SPUwriteDMAMem) pkSPUwriteDMAMem;
+	SPU_readDMAMem = (SPUreadDMAMem) pkSPUreadDMAMem;
+	SPU_playADPCMchannel = (SPUplayADPCMchannel) pkSPUplayADPCMchannel;
+	SPU_registerCallback = (SPUregisterCallback) pkSPUregisterCallback;
+    SPU_async = (SPUasync) pkSPUasync;
+    SPU_freeze = (SPUfreeze) pkSPUfreeze;
 
 	PAD1_readPort1 = (PADreadPort1) PAD__readPort1;
 	PAD2_readPort2 = (PADreadPort2) PAD__readPort2;
