@@ -26,3 +26,7 @@ long PAD__open(unsigned long *disp)
 long PAD__close(void) {
 	return 0;
 }
+
+long PAD__query(void) {
+	return 3;
+}

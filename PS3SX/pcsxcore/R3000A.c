@@ -123,6 +123,18 @@ void psxBranchTest() {
 		psxRcntUpdate();
 }
 
+void psxBiosA0() {
+	if (biosA0[psxRegs.GPR.n.t1 & 0xff]) biosA0[psxRegs.GPR.n.t1 & 0xff]();
+}
+
+void psxBiosB0() {
+	if (biosB0[psxRegs.GPR.n.t1 & 0xff]) biosB0[psxRegs.GPR.n.t1 & 0xff]();
+}
+
+void psxBiosC0() {
+	if (biosC0[psxRegs.GPR.n.t1 & 0xff]) biosC0[psxRegs.GPR.n.t1 & 0xff]();
+}
+
 void psxJumpTest() {
 	if (Config.HLE) return;
 
