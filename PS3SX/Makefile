@@ -54,12 +54,14 @@ PPU_SRCS		:= Ps3sxMain.cpp ./PS3/ps3audio.cpp ./PS3/ps3video.cpp ./PS3/rom_list.
 	./pcsxcore/ppc/reguse.c \
 	./pcsxcore/PlugPAD.c \
 	./pcsxcore/PlugCD.c \
-	./pcsxcore/dfsound/adsr.c \
-	./pcsxcore/dfsound/xa.c \
-	./pcsxcore/dfsound/spu.c \
-	./pcsxcore/dfsound/dma.c \
-	./pcsxcore/dfsound/registers.c \
-	./pcsxcore/dfsound/freeze.c \
+	./pcsxcore/spu_mednafen/Channel.cpp \
+	./pcsxcore/spu_mednafen/DiscStreamer.cpp \
+	./pcsxcore/spu_mednafen/Envelope.cpp \
+	./pcsxcore/spu_mednafen/Interpolate.cpp \
+	./pcsxcore/spu_mednafen/NoiseGenerator.cpp \
+	./pcsxcore/spu_mednafen/Plugin.cpp \
+	./pcsxcore/spu_mednafen/SPU.cpp \
+	./pcsxcore/spu_mednafen/ps3snd.cpp \
 	./pcsxcore/zlib/adler32.c \
 	./pcsxcore/zlib/compress.c \
 	./pcsxcore/zlib/crc32.c \
@@ -83,7 +85,7 @@ PPU_ASFLAGS		+=
 
 PPU_LDFLAGS		= -Wl -finline-limit=5000
 
-PPU_CXXFLAGS		+=	-I. -I./PS3 -I./pcsxcore -I./pcsxcore/zlib -I./pcsxcore/ppc -I./PS3/threads -I./PS3/Audio -IPS3/input -IPS3/Ini
+PPU_CXXFLAGS		+=	-I. -I./PS3 -I./pcsxcore -I./pcsxcore/zlib -I./pcsxcore/ppc -I./PS3/threads -I./PS3/Audio -IPS3/input -IPS3/Ini -I./pcsxcore/spu_mednafen
 PPU_LIBS		    +=	$(CELL_TARGET_PATH)/ppu/lib/libgcm_cmd.a \
 					$(CELL_TARGET_PATH)/ppu/lib/libgcm_sys_stub.a $(CELL_TARGET_PATH)/ppu/lib/libfs_stub.a
 PPU_LDLIBS		+= 	-L$(CELL_SDK)/target/ppu/lib/PSGL/RSX/opt -lPSGL -lPSGLcgc -lcgc -lsysmodule_stub 
