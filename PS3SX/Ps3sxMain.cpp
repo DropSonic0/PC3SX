@@ -474,12 +474,19 @@ void RunCD(){ // run the cd, no bios
 	SysPrintf("RunCD\n");
 	newCD(rom_path); 
 	SysReset();
-	CheckCdrom();
-	if (LoadCdrom() == -1) {
+	SysPrintf("RunCD: CheckCdrom\n");
+	if (CheckCdrom() == -1) {
+		SysPrintf("RunCD: CheckCdrom FAILED\n");
 		ClosePlugins();
-
-		exit(0);//epic fail
+		return;
 	}
+	SysPrintf("RunCD: LoadCdrom\n");
+	if (LoadCdrom() == -1) {
+		SysPrintf("RunCD: LoadCdrom FAILED\n");
+		ClosePlugins();
+		return;
+	}
+	SysPrintf("RunCD: psxCpu->Execute\n");
 	psxCpu->Execute();
 }
 
@@ -487,15 +494,26 @@ void RunCDBIOS(){ // run the bios on the cd?
 	SysPrintf("RunCDBIOS\n");
 	LoadCdBios = 1;
 	newCD(rom_path); 
-	CheckCdrom();
+	if (CheckCdrom() == -1) {
+		SysPrintf("RunCDBIOS: CheckCdrom FAILED\n");
+		ClosePlugins();
+		return;
+	}
 	SysReset();
+	SysPrintf("RunCDBIOS: psxCpu->Execute\n");
 	psxCpu->Execute();
 }
 
 void RunEXE(){
 	SysPrintf("RunEXE\n");
 	SysReset();
-	Load(rom_path);
+	SysPrintf("RunEXE: Load %s\n", rom_path);
+	if (Load(rom_path) == -1) {
+		SysPrintf("RunEXE: Load FAILED\n");
+		ClosePlugins();
+		return;
+	}
+	SysPrintf("RunEXE: psxCpu->Execute\n");
 	psxCpu->Execute();
 }
 
@@ -661,17 +679,22 @@ int main()
 	SysPrintf("Run the emulator\n");
 	RomBrowser();
 
+	SysPrintf("Selected RomType = %d\n", RomType);
+
 	//clear screen to black
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 	switch(RomType){
 	 case 1: 
+		 SysPrintf("Calling RunEXE()\n");
 		 RunEXE();
 		 break;
 	 case 2: 
+		 SysPrintf("Calling RunCD()\n");
 		 RunCD();
 		 break;
 	 default:
+		 SysPrintf("Calling RunBios()\n");
 		 RunBios();
 		 break;
 	}
@@ -760,7 +783,7 @@ extern "C" {
 	static bool BiosLoaded = false;
 
 	//Get the bios buffer
-	void MDFNPCSXGetBios(uint8_t* aBuffer)
+	boolean MDFNPCSXGetBios(uint8_t* aBuffer)
 	{
 		if (!BiosLoaded) {
 			char biosPath[256];
@@ -773,8 +796,10 @@ extern "C" {
 			} else {
 				SysPrintf("Error: Could not load BIOS from %s\n", biosPath);
 				memset(BiosBuffer, 0, 512 * 1024);
+				BiosLoaded = false;
 			}
 		}
 		memcpy(aBuffer, BiosBuffer, 1024 * 512);
+		return BiosLoaded;
 	}
 }

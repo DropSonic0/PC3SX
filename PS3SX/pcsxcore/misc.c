@@ -150,8 +150,10 @@ int LoadCdrom() {
 	u8 mdir[4096];
 	s8 exename[256];
 
+	SysPrintf("LoadCdrom: starting\n");
 	if (!Config.HLE) {
 		if (!Config.SlowBoot) psxRegs.pc = psxRegs.GPR.n.ra;
+		SysPrintf("LoadCdrom: HLE disabled, pc=%08x\n", psxRegs.pc);
 		return 0;
 	}
 
@@ -274,6 +276,7 @@ int CheckCdrom() {
 	char exename[256];
 	int i, c;
 
+	SysPrintf("CheckCdrom: starting\n");
 	FreePPFCache();
 
 	time[0] = itob(0);
@@ -349,6 +352,7 @@ int CheckCdrom() {
 	SysPrintf(_("CD-ROM Label: %.32s\n"), CdromLabel);
 	SysPrintf(_("CD-ROM ID: %.9s\n"), CdromId);
 
+	SysPrintf("CheckCdrom: BuildPPFCache\n");
 	BuildPPFCache();
 	LoadSBI();
 

@@ -116,14 +116,23 @@ void psxMemReset() {
 	FILE *f = NULL;
 	char bios[1024];
 
+	SysPrintf("psxMemReset: memset psxM\n");
 	memset(psxM, 0, 0x00200000);
+	SysPrintf("psxMemReset: memset psxP\n");
 	memset(psxP, 0, 0x00010000);
 
 	// Load BIOS
+	SysPrintf("psxMemReset: Config.Bios = %s\n", Config.Bios);
 	if (strcmp(Config.Bios, "HLE") != 0) {
 #ifdef MDFNPS3
-		MDFNPCSXGetBios((uint8_t*)psxR);
-		Config.HLE = FALSE;
+		SysPrintf("psxMemReset: MDFNPCSXGetBios\n");
+		if (MDFNPCSXGetBios((uint8_t*)psxR)) {
+			Config.HLE = FALSE;
+			SysPrintf("psxMemReset: Config.HLE set to FALSE\n");
+		} else {
+			Config.HLE = TRUE;
+			SysPrintf("psxMemReset: BIOS load failed, enabling HLE\n");
+		}
 #else
 		sprintf(bios, "%s/%s", Config.BiosDir, Config.Bios);
 		f = fopen(bios, "rb");

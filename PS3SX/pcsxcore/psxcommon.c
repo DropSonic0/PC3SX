@@ -35,10 +35,14 @@ int EmuInit() {
 }
 
 void EmuReset() {
+	SysPrintf("EmuReset: FreeCheatSearchResults\n");
 	FreeCheatSearchResults();
+	SysPrintf("EmuReset: FreeCheatSearchMem\n");
 	FreeCheatSearchMem();
 
+	SysPrintf("EmuReset: psxReset\n");
 	psxReset();
+	SysPrintf("EmuReset: psxReset done\n");
 }
 
 void EmuShutdown() {

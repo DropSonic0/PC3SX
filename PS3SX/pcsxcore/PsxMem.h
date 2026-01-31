@@ -131,7 +131,7 @@ void psxMemReset(void);
 void psxMemShutdown(void);
 
 #ifdef MDFNPS3
-void MDFNPCSXGetBios(uint8_t* aBuffer);
+boolean MDFNPCSXGetBios(uint8_t* aBuffer);
 #endif
 
 u8 psxMemRead8 (u32 mem);

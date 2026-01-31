@@ -1082,6 +1082,7 @@ static void freeMem(int all)
 static int allocMem() {
 	int i;
 
+	SysPrintf("allocMem: starting\n");
 	freeMem(0);
         
 	if (psxRecLUT==NULL)
@@ -1090,12 +1091,14 @@ static int allocMem() {
 #ifndef MDFNPS3 //Memory allocation
 	recMem = (char*) malloc(RECMEM_SIZE);
 #else
-	recMem = MDFNDC_AllocateExec(RECMEM_SIZE);
+	SysPrintf("allocMem: MDFNDC_AllocateExec\n");
+	recMem = (void*)MDFNDC_AllocateExec(RECMEM_SIZE);
 #endif
         //recMem = mmap(NULL, RECMEM_SIZE, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1,  0);
 	recRAM = (char*) malloc(0x200000);
 	recROM = (char*) malloc(0x080000);
 	if (recRAM == NULL || recROM == NULL || recMem == NULL/*(void *)-1*/ || psxRecLUT == NULL) {
+                SysPrintf("allocMem: FAILED recRAM=%p recROM=%p recMem=%p psxRecLUT=%p\n", recRAM, recROM, recMem, psxRecLUT);
                 freeMem(1);
 		SysMessage("Error allocating memory"); return -1;
 	}
@@ -1114,7 +1117,9 @@ static int recInit() {
 }
 
 static void recReset() {
+	SysPrintf("recReset: memset recRAM\n");
 	memset(recRAM, 0, 0x200000);
+	SysPrintf("recReset: memset recROM\n");
 	memset(recROM, 0, 0x080000);
 
 	ppcInit();
@@ -1124,6 +1129,7 @@ static void recReset() {
 	memset(iRegs, 0, sizeof(iRegs));
 	iRegs[0].state = ST_CONST;
 	iRegs[0].k     = 0;
+	SysPrintf("recReset done\n");
 }
 
 static void recShutdown() {

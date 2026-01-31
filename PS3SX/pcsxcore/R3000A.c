@@ -49,10 +49,13 @@ int psxInit() {
 }
 
 void psxReset() {
+	SysPrintf("psxReset: psxCpu->Reset\n");
 	psxCpu->Reset();
 
+	SysPrintf("psxReset: psxMemReset\n");
 	psxMemReset();
 
+	SysPrintf("psxReset: memset psxRegs\n");
 	memset(&psxRegs, 0, sizeof(psxRegs));
 
 	psxRegs.pc = 0xbfc00000; // Start in bootstrap
@@ -60,16 +63,24 @@ void psxReset() {
 	psxRegs.CP0.r[12] = 0x10900000; // COP0 enabled | BEV = 1 | TS = 1
 	psxRegs.CP0.r[15] = 0x00000002; // PRevID = Revision ID, same as R3000A
 
+	SysPrintf("psxReset: psxHwReset\n");
 	psxHwReset();
+	SysPrintf("psxReset: psxBiosInit\n");
 	psxBiosInit();
 
-	if (!Config.HLE)
+	if (!Config.HLE) {
+		SysPrintf("psxReset: psxExecuteBios\n");
 		psxExecuteBios();
+		SysPrintf("psxReset: psxExecuteBios done\n");
+	} else {
+		SysPrintf("psxReset: HLE Bios enabled\n");
+	}
 
 #ifdef EMU_LOG
 	EMU_LOG("*BIOS END*\n");
 #endif
 	Log = 0;
+	SysPrintf("psxReset done\n");
 }
 
 void psxShutdown() {
@@ -269,7 +280,17 @@ void psxJumpTest() {
 }
 
 void psxExecuteBios() {
-	while (psxRegs.pc != 0x80030000)
+	uint32_t timeout = 0;
+	while (psxRegs.pc != 0x80030000) {
 		psxCpu->ExecuteBlock();
+		if (psxRegs.pc == 0x00000000) {
+			SysPrintf("psxExecuteBios: PC reached 0! Likely crash.\n");
+			break;
+		}
+		if (timeout++ > 500000) {
+			SysPrintf("psxExecuteBios: Timeout reached! BIOS might be hung.\n");
+			break;
+		}
+	}
 }
 

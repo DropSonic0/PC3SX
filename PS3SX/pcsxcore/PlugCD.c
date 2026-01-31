@@ -67,16 +67,14 @@ void openBin(const char* filename)
 
     CD.cd = fopen(filename, "rb");
 
-    printf("CD.cd = %08x\n",CD.cd);
+    SysPrintf("CD.cd = %p\n",CD.cd);
 
-//	if (CD.cd == NULL) CD.cd = -1;
-	
-/*    if (CD.cd == 0)
+    if (CD.cd == NULL)
     {
-        SysPrintf("Error opening cd\n");
-        exit(0);
+        SysPrintf("Error opening cd: %s\n", filename);
+        return;
     }
-*/
+
     end = fseek(CD.cd, 0, SEEK_END);
     end = ftell(CD.cd);
     size = end;
@@ -125,16 +123,17 @@ void addBinTrackInfo()
 // new file types should be added here and in the CDOpen function
 void newCD(const char * filename)
 {
-//    SysPrintf("start newCD()\n");
+    SysPrintf("start newCD(%s)\n", filename);
 
     CD.type = Bin;
     openBin(filename);
+    if (CD.cd == NULL) return;
     addBinTrackInfo();
 
     CD.bufferPos = 0x7FFFFFFF;
     seekSector(0,2,0);
 
-//    SysPrintf("end newCD\n");
+    SysPrintf("end newCD\n");
 }
 
 

@@ -27,14 +27,20 @@
 #include "psxgpu.h"
 
 void psxHwReset() {
+	SysPrintf("psxHwReset: starting\n");
 	if (Config.Sio) psxHu32ref(0x1070) |= SWAP32(0x80);
 	if (Config.SpuIrq) psxHu32ref(0x1070) |= SWAP32(0x200);
 
+	SysPrintf("psxHwReset: memset psxH\n");
 	memset(psxH, 0, 0x10000);
 
+	SysPrintf("psxHwReset: mdecInit\n");
 	mdecInit(); // initialize mdec decoder
+	SysPrintf("psxHwReset: cdrReset\n");
 	cdrReset();
+	SysPrintf("psxHwReset: psxRcntInit\n");
 	psxRcntInit();
+	SysPrintf("psxHwReset done\n");
 }
 
 u8 psxHwRead8(u32 add) {
@@ -512,9 +518,9 @@ void psxHwWrite32(u32 add, u32 value) {
 	switch (add) {
 	    case 0x1f801040:
 			sioWrite8((unsigned char)value);
-			sioWrite8((unsigned char)((value&0xff) >>  8));
-			sioWrite8((unsigned char)((value&0xff) >> 16));
-			sioWrite8((unsigned char)((value&0xff) >> 24));
+			sioWrite8((unsigned char)(value >>  8));
+			sioWrite8((unsigned char)(value >> 16));
+			sioWrite8((unsigned char)(value >> 24));
 #ifdef PAD_LOG
 			PAD_LOG("sio write32 %x\n", value);
 #endif
