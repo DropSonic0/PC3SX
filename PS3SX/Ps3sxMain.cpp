@@ -10,7 +10,7 @@
 #include "ini.h"
 #include <unistd.h> 
 #include <pthread.h>
-#include <sys/time.h>
+#include <sys/timer.h>
 #include <sysutil/sysutil_gamecontent.h>
 
 SYS_PROCESS_PARAM(1001, 0x10000);
@@ -679,13 +679,14 @@ extern "C" {
 	}
 
 	uint32_t MDFNDC_GetTime() {
-		struct timeval tv;
-		gettimeofday(&tv, NULL);
-		return (uint32_t)((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
+		sys_time_sec_t sec;
+		sys_time_usec_t usec;
+		sys_time_get_current_time(&sec, &usec);
+		return (uint32_t)((sec * 1000) + (usec / 1000));
 	}
 
 	void MDFND_Sleep(uint32_t ms) {
-		usleep(ms * 1000);
+		sys_timer_usleep(ms * 1000);
 	}
 
 	void MDFND_Message(const char *msg) {
