@@ -144,7 +144,7 @@ __inline void UpdateGlobalTP(unsigned short gdata)
      GlobalTextTP = (gdata >> 9) & 0x3;
      if(GlobalTextTP==3) GlobalTextTP=2;             
      usMirror =0;
-     lGPUstatusRet = (lGPUstatusRet & 0xffffe000 ) | (gdata & 0x1fff );
+     lGPUstatusRet = (lGPUstatusRet & 0xffffe000 ) | (gdata & 0x07ff) | ((gdata & 0x0800) << 1);
 
      // tekken dithering? right now only if dithering is forced by user
      if(iUseDither==2) iDither=2; else iDither=0;
@@ -175,8 +175,8 @@ __inline void UpdateGlobalTP(unsigned short gdata)
 
  GlobalTextABR = (gdata >> 5) & 0x3;                   // blend mode
      
- lGPUstatusRet&=~0x07ff;                               // Clear the necessary bits
- lGPUstatusRet|=(gdata & 0x07ff);                      // set the necessary bits
+ lGPUstatusRet&=~0x17ff;                               // Clear the necessary bits
+ lGPUstatusRet|=(gdata & 0x07ff) | ((gdata & 0x0800) << 1); // set the necessary bits
 }
 
 ////////////////////////////////////////////////////////////////////////                                          

@@ -425,13 +425,14 @@ void psxHwWrite16(u32 add, u16 value) {
 			return;
 #endif
 		case 0x1f801070: 
-#ifdef PSXHW_LOG
-			PSXHW_LOG("IREG 16bit write %x\n", value);
-#endif
-			if (Config.Sio) psxHu16ref(0x1070) |= SWAPu16(0x80);
-			if (Config.SpuIrq) psxHu16ref(0x1070) |= SWAPu16(0x200);
-			psxHu16ref(0x1070) &= SWAPu16((psxHu16(0x1074) & value));
+		{
+			u16 reg = psxHu16(0x1070);
+			reg &= ~value;
+			if (Config.Sio) reg |= 0x80;
+			if (Config.SpuIrq) reg |= 0x200;
+			psxHu16ref(0x1070) = SWAPu16(reg);
 			return;
+		}
 
 		case 0x1f801074:
 #ifdef PSXHW_LOG
@@ -538,13 +539,14 @@ void psxHwWrite32(u32 add, u32 value) {
 #endif
 
 		case 0x1f801070: 
-#ifdef PSXHW_LOG
-			PSXHW_LOG("IREG 32bit write %x\n", value);
-#endif
-			if (Config.Sio) psxHu32ref(0x1070) |= SWAPu32(0x80);
-			if (Config.SpuIrq) psxHu32ref(0x1070) |= SWAPu32(0x200);
-			psxHu32ref(0x1070) &= SWAPu32((psxHu32(0x1074) & value));
+		{
+			u32 reg = psxHu32(0x1070);
+			reg &= ~value;
+			if (Config.Sio) reg |= 0x80;
+			if (Config.SpuIrq) reg |= 0x200;
+			psxHu32ref(0x1070) = SWAPu32(reg);
 			return;
+		}
 		case 0x1f801074:
 #ifdef PSXHW_LOG
 			PSXHW_LOG("IMASK 32bit write %x\n", value);
@@ -657,12 +659,17 @@ void psxHwWrite32(u32 add, u32 value) {
 #endif
 
 		case 0x1f8010f4:
-#ifdef PSXHW_LOG
-			PSXHW_LOG("DMA ICR 32bit write %x\n", value);
-#endif
 		{
-			u32 tmp = (~value) & SWAPu32(HW_DMA_ICR);
-			HW_DMA_ICR = SWAPu32(((tmp ^ value) & 0xffffff) ^ tmp);
+			u32 reg = SWAPu32(HW_DMA_ICR);
+			// Bits 16-22 are "write 1 to clear"
+			u32 flags = (reg >> 16) & 0x7f;
+			flags &= ~((value >> 16) & 0x7f);
+			// Bits 0-15 are write normally (enable bits)
+			reg = (value & 0xff) | (reg & 0xff00) | (flags << 16);
+			// Master enable (bit 15)
+			if (value & 0x8000) reg |= 0x8000; else reg &= ~0x8000;
+
+			HW_DMA_ICR = SWAPu32(reg);
 			return;
 		}
 
