@@ -35,33 +35,33 @@
 // --------------------------------------------------- //
 
 #ifdef _WINDOWS
-long CALLBACK GPUopen(HWND hwndGPU);
+long CALLBACK SOFTGPUopen(HWND hwndGPU);
 #else
-long GPUopen(unsigned long * disp,const char * CapText,const char * CfgFile);
+long SOFTGPUopen(unsigned long * disp,const char * CapText,const char * CfgFile);
 #endif
 void CALLBACK GPUdisplayText(char * pText);
 void CALLBACK GPUdisplayFlags(unsigned long dwFlags);
-void CALLBACK GPUmakeSnapshot(void);
-long CALLBACK GPUinit();
-long CALLBACK GPUclose();
-long CALLBACK GPUshutdown();
+void CALLBACK SOFTGPUmakeSnapshot(void);
+long CALLBACK SOFTGPUinit();
+long CALLBACK SOFTGPUclose();
+long CALLBACK SOFTGPUshutdown();
 void CALLBACK GPUcursor(int iPlayer,int x,int y);
-void CALLBACK GPUupdateLace(void);
-unsigned long CALLBACK GPUreadStatus(void);
-void CALLBACK GPUwriteStatus(unsigned long gdata);
-void CALLBACK GPUreadDataMem(unsigned long * pMem, int iSize);
-unsigned long CALLBACK GPUreadData(void);
-void CALLBACK GPUwriteDataMem(unsigned long * pMem, int iSize);
-void CALLBACK GPUwriteData(unsigned long gdata);
+void CALLBACK SOFTGPUupdateLace(void);
+unsigned long CALLBACK SOFTGPUreadStatus(void);
+void CALLBACK SOFTGPUwriteStatus(unsigned long gdata);
+void CALLBACK SOFTGPUreadDataMem(unsigned long * pMem, int iSize);
+unsigned long CALLBACK SOFTGPUreadData(void);
+void CALLBACK SOFTGPUwriteDataMem(unsigned long * pMem, int iSize);
+void CALLBACK SOFTGPUwriteData(unsigned long gdata);
 void CALLBACK GPUsetMode(unsigned long gdata);
 long CALLBACK GPUgetMode(void);
-long CALLBACK GPUdmaChain(unsigned long * baseAddrL, unsigned long addr);
-long CALLBACK GPUconfigure(void);
-void CALLBACK GPUabout(void);
-long CALLBACK GPUtest(void);
-long CALLBACK GPUfreeze(unsigned long ulGetFreezeData,void * pF);
-void CALLBACK GPUgetScreenPic(unsigned char * pMem);
-void CALLBACK GPUshowScreenPic(unsigned char * pMem);
+long CALLBACK SOFTGPUdmaChain(unsigned long * baseAddrL, unsigned long addr);
+long CALLBACK SOFTGPUconfigure(void);
+void CALLBACK SOFTGPUabout(void);
+long CALLBACK SOFTGPUtest(void);
+long CALLBACK SOFTGPUfreeze(unsigned long ulGetFreezeData,void * pF);
+void CALLBACK SOFTGPUgetScreenPic(unsigned char * pMem);
+void CALLBACK SOFTGPUshowScreenPic(unsigned char * pMem);
 #ifndef _WINDOWS
 void CALLBACK GPUkeypressed(int keycode);
 #endif
@@ -103,7 +103,7 @@ void CALLBACK ZN_GPUdisplayFlags(unsigned long dwFlags)
 
 void CALLBACK ZN_GPUmakeSnapshot(void)
 {
- GPUmakeSnapshot();
+ SOFTGPUmakeSnapshot();
 }
 
 // --------------------------------------------------- //
@@ -113,7 +113,7 @@ long CALLBACK ZN_GPUinit()
  iGPUHeight=1024;
  iGPUHeightMask=1023;
 
- return GPUinit();
+ return SOFTGPUinit();
 }
 
 // --------------------------------------------------- //
@@ -128,9 +128,9 @@ long CALLBACK ZN_GPUopen(void * vcfg)
 
 #ifdef _WINDOWS
  pConfigFile=(char *)cfg->CfgFile;                     // only used in this open, so we can store this temp pointer here without danger... don't access it later, though!
- lret=GPUopen((HWND)cfg->hWnd);
+ lret=SOFTGPUopen((HWND)cfg->hWnd);
 #else
- lret=GPUopen(&cfg->hWnd,cfg->GameName,cfg->CfgFile);
+ lret=SOFTGPUopen(&cfg->hWnd,cfg->GameName,cfg->CfgFile);
 #endif
 
 /*
@@ -155,42 +155,42 @@ long CALLBACK ZN_GPUopen(void * vcfg)
 
 long CALLBACK ZN_GPUclose()
 {
- return GPUclose();
+ return SOFTGPUclose();
 }
 
 // --------------------------------------------------- // 
 
 long CALLBACK ZN_GPUshutdown()
 {
- return GPUshutdown();
+ return SOFTGPUshutdown();
 }
 
 // --------------------------------------------------- // 
 
 void CALLBACK ZN_GPUupdateLace(void)
 {
- GPUupdateLace();
+ SOFTGPUupdateLace();
 }
 
 // --------------------------------------------------- // 
 
 unsigned long CALLBACK ZN_GPUreadStatus(void)
 {
- return GPUreadStatus();
+ return SOFTGPUreadStatus();
 }
 
 // --------------------------------------------------- // 
 
 void CALLBACK ZN_GPUwriteStatus(unsigned long gdata)
 {
- GPUwriteStatus(gdata);
+ SOFTGPUwriteStatus(gdata);
 }
 
 // --------------------------------------------------- // 
 
 long CALLBACK ZN_GPUdmaSliceOut(unsigned long *baseAddrL, unsigned long addr, unsigned long iSize)
 {
- GPUreadDataMem(baseAddrL+addr,iSize);
+ SOFTGPUreadDataMem(baseAddrL+addr,iSize);
  return 0;
 }
 
@@ -198,7 +198,7 @@ long CALLBACK ZN_GPUdmaSliceOut(unsigned long *baseAddrL, unsigned long addr, un
 
 unsigned long CALLBACK ZN_GPUreadData(void)
 {
- return GPUreadData();
+ return SOFTGPUreadData();
 }
 
 // --------------------------------------------------- // 
@@ -219,49 +219,49 @@ long CALLBACK ZN_GPUgetMode(void)
 
 long CALLBACK ZN_GPUdmaSliceIn(unsigned long *baseAddrL, unsigned long addr, unsigned long iSize)
 {
- GPUwriteDataMem(baseAddrL+addr,iSize);
+ SOFTGPUwriteDataMem(baseAddrL+addr,iSize);
  return 0;
 }
 // --------------------------------------------------- // 
 
 void CALLBACK ZN_GPUwriteData(unsigned long gdata)
 {
- GPUwriteDataMem(&gdata,1);
+ SOFTGPUwriteDataMem(&gdata,1);
 }
 
 // --------------------------------------------------- // 
 
 long CALLBACK ZN_GPUdmaChain(unsigned long * baseAddrL, unsigned long addr)
 {
- return GPUdmaChain(baseAddrL,addr);
+ return SOFTGPUdmaChain(baseAddrL,addr);
 }
 
 // --------------------------------------------------- // 
 
 long CALLBACK ZN_GPUtest(void)
 {
- return GPUtest();
+ return SOFTGPUtest();
 }
 
 // --------------------------------------------------- // 
 
 long CALLBACK ZN_GPUfreeze(unsigned long ulGetFreezeData,void * pF)
 {
- return GPUfreeze(ulGetFreezeData,pF);
+ return SOFTGPUfreeze(ulGetFreezeData,pF);
 }
 
 // --------------------------------------------------- // 
 
 void CALLBACK ZN_GPUgetScreenPic(unsigned char * pMem)
 {
- GPUgetScreenPic(pMem);
+ SOFTGPUgetScreenPic(pMem);
 }
 
 // --------------------------------------------------- // 
 
 void CALLBACK ZN_GPUshowScreenPic(unsigned char * pMem)
 {
- GPUshowScreenPic(pMem);
+ SOFTGPUshowScreenPic(pMem);
 }
 
 // --------------------------------------------------- // 
