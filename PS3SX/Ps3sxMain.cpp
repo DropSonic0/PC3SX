@@ -31,7 +31,7 @@ static bool runbios = 0;
 char rom_path[256];
 char usrdirPath[256];
 
-void InitPS3()
+void InitPS3(void)
 {
 	Graphics = new PS3Graphics();
 	Graphics->Init();
@@ -328,7 +328,7 @@ long PAD__readPort2(PadDataS* pad)
 
 //end Pad
 
-void InitConfig()
+void InitConfig(void)
 {
 	memset(&Config, 0, sizeof(PcsxConfig));
 
@@ -362,7 +362,7 @@ void InitConfig()
 
 static int sysInited = 0;
 
-int SysInit()
+int SysInit(void)
 {
 	sysInited = 1;
 
@@ -379,7 +379,7 @@ int SysInit()
 	return 0;
 }
 
-void SysReset() {
+void SysReset(void) {
     SysPrintf("start SysReset()\n");
 	EmuReset();
 	SysPrintf("end SysReset()\n");
@@ -387,10 +387,10 @@ void SysReset() {
 
 void SysPrintf(const char *fmt, ...) {
     va_list list;
-    char msg[512];
+    char msg[1024];
 
     va_start(list, fmt);
-    vsnprintf(msg, 512, fmt, list);
+    vsnprintf(msg, 1024, fmt, list);
     va_end(list);
 
 	dprintf_console(msg);
@@ -398,21 +398,24 @@ void SysPrintf(const char *fmt, ...) {
 		char logPath[512];
 		sprintf(logPath, "%s/log.txt", usrdirPath);
 		emuLog = fopen(logPath,"ab");
-		if(emuLog) cellFsChmod(logPath, 0666);
+		if(emuLog) {
+			cellFsChmod(logPath, 0666);
+			setvbuf(emuLog, NULL, _IONBF, 0);
+		}
 	}
 	if(emuLog) {
 		fputs(msg, emuLog);
-		fflush(emuLog);
+		// fflush(emuLog); // redundant with _IONBF
 	}
 	printf("%s", msg);
 }
 
 void SysMessage(const char *fmt, ...) {
 	va_list list;
-    char msg[512];
+    char msg[1024];
 
     va_start(list, fmt);
-    vsnprintf(msg, 512, fmt, list);
+    vsnprintf(msg, 1024, fmt, list);
     va_end(list);
 
 	dprintf_console(msg);
@@ -420,13 +423,14 @@ void SysMessage(const char *fmt, ...) {
 		char logPath[512];
 		sprintf(logPath, "%s/log.txt", usrdirPath);
 		emuLog = fopen(logPath,"ab");
-		if(emuLog) cellFsChmod(logPath, 0666);
+		if(emuLog) {
+			cellFsChmod(logPath, 0666);
+			setvbuf(emuLog, NULL, _IONBF, 0);
+		}
 	}
 	if(emuLog) {
 		fputs(msg, emuLog);
-		fflush(emuLog);
-		fclose(emuLog);
-		emuLog = NULL;
+		// Keep open for subsequent prints
 	}
 	printf("%s", msg);
 }
@@ -449,27 +453,27 @@ void SysCloseLibrary(void *lib) {
 }
 
 // Called periodically from the emu thread
-void SysUpdate() {
+void SysUpdate(void) {
 
 }
 
 // Returns to the Gui
-void SysRunGui()
+void SysRunGui(void)
 {
 
 }
 
 // Close mem and plugins
-void SysClose() {
+void SysClose(void) {
 	EmuShutdown();
 	ReleasePlugins();
 }
 
-void OnFile_Exit() {
+void OnFile_Exit(void) {
 
 }
 
-void RunCD(){ // run the cd, no bios
+void RunCD(void){ // run the cd, no bios
 	LoadCdBios = 0;
 	SysPrintf("RunCD\n");
 	newCD(rom_path); 
@@ -488,9 +492,12 @@ void RunCD(){ // run the cd, no bios
 	}
 	SysPrintf("RunCD: psxExecuteBios\n");
 	psxExecuteBios();
+	SysPrintf("RunCD: psxCpu->Execute starting\n");
+	psxCpu->Execute();
+	SysPrintf("RunCD: psxCpu->Execute finished\n");
 }
 
-void RunCDBIOS(){ // run the bios on the cd?
+void RunCDBIOS(void){ // run the bios on the cd?
 	SysPrintf("RunCDBIOS\n");
 	LoadCdBios = 1;
 	newCD(rom_path); 
@@ -502,9 +509,12 @@ void RunCDBIOS(){ // run the bios on the cd?
 	SysReset();
 	SysPrintf("RunCDBIOS: psxExecuteBios\n");
 	psxExecuteBios();
+	SysPrintf("RunCDBIOS: psxCpu->Execute starting\n");
+	psxCpu->Execute();
+	SysPrintf("RunCDBIOS: psxCpu->Execute finished\n");
 }
 
-void RunEXE(){
+void RunEXE(void){
 	SysPrintf("RunEXE\n");
 	SysReset();
 	SysPrintf("RunEXE: Load %s\n", rom_path);
@@ -513,15 +523,18 @@ void RunEXE(){
 		ClosePlugins();
 		return;
 	}
-	SysPrintf("RunEXE: psxCpu->Execute\n");
+	SysPrintf("RunEXE: psxCpu->Execute starting\n");
 	psxCpu->Execute();
+	SysPrintf("RunEXE: psxCpu->Execute finished\n");
 }
 
-void RunBios(){
+void RunBios(void){
 	SysPrintf("RunBios\n");
 	SysReset();
 	SysMessage("Bios done!!!\n");
+	SysPrintf("RunBios: psxCpu->Execute starting\n");
 	psxCpu->Execute();
+	SysPrintf("RunBios: psxCpu->Execute finished\n");
 }
 
 void sysutil_callback (uint64_t status, uint64_t param, void *userdata) {
@@ -572,7 +585,7 @@ void CreatFolder(char* folders)
 	}
 }
 
-void RomBrowser()
+void RomBrowser(void)
 {
 	SysPrintf("aspec ration  0x%X \n",(int)Graphics->GetDeviceAspectRatio());
 	//detection 16/9 or 4/3 Anonymous
@@ -601,7 +614,7 @@ void RomBrowser()
 
 }
 
-int main()
+int main(void)
 {
 	emuLog=NULL;
 	strcpy(usrdirPath, "/dev_hdd0/game/PCSX00001/USRDIR");
@@ -648,9 +661,10 @@ int main()
 	printf("cellGameContentPermit\n");
 	ret = cellGameContentPermit(contentInfoPath, usrdirPath);
 	if (ret != CELL_GAME_RET_OK) {
-		SysPrintf("cellGameContentPermit failed %X\n",ret);
+		printf("cellGameContentPermit failed %X\n",ret);
 		strcpy(usrdirPath, "/dev_hdd0/game/PCSX00001/USRDIR");
 	}
+	printf("Final usrdirPath: %s\n", usrdirPath);
 
 	char initialLogPath[512];
 	sprintf(initialLogPath, "%s/log.txt", usrdirPath);

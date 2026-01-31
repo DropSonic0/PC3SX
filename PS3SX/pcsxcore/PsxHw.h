@@ -59,8 +59,12 @@ extern "C" {
 
 #define	DMA_INTERRUPT(n) \
 	if (SWAPu32(HW_DMA_ICR) & (1 << (16 + n))) {    \
-		HW_DMA_ICR |= SWAP32(1 << (24 + n));        \
-		psxHu32ref(0x1070) |= SWAP32(8);            \
+		u32 _icr = SWAPu32(HW_DMA_ICR);             \
+		_icr |= (1 << (24 + n));                    \
+		HW_DMA_ICR = SWAPu32(_icr);                 \
+		u32 _istat = SWAPu32(psxHu32ref(0x1070));   \
+		_istat |= 8;                                \
+		psxHu32ref(0x1070) = SWAPu32(_istat);       \
 	}
 
 void psxHwReset(void);

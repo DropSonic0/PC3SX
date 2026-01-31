@@ -1299,8 +1299,8 @@ void psxBios_StartRCnt() { // 04
 #endif
 
 	a0&= 0x3;
-	if (a0 != 3) psxHu32ref(0x1074)|= SWAP32((u32)((1<<(a0+4))));
-	else psxHu32ref(0x1074)|= SWAPu32(0x1);
+	if (a0 != 3) psxH_ST_OR32(psxHu32ref(0x1074), (1<<(a0+4)));
+	else psxH_ST_OR32(psxHu32ref(0x1074), 0x1);
 	v0 = 1; pc0 = ra;
 }
 
@@ -1310,8 +1310,8 @@ void psxBios_StopRCnt() { // 05
 #endif
 
 	a0&= 0x3;
-	if (a0 != 3) psxHu32ref(0x1074)&= SWAP32((u32)(~(1<<(a0+4))));
-	else psxHu32ref(0x1074)&= SWAPu32(~0x1);
+	if (a0 != 3) psxH_ST_AND32(psxHu32ref(0x1074), ~(1<<(a0+4)));
+	else psxH_ST_AND32(psxHu32ref(0x1074), ~0x1);
 	pc0 = ra;
 }
 
@@ -2201,9 +2201,9 @@ void psxBios_dummy() {
 	pc0 = ra; 
 }
 
-void (*biosA0[256])();
-void (*biosB0[256])();
-void (*biosC0[256])();
+void (*biosA0[256])(void);
+void (*biosB0[256])(void);
+void (*biosC0[256])(void);
 
 #include "sjisfont.h"
 

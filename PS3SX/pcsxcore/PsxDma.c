@@ -26,8 +26,13 @@
 // Dma0/1 in Mdec.c
 // Dma3 in CdRom.c
 
-void spuInterrupt() {
-	HW_DMA4_CHCR &= SWAP32(~0x01000000);
+void spuInterrupt(void) {
+	u32 _chcr = SWAPu32(HW_DMA4_CHCR);
+	{
+		u32 _chcr_inner = SWAPu32(HW_DMA4_CHCR);
+		_chcr_inner &= ~0x01000000;
+		HW_DMA4_CHCR = SWAPu32(_chcr_inner);
+	}
 	DMA_INTERRUPT(4);
 }
 
@@ -83,7 +88,11 @@ void psxDma4(u32 madr, u32 bcr, u32 chcr) { // SPU
 #endif
 	}
 
-	HW_DMA4_CHCR &= SWAP32(~0x01000000);
+	{
+		u32 _chcr = SWAPu32(HW_DMA4_CHCR);
+		_chcr &= ~0x01000000;
+		HW_DMA4_CHCR = SWAPu32(_chcr);
+	}
 	DMA_INTERRUPT(4);
 }
 
@@ -100,7 +109,9 @@ void psxDma6(u32 madr, u32 bcr, u32 chcr) {
 #ifdef CPU_LOG
 			CPU_LOG("*** DMA6 OT *** NULL Pointer!!!\n");
 #endif
-			HW_DMA6_CHCR &= SWAP32(~0x01000000);
+			u32 _chcr = SWAPu32(HW_DMA6_CHCR);
+			_chcr &= ~0x01000000;
+			HW_DMA6_CHCR = SWAPu32(_chcr);
 			DMA_INTERRUPT(6);
 			return;
 		}
@@ -130,11 +141,15 @@ void psxDma6(u32 madr, u32 bcr, u32 chcr) {
 	}
 #endif
 
-	HW_DMA6_CHCR &= SWAP32(~0x01000000);
+	u32 _chcr = SWAPu32(HW_DMA6_CHCR);
+	_chcr &= ~0x01000000;
+	HW_DMA6_CHCR = SWAPu32(_chcr);
 	DMA_INTERRUPT(6);
 }
 
 void gpuotcInterrupt() {
-	HW_DMA6_CHCR &= SWAP32(~0x01000000);
+	u32 _chcr = SWAPu32(HW_DMA6_CHCR);
+	_chcr &= ~0x01000000;
+	HW_DMA6_CHCR = SWAPu32(_chcr);
 	DMA_INTERRUPT(6);
 }

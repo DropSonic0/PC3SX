@@ -86,7 +86,7 @@ u32 psxNextCounter = 0, psxNextsCounter = 0;
 static inline
 void setIrq( u32 irq )
 {
-    psxHu32ref(0x1070) |= SWAPu32(irq);
+    psxH_ST_OR32(psxHu32ref(0x1070), irq);
 }
 
 static

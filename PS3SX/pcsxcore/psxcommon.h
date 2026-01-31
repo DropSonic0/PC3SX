@@ -165,6 +165,18 @@ extern boolean NetOpened;
 #define BIAS	2
 #define PSXCLK	33868800	/* 33.8688 MHz */
 
+#if defined(__BIGENDIAN__)
+#define psxH_ST_OR32(reg, val)  { u32 _v = SWAPu32(reg); _v |= (val); reg = SWAPu32(_v); }
+#define psxH_ST_AND32(reg, val) { u32 _v = SWAPu32(reg); _v &= (val); reg = SWAPu32(_v); }
+#define psxH_ST_OR16(reg, val)  { u16 _v = SWAPu16(reg); _v |= (val); reg = SWAPu16(_v); }
+#define psxH_ST_AND16(reg, val) { u16 _v = SWAPu16(reg); _v &= (val); reg = SWAPu16(_v); }
+#else
+#define psxH_ST_OR32(reg, val)  (reg) |= (val)
+#define psxH_ST_AND32(reg, val) (reg) &= (val)
+#define psxH_ST_OR16(reg, val)  (reg) |= (val)
+#define psxH_ST_AND16(reg, val) (reg) &= (val)
+#endif
+
 enum {
 	PSX_TYPE_NTSC = 0,
 	PSX_TYPE_PAL

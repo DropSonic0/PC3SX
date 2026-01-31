@@ -332,6 +332,9 @@ int  psxTestLoadDelay(int reg, u32 tmp);
 void psxDelayTest(int reg, u32 bpc);
 void psxTestSWInts(void);
 void psxJumpTest(void);
+void psxBiosA0(void);
+void psxBiosB0(void);
+void psxBiosC0(void);
 
 #ifdef __cplusplus
 }

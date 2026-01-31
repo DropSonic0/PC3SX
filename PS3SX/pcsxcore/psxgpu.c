@@ -100,6 +100,7 @@ int gpuReadStatus() {
 void psxDma2(u32 madr, u32 bcr, u32 chcr) { // GPU
 	u32 *ptr;
 	u32 size;
+	u32 _chcr;
 
 	switch (chcr) {
 		case 0x01000200: // vram2mem
@@ -176,11 +177,15 @@ void psxDma2(u32 madr, u32 bcr, u32 chcr) { // GPU
 #endif
 	}
 
-	HW_DMA2_CHCR &= SWAP32(~0x01000000);
+	_chcr = SWAPu32(HW_DMA2_CHCR);
+	_chcr &= ~0x01000000;
+	HW_DMA2_CHCR = SWAPu32(_chcr);
 	DMA_INTERRUPT(2);
 }
 
 void gpuInterrupt() {
-	HW_DMA2_CHCR &= SWAP32(~0x01000000);
+	u32 _chcr = SWAPu32(HW_DMA2_CHCR);
+	_chcr &= ~0x01000000;
+	HW_DMA2_CHCR = SWAPu32(_chcr);
 	DMA_INTERRUPT(2);
 }

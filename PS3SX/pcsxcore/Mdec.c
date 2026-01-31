@@ -469,6 +469,7 @@ u32 mdecRead1(void) {
 void psxDma0(u32 adr, u32 bcr, u32 chcr) {
 	int cmd = mdec.reg0;
 	int size;
+	u32 _chcr;
 
 	if (chcr != 0x01000201) {
 		return;
@@ -525,13 +526,17 @@ void psxDma0(u32 adr, u32 bcr, u32 chcr) {
 			break;
 	}
 
-	HW_DMA0_CHCR &= SWAP32(~0x01000000);
+	_chcr = SWAPu32(HW_DMA0_CHCR);
+	_chcr &= ~0x01000000;
+	HW_DMA0_CHCR = SWAPu32(_chcr);
 	DMA_INTERRUPT(0);
 }
 
-void mdec0Interrupt()
+void mdec0Interrupt(void)
 {
-	HW_DMA0_CHCR &= SWAP32(~0x01000000);
+	u32 _chcr = SWAPu32(HW_DMA0_CHCR);
+	_chcr &= ~0x01000000;
+	HW_DMA0_CHCR = SWAPu32(_chcr);
 	DMA_INTERRUPT(0);
 }
 
@@ -626,7 +631,7 @@ void psxDma1(u32 adr, u32 bcr, u32 chcr) {
 	}
 }
 
-void mdec1Interrupt() {
+void mdec1Interrupt(void) {
 	/* Author : gschwind
 	 *
 	 * in that case we have done all decoding stuff
@@ -654,17 +659,25 @@ void mdec1Interrupt() {
 	/* this else if avoid to read outside memory */
 	if(mdec.rl >= mdec.rl_end) {
 		mdec.reg1 &= ~MDEC1_STP;
-		HW_DMA0_CHCR &= SWAP32(~0x01000000);
+		u32 _chcr = SWAPu32(HW_DMA0_CHCR);
+		_chcr &= ~0x01000000;
+		HW_DMA0_CHCR = SWAPu32(_chcr);
 		DMA_INTERRUPT(0);
 		mdec.reg1 &= ~MDEC1_BUSY;
 	} else if (SWAP16(*(mdec.rl)) == MDEC_END_OF_DATA) {
 		mdec.reg1 &= ~MDEC1_STP;
-		HW_DMA0_CHCR &= SWAP32(~0x01000000);
+		u32 _chcr = SWAPu32(HW_DMA0_CHCR);
+		_chcr &= ~0x01000000;
+		HW_DMA0_CHCR = SWAPu32(_chcr);
 		DMA_INTERRUPT(0);
 		mdec.reg1 &= ~MDEC1_BUSY;
 	}
 
-	HW_DMA1_CHCR &= SWAP32(~0x01000000);
+	{
+		u32 _chcr = SWAPu32(HW_DMA1_CHCR);
+		_chcr &= ~0x01000000;
+		HW_DMA1_CHCR = SWAPu32(_chcr);
+	}
 	DMA_INTERRUPT(1);
 	return;
 }

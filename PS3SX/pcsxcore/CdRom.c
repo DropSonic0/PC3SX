@@ -222,7 +222,7 @@ extern SPUregisterCallback SPU_registerCallback;
 	cdr.ResultReady = 1; \
 }
 
-void adjustTransferIndex()
+void adjustTransferIndex(void)
 {
 	unsigned int bufSize;
 	
@@ -236,7 +236,7 @@ void adjustTransferIndex()
 		cdr.transferIndex %= bufSize;
 }
 
-void cdrDecodedBufferInterrupt()
+void cdrDecodedBufferInterrupt(void)
 {
 #ifndef MDFNPS3 //Not using cdriso
 	u16 buf_ptr[0x400], lcv;
@@ -296,7 +296,7 @@ void cdrDecodedBufferInterrupt()
 
 
 	// signal CDDA data ready
-	psxHu32ref(0x1070) |= SWAP32((u32)0x200);
+	psxH_ST_OR32(psxHu32ref(0x1070), 0x200);
 
 
 	// time for next full buffer
@@ -306,7 +306,7 @@ void cdrDecodedBufferInterrupt()
 }
 
 
-void cdrLidSeekInterrupt()
+void cdrLidSeekInterrupt(void)
 {
 	// turn back on checking
 	if( cdr.LidCheck == 0x10 )
@@ -426,7 +426,7 @@ void Check_Shell( int Irq )
 					if( cdr.Stat == NoIntr )
 						cdr.Stat = Acknowledge;
 
-					psxHu32ref(0x1070) |= SWAP32((u32)0x4);
+					psxH_ST_OR32(psxHu32ref(0x1070), 0x4);
 
 
 					// begin close-seek-ready cycle
@@ -467,13 +467,13 @@ void Check_Shell( int Irq )
 			if( cdr.Stat == NoIntr )
 				cdr.Stat = Acknowledge;
 
-			psxHu32ref(0x1070) |= SWAP32((u32)0x4);
+			psxH_ST_OR32(psxHu32ref(0x1070), 0x4);
 		}
 	}
 }
 
 
-void Find_CurTrack() {
+void Find_CurTrack(void) {
 	cdr.CurTrack = 0;
 
 	if (CDR_getTN(cdr.ResultTN) != -1) {
@@ -579,7 +579,7 @@ void AddIrqQueue(unsigned char irq, unsigned long ecycle) {
 }
 
 
-void Set_Track()
+void Set_Track(void)
 {
 	if (CDR_getTN(cdr.ResultTN) != -1) {
 		int lcv;
@@ -612,7 +612,7 @@ void Set_Track()
 
 
 static u8 fake_subq_local[3], fake_subq_real[3], fake_subq_index, fake_subq_change;
-void Create_Fake_Subq()
+void Create_Fake_Subq(void)
 {
 	u8 temp_cur[3], temp_next[3], temp_start[3], pregap;
 	int diff;
@@ -695,7 +695,7 @@ void Create_Fake_Subq()
 }
 
 
-void cdrPlayInterrupt_Autopause()
+void cdrPlayInterrupt_Autopause(void)
 {
 	if ((cdr.Mode & (MODE_AUTOPAUSE|MODE_CDDA)) != (MODE_AUTOPAUSE|MODE_CDDA)) return;
 
@@ -739,7 +739,7 @@ void cdrPlayInterrupt_Autopause()
 			//cdr.ResultReady = 1;
 			//cdr.Stat = DataReady;
 			cdr.Stat = DataEnd;
-			psxHu32ref(0x1070) |= SWAP32((u32)0x4);
+			psxH_ST_OR32(psxHu32ref(0x1070), 0x4);
 
 
 			StopCdda();
@@ -763,7 +763,7 @@ void cdrPlayInterrupt_Autopause()
 			//cdr.ResultReady = 1;
 			//cdr.Stat = DataReady;
 			cdr.Stat = DataEnd;
-			psxHu32ref(0x1070) |= SWAP32((u32)0x4);
+			psxH_ST_OR32(psxHu32ref(0x1070), 0x4);
 
 
 			StopCdda();
@@ -774,7 +774,7 @@ void cdrPlayInterrupt_Autopause()
 }
 
 
-void cdrPlayInterrupt_Repplay()
+void cdrPlayInterrupt_Repplay(void)
 {
 	// BIOS - HACK: Switch between local / absolute times
 	static u8 report_time = 1;
@@ -904,11 +904,11 @@ void cdrPlayInterrupt_Repplay()
 	cdr.Stat = DataReady;
 
 	SetResultSize(8);
-	psxHu32ref(0x1070) |= SWAP32((u32)0x4);
+	psxH_ST_OR32(psxHu32ref(0x1070), 0x4);
 }
 
 	
-void cdrPlayInterrupt()
+void cdrPlayInterrupt(void)
 {
 	if( !cdr.Play ) return;
 
@@ -979,7 +979,7 @@ void cdrPlayInterrupt()
 }
 
 
-void cdrInterrupt() {
+void cdrInterrupt(void) {
 	int i;
 	unsigned char Irq = cdr.Irq;
 
@@ -1586,7 +1586,7 @@ void cdrInterrupt() {
 	Check_Shell( Irq );
 
 	if (cdr.Stat != NoIntr && cdr.Reg2 != 0x18) {
-		psxHu32ref(0x1070) |= SWAP32((u32)0x4);
+		psxH_ST_OR32(psxHu32ref(0x1070), 0x4);
 	}
 
 #ifdef CDR_LOG
@@ -1594,7 +1594,7 @@ void cdrInterrupt() {
 #endif
 }
 
-void cdrReadInterrupt() {
+void cdrReadInterrupt(void) {
 	u8 *buf;
 
 	if (!cdr.Reading)
@@ -1687,7 +1687,7 @@ void cdrReadInterrupt() {
 				// - don't do here
 
 				// signal ADPCM data ready
-				psxHu32ref(0x1070) |= SWAP32((u32)0x200);
+				psxH_ST_OR32(psxHu32ref(0x1070), 0x200);
 #endif
 			}
 			else cdr.FirstSector = -1;
@@ -1732,7 +1732,8 @@ void cdrReadInterrupt() {
 		// Rockman X5 - no music restart problem
         cdr.Stat = NoIntr;
     }
-    psxHu32ref(0x1070) |= SWAP32((u32)0x4);
+    psxH_ST_OR32(psxHu32ref(0x1070), 0x4);
+    psxH_ST_OR32(psxHu32ref(0x1070), 0x4);
 
 	Check_Shell(0);
 }
@@ -2147,7 +2148,8 @@ void cdrWrite1(unsigned char rt) {
 			return;
     }
 	if (cdr.Stat != NoIntr) {
-		psxHu32ref(0x1070) |= SWAP32((u32)0x4);
+		psxH_ST_OR32(psxHu32ref(0x1070), 0x4);
+		psxH_ST_OR32(psxHu32ref(0x1070), 0x4);
 	}
 }
 
@@ -2300,6 +2302,7 @@ void cdrWrite3(unsigned char rt) {
 void psxDma3(u32 madr, u32 bcr, u32 chcr) {
 	u32 cdsize;
 	u8 *ptr/*, *cdwrap_ptr*/;
+	u32 _chcr;
 
 #ifdef CDR_LOG
 	CDR_LOG("psxDma3() Log: *** DMA 3 *** %x addr = %x size = %x\n", chcr, madr, bcr);
@@ -2446,17 +2449,21 @@ void psxDma3(u32 madr, u32 bcr, u32 chcr) {
 			break;
 	}
 
-	HW_DMA3_CHCR &= SWAP32(~0x01000000);
+	_chcr = SWAPu32(HW_DMA3_CHCR);
+	_chcr &= ~0x01000000;
+	HW_DMA3_CHCR = SWAPu32(_chcr);
 	DMA_INTERRUPT(3);
 }
 
-void cdrDmaInterrupt()
+void cdrDmaInterrupt(void)
 {
-	HW_DMA3_CHCR &= SWAP32(~0x01000000);
+	u32 _chcr = SWAPu32(HW_DMA3_CHCR);
+	_chcr &= ~0x01000000;
+	HW_DMA3_CHCR = SWAPu32(_chcr);
 	DMA_INTERRUPT(3);
 }
 
-void cdrReset() {
+void cdrReset(void) {
 	memset(&cdr, 0, sizeof(cdr));
 	cdr.CurTrack = 1;
 	cdr.File = 1;
@@ -2495,7 +2502,7 @@ int cdrFreeze(gzFile f, int Mode) {
 	return 0;
 }
 
-void LidInterrupt() {
+void LidInterrupt(void) {
 	cdr.LidCheck = 0x20; // start checker
 
 	CDRLID_INT( cdReadTime * 3 );
