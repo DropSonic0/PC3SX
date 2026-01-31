@@ -1299,8 +1299,11 @@ void psxBios_StartRCnt(void) { // 04
 #endif
 
 	a0&= 0x3;
-	if (a0 != 3) psxH_ST_OR32(psxHu32ref(0x1074), (1<<(a0+4)));
-	else psxH_ST_OR32(psxHu32ref(0x1074), 0x1);
+	if (a0 != 3) {
+		psxH_ST_OR32(psxHu32ref(0x1074), (1<<(a0+4)));
+	} else {
+		psxH_ST_OR32(psxHu32ref(0x1074), 0x1);
+	}
 	v0 = 1; pc0 = ra;
 }
 
@@ -1310,8 +1313,11 @@ void psxBios_StopRCnt(void) { // 05
 #endif
 
 	a0&= 0x3;
-	if (a0 != 3) psxH_ST_AND32(psxHu32ref(0x1074), ~(1<<(a0+4)));
-	else psxH_ST_AND32(psxHu32ref(0x1074), ~0x1);
+	if (a0 != 3) {
+		psxH_ST_AND32(psxHu32ref(0x1074), ~(1<<(a0+4)));
+	} else {
+		psxH_ST_AND32(psxHu32ref(0x1074), ~0x1);
+	}
 	pc0 = ra;
 }
 

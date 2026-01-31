@@ -39,7 +39,7 @@ static u32 execCount = 0;
 #define debugI()
 #endif
 
-inline void execI();
+inline void execI(void);
 
 // Subsets
 void (*psxBSC[64])(void);
@@ -1073,7 +1073,7 @@ static void intReset(void) {
 }
 
 #ifndef MDFNPS3 //Leave on command
-static void intExecute() {
+static void intExecute(void) {
 	for (;;) 
 		execI();
 }

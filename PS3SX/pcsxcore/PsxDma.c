@@ -147,7 +147,7 @@ void psxDma6(u32 madr, u32 bcr, u32 chcr) {
 	DMA_INTERRUPT(6);
 }
 
-void gpuotcInterrupt() {
+void gpuotcInterrupt(void) {
 	u32 _chcr = SWAPu32(HW_DMA6_CHCR);
 	_chcr &= ~0x01000000;
 	HW_DMA6_CHCR = SWAPu32(_chcr);

@@ -438,7 +438,7 @@ u32 psxRcntRtarget( u32 index )
 
 /******************************************************************************/
 
-void psxRcntInit()
+void psxRcntInit(void)
 {
     s32 i;
 

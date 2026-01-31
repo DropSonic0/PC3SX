@@ -166,10 +166,10 @@ extern boolean NetOpened;
 #define PSXCLK	33868800	/* 33.8688 MHz */
 
 #if defined(__BIGENDIAN__)
-#define psxH_ST_OR32(reg, val)  do { u32 _v = SWAPu32(reg); _v |= (val); reg = SWAPu32(_v); } while(0)
-#define psxH_ST_AND32(reg, val) do { u32 _v = SWAPu32(reg); _v &= (val); reg = SWAPu32(_v); } while(0)
-#define psxH_ST_OR16(reg, val)  do { u16 _v = SWAPu16(reg); _v |= (val); reg = SWAPu16(_v); } while(0)
-#define psxH_ST_AND16(reg, val) do { u16 _v = SWAPu16(reg); _v &= (val); reg = SWAPu16(_v); } while(0)
+#define psxH_ST_OR32(reg, val)  do { u32 _v_or = SWAPu32(reg); _v_or |= (val); reg = SWAPu32(_v_or); } while(0)
+#define psxH_ST_AND32(reg, val) do { u32 _v_and = SWAPu32(reg); _v_and &= (val); reg = SWAPu32(_v_and); } while(0)
+#define psxH_ST_OR16(reg, val)  do { u16 _v_or16 = SWAPu16(reg); _v_or16 |= (val); reg = SWAPu16(_v_or16); } while(0)
+#define psxH_ST_AND16(reg, val) do { u16 _v_and16 = SWAPu16(reg); _v_and16 &= (val); reg = SWAPu16(_v_and16); } while(0)
 #else
 #define psxH_ST_OR32(reg, val)  (reg) |= (val)
 #define psxH_ST_AND32(reg, val) (reg) &= (val)

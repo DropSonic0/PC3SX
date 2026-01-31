@@ -143,7 +143,7 @@ int GetCdromFile(u8 *mdir, u8 *time, s8 *filename) {
 	return 0;
 }
 
-int LoadCdrom() {
+int LoadCdrom(void) {
 	EXE_HEADER tmpHead;
 	struct iso_directory_record *dir;
 	u8 time[4], *buf;
@@ -269,7 +269,7 @@ int LoadCdromFile(const char *filename, EXE_HEADER *head) {
 	return 0;
 }
 
-int CheckCdrom() {
+int CheckCdrom(void) {
 	struct iso_directory_record *dir;
 	unsigned char time[4], *buf;
 	unsigned char mdir[4096];
@@ -384,7 +384,7 @@ static int PSXGetFileType(FILE *f) {
 	return INVALID_EXE;
 }
 
-static void LoadLibPS() {
+static void LoadLibPS(void) {
 	char buf[MAXPATHLEN];
 	FILE *f;
 
@@ -643,7 +643,7 @@ int CheckState(const char *file) {
 
 // NET Function Helpers
 
-int SendPcsxInfo() {
+int SendPcsxInfo(void) {
 	if (NET_recvData == NULL || NET_sendData == NULL)
 		return 0;
 
@@ -657,7 +657,7 @@ int SendPcsxInfo() {
 	return 0;
 }
 
-int RecvPcsxInfo() {
+int RecvPcsxInfo(void) {
 	int tmp;
 
 	if (NET_recvData == NULL || NET_sendData == NULL)

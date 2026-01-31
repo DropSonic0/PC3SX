@@ -11,10 +11,10 @@
 .align 3
 .globl recRun
 recRun:
-    .long .recRun, .TOC.@tocbase32
+    .quad .recRun, .TOC.@tocbase, 0
 .globl returnPC
 returnPC:
-    .long .returnPC, .TOC.@tocbase32
+    .quad .returnPC, .TOC.@tocbase, 0
 #endif
 
 #define OLD_REGISTER_OFFSET	(19*4)
@@ -33,28 +33,28 @@ C(.recRun):
 	/* prologue code */
 	mflr	0
 #ifdef MDFNPS3
-	std		2, 40(1)	/* Save original TOC in caller frame (64-bit) */
-	std		31, -8(1)	/* Save non-volatiles individually for 64-bit */
-	std		30, -16(1)
-	std		29, -24(1)
-	std		28, -32(1)
-	std		27, -40(1)
-	std		26, -48(1)
-	std		25, -56(1)
-	std		24, -64(1)
-	std		23, -72(1)
-	std		22, -80(1)
-	std		21, -88(1)
-	std		20, -96(1)
-	std		19, -104(1)
-	std		18, -112(1)
-	std		17, -120(1)
-	std		16, -128(1)
-	std		15, -136(1)
-	std		14, -144(1)
-	std		13, -152(1)
 	std		0, 16(1)	/* Save LR in caller frame */
-	stdu	1, -176(1)	/* Create frame (152 + padding = 176) */
+	std		2, 40(1)	/* Save original TOC in caller frame */
+	stdu	1, -256(1)	/* Create frame */
+	std		31, 248(1)	/* Save non-volatiles in our frame */
+	std		30, 240(1)
+	std		29, 232(1)
+	std		28, 224(1)
+	std		27, 216(1)
+	std		26, 208(1)
+	std		25, 200(1)
+	std		24, 192(1)
+	std		23, 184(1)
+	std		22, 176(1)
+	std		21, 168(1)
+	std		20, 160(1)
+	std		19, 152(1)
+	std		18, 144(1)
+	std		17, 136(1)
+	std		16, 128(1)
+	std		15, 120(1)
+	std		14, 112(1)
+	std		13, 104(1)
 #else
 	stmw	13, -76(1)
 	stw		0, 4(1)
@@ -78,33 +78,31 @@ C(returnPC):
 #else
         .globl  C(.returnPC)
 C(.returnPC):
-        .globl  returnPC_recomp
-returnPC_recomp:
 #endif
 	// end code
 #ifdef MDFNPS3
+	ld		31, 248(1)	/* Restore non-volatiles */
+	ld		30, 240(1)
+	ld		29, 232(1)
+	ld		28, 224(1)
+	ld		27, 216(1)
+	ld		26, 208(1)
+	ld		25, 200(1)
+	ld		24, 192(1)
+	ld		23, 184(1)
+	ld		22, 176(1)
+	ld		21, 168(1)
+	ld		20, 160(1)
+	ld		19, 152(1)
+	ld		18, 144(1)
+	ld		17, 136(1)
+	ld		16, 128(1)
+	ld		15, 120(1)
+	ld		14, 112(1)
+	ld		13, 104(1)
 	ld		1, 0(1)		/* Restore SP */
 	ld		0, 16(1)	/* Restore LR */
 	mtlr	0
-	ld		13, -152(1)	/* Restore non-volatiles */
-	ld		14, -144(1)
-	ld		15, -136(1)
-	ld		16, -128(1)
-	ld		17, -120(1)
-	ld		18, -112(1)
-	ld		19, -104(1)
-	ld		20, -96(1)
-	ld		21, -88(1)
-	ld		22, -80(1)
-	ld		23, -72(1)
-	ld		24, -64(1)
-	ld		25, -56(1)
-	ld		26, -48(1)
-	ld		27, -40(1)
-	ld		28, -32(1)
-	ld		29, -24(1)
-	ld		30, -16(1)
-	ld		31, -8(1)
 	ld		2, 40(1)	/* Restore TOC */
 #else
 	lwz		0, 96+4(1)

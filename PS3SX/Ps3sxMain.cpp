@@ -405,7 +405,7 @@ void SysPrintf(const char *fmt, ...) {
 	}
 	if(emuLog) {
 		fputs(msg, emuLog);
-		// fflush(emuLog); // redundant with _IONBF
+		fflush(emuLog);
 	}
 	printf("%s", msg);
 }
@@ -430,7 +430,7 @@ void SysMessage(const char *fmt, ...) {
 	}
 	if(emuLog) {
 		fputs(msg, emuLog);
-		// Keep open for subsequent prints
+		fflush(emuLog);
 	}
 	printf("%s", msg);
 }
@@ -637,7 +637,7 @@ int main(void)
 	// Default settings
 	Settings.PS3KeepAspect = true;
 	Settings.PS3Smooth = true;
-	Settings.CPU = true; // Use Interpreter by default for stability
+	Settings.CPU = false; // Use Dynarec by default
 	Settings.HLE = false;
 	Settings.Fps = false;
 	Settings.PAD = false;

@@ -80,12 +80,7 @@ void ppcSetPtr(u32 *ptr);
 void ppcShutdown(void);
 
 void ppcAlign(int bytes);
-#ifdef MDFNPS3
-extern uint8_t returnPC_recomp[];
-#define returnPC ((void(*)(void))returnPC_recomp)
-#else
 void returnPC(void);
-#endif
 void recRun(uptr func_code, uptr hw1, uptr hw2);
 u8 dynMemRead8(u32 mem);
 u16 dynMemRead16(u32 mem);

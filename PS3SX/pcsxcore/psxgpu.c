@@ -183,7 +183,7 @@ void psxDma2(u32 madr, u32 bcr, u32 chcr) { // GPU
 	DMA_INTERRUPT(2);
 }
 
-void gpuInterrupt() {
+void gpuInterrupt(void) {
 	u32 _chcr = SWAPu32(HW_DMA2_CHCR);
 	_chcr &= ~0x01000000;
 	HW_DMA2_CHCR = SWAPu32(_chcr);

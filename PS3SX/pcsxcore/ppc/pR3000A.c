@@ -740,7 +740,10 @@ static void Return(void)
 {
 	iFlushRegs(0);
 	FlushAllHWReg();
-	LIP(0, (uptr)returnPC);
+	// returnPC is a function pointer (descriptor on PS3)
+	// We jump directly to the code address (first word of descriptor)
+	uptr code_addr = *(uptr*)returnPC;
+	LIP(0, code_addr);
 	MTLR(0);
 	BLR();
 }
@@ -1154,7 +1157,7 @@ __inline static void execute(void) {
 	void (**recFunc)(void);
 	char *p;
 
-	if (++execCount % 100000 == 0) {
+	if (++execCount % 10000 == 0) {
 		SysPrintf("execute: PC=%08x, blocks=%d\n", psxRegs.pc, execCount);
 	}
 
