@@ -338,7 +338,7 @@ void InitConfig()
 	Config.Sio     = 0; //disable sio interrupt ?
 	Config.Mdec    = 1; //movie decode
 	Config.Cdda    = 1; //enable cdda playback
-	Config.SlowBoot = 0;
+	Config.SlowBoot = 1;
 	
 	Config.Cpu	   = Settings.CPU;// interpreter 1 :  dynarec 0
 
@@ -486,8 +486,8 @@ void RunCD(){ // run the cd, no bios
 		ClosePlugins();
 		return;
 	}
-	SysPrintf("RunCD: psxCpu->Execute\n");
-	psxCpu->Execute();
+	SysPrintf("RunCD: psxExecuteBios\n");
+	psxExecuteBios();
 }
 
 void RunCDBIOS(){ // run the bios on the cd?
@@ -500,8 +500,8 @@ void RunCDBIOS(){ // run the bios on the cd?
 		return;
 	}
 	SysReset();
-	SysPrintf("RunCDBIOS: psxCpu->Execute\n");
-	psxCpu->Execute();
+	SysPrintf("RunCDBIOS: psxExecuteBios\n");
+	psxExecuteBios();
 }
 
 void RunEXE(){

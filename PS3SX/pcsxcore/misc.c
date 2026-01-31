@@ -152,8 +152,8 @@ int LoadCdrom() {
 
 	SysPrintf("LoadCdrom: starting\n");
 	if (!Config.HLE) {
-		if (!Config.SlowBoot) psxRegs.pc = psxRegs.GPR.n.ra;
-		SysPrintf("LoadCdrom: HLE disabled, pc=%08x\n", psxRegs.pc);
+		// if (!Config.SlowBoot) psxRegs.pc = psxRegs.GPR.n.ra;
+		SysPrintf("LoadCdrom: HLE disabled, pc=%08x (SlowBoot=%d)\n", psxRegs.pc, Config.SlowBoot);
 		return 0;
 	}
 

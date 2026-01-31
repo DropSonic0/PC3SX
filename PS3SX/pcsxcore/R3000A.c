@@ -163,7 +163,31 @@ void psxJumpTest() {
 }
 
 void psxExecuteBios() {
+	uint32_t timeout = 0;
+	SysPrintf("psxExecuteBios: starting at PC=%08x\n", psxRegs.pc);
 	while (psxRegs.pc != 0x80030000) {
+		if (timeout < 20) {
+			u32 *code_ptr = Read_ICache(psxRegs.pc, FALSE);
+			u32 code = (code_ptr ? SWAP32(*code_ptr) : 0);
+			SysPrintf("psxExecuteBios: PC=%08x, timeout=%d, ins=\"%s\", v0=%08x, a0=%08x, ISTAT=%08x\n",
+				psxRegs.pc, timeout, disR3000AF(code, psxRegs.pc), psxRegs.GPR.n.v0, psxRegs.GPR.n.a0, psxHu32(0x1070));
+		}
 		psxCpu->ExecuteBlock();
+		if (timeout > 0 && timeout % 100000 == 0) {
+			u32 *code_ptr = Read_ICache(psxRegs.pc, FALSE);
+			u32 code = (code_ptr ? SWAP32(*code_ptr) : 0);
+			SysPrintf("psxExecuteBios: PC=%08x blocks=%d, ins=\"%s\", v0=%08x, a0=%08x\n",
+				psxRegs.pc, timeout, disR3000AF(code, psxRegs.pc), psxRegs.GPR.n.v0, psxRegs.GPR.n.a0);
+		}
+		if (psxRegs.pc == 0x00000000) {
+			SysPrintf("psxExecuteBios: PC reached 0! Likely crash.\n");
+			break;
+		}
+
+		if (timeout++ > 10000000) {
+			SysPrintf("psxExecuteBios: timeout reached 10M, breaking\n");
+			break;
+		}
 	}
+	SysPrintf("psxExecuteBios: finished at PC=%08x\n", psxRegs.pc);
 }

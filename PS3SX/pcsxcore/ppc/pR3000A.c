@@ -1120,6 +1120,7 @@ static int recInit() {
 }
 
 static void recReset() {
+	execCount = 0;
 	SysPrintf("recReset: memset recRAM\n");
 	memset(recRAM, 0, 0x200000 * PC_REC_SCALE);
 	SysPrintf("recReset: memset recROM\n");
@@ -1147,11 +1148,14 @@ static void recError() {
 	SysRunGui();
 }
 
+static uint32_t execCount = 0;
 __inline static void execute() {
 	void (**recFunc)();
 	char *p;
 
-	//SysPrintf("execute: PC=%08x\n", psxRegs.pc);
+	if (++execCount % 100000 == 0) {
+		SysPrintf("execute: PC=%08x, blocks=%d\n", psxRegs.pc, execCount);
+	}
 
 	uptr pc_base = psxRecLUT[psxRegs.pc >> 16];
 	if (pc_base == 0) {
