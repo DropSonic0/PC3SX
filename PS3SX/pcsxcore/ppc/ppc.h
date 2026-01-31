@@ -24,17 +24,32 @@ extern "C" {
 #define write64(val) *(u64*)ppcPtr = val; ppcPtr+=8;
 
 #ifdef MDFNPS3
+#define LIP(REG, IMM) \
+{ \
+    uptr __imm = (uptr)(IMM); \
+    if (sizeof(uptr) == 8) { \
+        LID(REG, __imm); \
+    } else { \
+        LIW(REG, (u32)__imm); \
+    } \
+}
 #define CALLFunc(FUNC) \
 { \
-    u32 _desc = (u32)(FUNC); \
-    u32 _func = *(u32*)_desc; \
-    u32 _toc  = *(u32*)(_desc + 4); \
+    uptr _desc = (uptr)(FUNC); \
+    uptr _func, _toc; \
+    if (sizeof(uptr) == 8) { \
+        _func = *(uptr*)_desc; \
+        _toc  = *(uptr*)(_desc + 8); \
+    } else { \
+        _func = (uptr)*(u32*)_desc; \
+        _toc  = (uptr)*(u32*)(_desc + 4); \
+    } \
     ReleaseArgs(); \
-    LIW(2, _toc); \
+    LIP(2, _toc); \
     if ((_func & 0x1fffffc) == _func) { \
         BLA(_func); \
     } else { \
-        LIW(0, _func); \
+        LIP(0, _func); \
         MTCTR(0); \
         BCTRL(); \
     } \
@@ -71,7 +86,7 @@ extern uint8_t returnPC_recomp[];
 #else
 void returnPC();
 #endif
-void recRun(void (*func)(), u32 hw1, u32 hw2);
+void recRun(void (*func)(), uptr hw1, uptr hw2);
 u8 dynMemRead8(u32 mem);
 u16 dynMemRead16(u32 mem);
 u32 dynMemRead32(u32 mem);

@@ -2213,6 +2213,8 @@ void psxBiosInit() {
 	int i;
 	uLongf len;
 
+	SysPrintf("psxBiosInit: starting\n");
+
 	for(i = 0; i < 256; i++) {
 		biosA0[i] = NULL;
 		biosB0[i] = NULL;
@@ -2598,6 +2600,7 @@ void psxBiosInit() {
 	psxMu32ref(0x9010) = SWAPu32(0xac20cc00);
 
 	// fonts
+	SysPrintf("psxBiosInit: decompressing fonts\n");
 	len = 0x80000 - 0x66000;
 	uncompress((Bytef *)(psxR + 0x66000), &len, font_8140, sizeof(font_8140));
 	len = 0x80000 - 0x69d68;
@@ -2607,6 +2610,7 @@ void psxBiosInit() {
 	psxHu32ref(0x1060) = SWAPu32(0x00000b88);
 
 	hleSoftCall = FALSE;
+	SysPrintf("psxBiosInit done\n");
 }
 
 void psxBiosShutdown() {

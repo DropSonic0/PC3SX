@@ -33,11 +33,33 @@ C(.recRun):
 	/* prologue code */
 	mflr	0
 #ifdef MDFNPS3
-	stw		2, 40(1)	/* Save original TOC in caller frame */
-#endif
-	stmw	13, -76(1)	/* Save r13-r31 (below sp) */
+	std		2, 40(1)	/* Save original TOC in caller frame (64-bit) */
+	std		31, -8(1)	/* Save non-volatiles individually for 64-bit */
+	std		30, -16(1)
+	std		29, -24(1)
+	std		28, -32(1)
+	std		27, -40(1)
+	std		26, -48(1)
+	std		25, -56(1)
+	std		24, -64(1)
+	std		23, -72(1)
+	std		22, -80(1)
+	std		21, -88(1)
+	std		20, -96(1)
+	std		19, -104(1)
+	std		18, -112(1)
+	std		17, -120(1)
+	std		16, -128(1)
+	std		15, -136(1)
+	std		14, -144(1)
+	std		13, -152(1)
+	std		0, 16(1)	/* Save LR in caller frame */
+	stdu	1, -176(1)	/* Create frame (152 + padding = 176) */
+#else
+	stmw	13, -76(1)
 	stw		0, 4(1)
-	stwu	1, -96(1)	/* Create frame (84 bytes aligned to 16 = 96) */
+	stwu	1, -96(1)
+#endif
 	
 	/* execute code */
 	mtctr	3
@@ -60,12 +82,35 @@ C(.returnPC):
 returnPC_recomp:
 #endif
 	// end code
-	lwz		0, 96+4(1)	/* Restore LR from frame info */
-	addi	1, 1, 96	/* Back to old frame */
-	mtlr	0
-	lmw		13, -76(1)	/* Restore r13-r31 */
 #ifdef MDFNPS3
-	lwz		2, 40(1)	/* Restore original TOC */
+	ld		1, 0(1)		/* Restore SP */
+	ld		0, 16(1)	/* Restore LR */
+	mtlr	0
+	ld		13, -152(1)	/* Restore non-volatiles */
+	ld		14, -144(1)
+	ld		15, -136(1)
+	ld		16, -128(1)
+	ld		17, -120(1)
+	ld		18, -112(1)
+	ld		19, -104(1)
+	ld		20, -96(1)
+	ld		21, -88(1)
+	ld		22, -80(1)
+	ld		23, -72(1)
+	ld		24, -64(1)
+	ld		25, -56(1)
+	ld		26, -48(1)
+	ld		27, -40(1)
+	ld		28, -32(1)
+	ld		29, -24(1)
+	ld		30, -16(1)
+	ld		31, -8(1)
+	ld		2, 40(1)	/* Restore TOC */
+#else
+	lwz		0, 96+4(1)
+	addi	1, 1, 96
+	mtlr	0
+	lmw		13, -76(1)
 #endif
 	blr
 //}*/

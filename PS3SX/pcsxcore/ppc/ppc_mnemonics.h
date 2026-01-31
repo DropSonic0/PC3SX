@@ -438,6 +438,24 @@
         INSTR = (0x7C000734 | (_src << 21) | (_dst << 16));}
 
 
+/* 64-bit ops */
+#define RLDICR(REG_DST, REG_SRC, SHIFT, MASK_END) \
+	{int _src = (REG_SRC), _dst = (REG_DST); \
+        INSTR = (0x78000004 | (_src << 21) | (_dst << 16) | ((SHIFT & 0x1f) << 11) | ((MASK_END & 0x1f) << 6) | ((SHIFT & 0x20) >> 4) | (MASK_END & 0x20));}
+
+#define SLDI(REG_DST, REG_SRC, SHIFT) \
+	RLDICR(REG_DST, REG_SRC, SHIFT, 63 - (SHIFT))
+
+#define LID(REG, IMM) \
+{ \
+    uint64_t __imm = (uint64_t)(IMM); \
+    LIS(REG, (__imm >> 48)); \
+    if (((__imm >> 32) & 0xffff) != 0) ORI(REG, REG, (__imm >> 32)); \
+    SLDI(REG, REG, 32); \
+    ORIS(REG, REG, (__imm >> 16)); \
+    ORI(REG, REG, __imm); \
+}
+
 /* floating point ops */
 #define FDIVS(FPR_DST, FPR1, FPR2) \
 	{INSTR = (0xEC000024 | (FPR_DST << 21) | (FPR1 << 16) | (FPR2 << 11));}

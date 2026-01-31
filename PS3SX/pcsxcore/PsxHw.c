@@ -28,11 +28,11 @@
 
 void psxHwReset() {
 	SysPrintf("psxHwReset: starting\n");
-	if (Config.Sio) psxHu32ref(0x1070) |= SWAP32(0x80);
-	if (Config.SpuIrq) psxHu32ref(0x1070) |= SWAP32(0x200);
-
 	SysPrintf("psxHwReset: memset psxH\n");
 	memset(psxH, 0, 0x10000);
+
+	if (Config.Sio) psxHu32ref(0x1070) |= SWAP32(0x80);
+	if (Config.SpuIrq) psxHu32ref(0x1070) |= SWAP32(0x200);
 
 	SysPrintf("psxHwReset: mdecInit\n");
 	mdecInit(); // initialize mdec decoder

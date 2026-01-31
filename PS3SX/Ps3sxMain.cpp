@@ -604,6 +604,7 @@ void RomBrowser()
 int main()
 {
 	emuLog=NULL;
+	strcpy(usrdirPath, "/dev_hdd0/game/PCSX00001/USRDIR");
 	
     int i, ret;
 	
@@ -619,11 +620,21 @@ int main()
 	if( ret != 0) printf("CELL_SYSMODULE_SYSUTIL_GAME error %X\n", ret);
 	
 	is_running = 1;
+
+	// Default settings
+	Settings.PS3KeepAspect = true;
+	Settings.PS3Smooth = true;
+	Settings.CPU = true; // Use Interpreter by default for stability
+	Settings.HLE = false;
+	Settings.Fps = false;
+	Settings.PAD = false;
+	Settings.PS3PALTemporalMode60Hz = false;
+	Settings.PS3FontSize = 100;
+
 	InitPS3();
 	PS3input->Init();
 	
 	printf("InitPS3 done\n");
-	strcpy(usrdirPath, "/dev_hdd0/game/PCSX00001/USRDIR");
 
 	unsigned int type = 0;
 	unsigned int attributes = 0;
