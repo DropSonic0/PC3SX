@@ -19,7 +19,7 @@ int cpuHWRegisters[NUM_HW_REGISTERS] = {
 
 u32 *ppcPtr;
 
-void ppcInit() {
+void ppcInit(void) {
 }
 void ppcSetPtr(u32 *ptr) {
 	ppcPtr = ptr;
@@ -29,7 +29,7 @@ void ppcAlign(int bytes) {
 	ppcPtr = (u32*)(((uptr)ppcPtr + bytes) & ~(bytes - 1));
 }
 
-void ppcShutdown() {
+void ppcShutdown(void) {
 }
 
 #endif

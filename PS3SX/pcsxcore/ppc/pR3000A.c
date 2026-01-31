@@ -95,6 +95,8 @@ static int branch;		/* set for branch */
 static u32 target;		/* branch target */
 static u32 resp;
 
+static u32 execCount = 0;
+
 u32 cop2readypc = 0;
 u32 idlecyclecount = 0;
 
@@ -118,12 +120,12 @@ static iRegisters iRegs[34];
 #endif
 #define IsMapped(reg) (iRegs[reg].state & ST_MAPPED)
 
-static void (*recBSC[64])();
-static void (*recSPC[64])();
-static void (*recREG[32])();
-static void (*recCP0[32])();
-static void (*recCP2[64])();
-static void (*recCP2BSC[32])();
+static void (*recBSC[64])(void);
+static void (*recSPC[64])(void);
+static void (*recREG[32])(void);
+static void (*recCP0[32])(void);
+static void (*recCP2[64])(void);
+static void (*recCP2BSC[32])(void);
 
 #define REG_LO			32
 #define REG_HI			33
@@ -172,11 +174,11 @@ static int HWRegUseCount;
 static int DstCPUReg;
 static int UniqueRegAlloc;
 
-static int GetFreeHWReg();
-static void InvalidateCPURegs();
+static int GetFreeHWReg(void);
+static void InvalidateCPURegs(void);
 static void DisposeHWReg(int index);
 static void FlushHWReg(int index);
-static void FlushAllHWReg();
+static void FlushAllHWReg(void);
 static void MapPsxReg32(int reg);
 static void FlushPsxReg32(int hwreg);
 static int UpdateHWRegUsage(int hwreg, int usage);
@@ -188,12 +190,12 @@ static int MapRegSpecial(int which);
 static void FlushRegSpecial(int hwreg);
 static int GetHWRegSpecial(int which);
 static int PutHWRegSpecial(int which);
-static void recRecompile();
-static void recError();
+static void recRecompile(void);
+static void recError(void);
 
 #pragma mark --- Generic register mapping ---
 
-static int GetFreeHWReg()
+static int GetFreeHWReg(void)
 {
 	int i, least, index;
 	
@@ -319,12 +321,12 @@ __inline static void FlushCPURegRange(int start, int end)
 	}
 }
 
-static void FlushAllHWReg()
+static void FlushAllHWReg(void)
 {
 	FlushCPURegRange(0,31);
 }
 
-static void InvalidateCPURegs()
+static void InvalidateCPURegs(void)
 {
 	FlushCPURegRange(0,12);
 }
@@ -400,7 +402,7 @@ static void ReserveArgs(int args)
 	}
 }
 
-static void ReleaseArgs()
+static void ReleaseArgs(void)
 {
 	int i;
 	
@@ -734,7 +736,7 @@ static void iFlushRegs(u32 nextpc) {
 	}
 }
 
-static void Return()
+static void Return(void)
 {
 	iFlushRegs(0);
 	FlushAllHWReg();
@@ -743,14 +745,14 @@ static void Return()
 	BLR();
 }
 
-static void iRet() {
+static void iRet(void) {
     /* store cycle */
     count = (idlecyclecount + (pc - pcold) / 4) * BIAS;
     ADDI(PutHWRegSpecial(CYCLECOUNT), GetHWRegSpecial(CYCLECOUNT), count);
     Return();
 }
 
-static int iLoadTest() {
+static int iLoadTest(void) {
 	u32 tmp;
 
 	// check for load delay
@@ -786,7 +788,7 @@ static int iLoadTest() {
 }
 
 /* set a pending branch */
-static void SetBranch() {
+static void SetBranch(void) {
 	int treg;
 	branch = 1;
 	psxRegs.code = PSXMu32(pc);
@@ -997,7 +999,7 @@ static void iBranch(u32 branchPC, int savectx) {
 }
 
 
-static void iDumpRegs() {
+static void iDumpRegs(void) {
 	int i, j;
 
 	printf("%lx %lx\n", psxRegs.pc, psxRegs.cycle);
@@ -1026,8 +1028,8 @@ void iDumpBlock(char *ptr) {
 }
 
 #define REC_FUNC(f) \
-void psx##f(); \
-static void rec##f() { \
+void psx##f(void); \
+static void rec##f(void) { \
 	iFlushRegs(0); \
 	LIW(PutHWRegSpecial(ARG1), (u32)psxRegs.code); \
 	STW(GetHWRegSpecial(ARG1), OFFSET(&psxRegs, &psxRegs.code), GetHWRegSpecial(PSXREGS)); \
@@ -1038,8 +1040,8 @@ static void rec##f() { \
 }
 
 #define REC_SYS(f) \
-void psx##f(); \
-static void rec##f() { \
+void psx##f(void); \
+static void rec##f(void) { \
 	iFlushRegs(0); \
         LIW(PutHWRegSpecial(ARG1), (u32)psxRegs.code); \
         STW(GetHWRegSpecial(ARG1), OFFSET(&psxRegs, &psxRegs.code), GetHWRegSpecial(PSXREGS)); \
@@ -1051,8 +1053,8 @@ static void rec##f() { \
 }
 
 #define REC_BRANCH(f) \
-void psx##f(); \
-static void rec##f() { \
+void psx##f(void); \
+static void rec##f(void) { \
 	iFlushRegs(0); \
         LIW(PutHWRegSpecial(ARG1), (u32)psxRegs.code); \
         STW(GetHWRegSpecial(ARG1), OFFSET(&psxRegs, &psxRegs.code), GetHWRegSpecial(PSXREGS)); \
@@ -1079,7 +1081,7 @@ static void freeMem(int all)
     }
 }
 
-static int allocMem() {
+static int allocMem(void) {
 	int i;
 
 	SysPrintf("allocMem: starting\n");
@@ -1115,11 +1117,11 @@ static int allocMem() {
 	return 0;
 }
 
-static int recInit() {
+static int recInit(void) {
 	return allocMem();
 }
 
-static void recReset() {
+static void recReset(void) {
 	execCount = 0;
 	SysPrintf("recReset: memset recRAM\n");
 	memset(recRAM, 0, 0x200000 * PC_REC_SCALE);
@@ -1136,21 +1138,20 @@ static void recReset() {
 	SysPrintf("recReset done\n");
 }
 
-static void recShutdown() {
+static void recShutdown(void) {
         freeMem(1);
 	ppcShutdown();
 }
 
-static void recError() {
+static void recError(void) {
 	SysReset();
 	ClosePlugins();
 	SysMessage("Unrecoverable error while running recompiler\n");
 	SysRunGui();
 }
 
-static uint32_t execCount = 0;
-__inline static void execute() {
-	void (**recFunc)();
+__inline static void execute(void) {
+	void (**recFunc)(void);
 	char *p;
 
 	if (++execCount % 100000 == 0) {
@@ -1165,7 +1166,7 @@ __inline static void execute() {
 	}
 
 	p =	(char*)(pc_base + ((psxRegs.pc & 0xffff) * PC_REC_SCALE));
-	recFunc = (void (**)()) (uptr)p;
+	recFunc = (void (**)(void)) (uptr)p;
 
 	if (*(uptr*)recFunc == 0) {
 		recRecompile();
@@ -1174,18 +1175,18 @@ __inline static void execute() {
 }
 
 #ifndef MDFNPS3 //Leave on command
-static void recExecute() {
+static void recExecute(void) {
 	for (;;) execute();
 }
 #else
 extern int wanna_leave;
-static void recExecute() {
+static void recExecute(void) {
 	wanna_leave = 0;
 	while(!wanna_leave) execute();
 }
 #endif
 
-static void recExecuteBlock() {
+static void recExecuteBlock(void) {
 	execute();
 }
 
@@ -1193,7 +1194,7 @@ static void recClear(u32 Addr, u32 Size) {
 	memset((void*)PC_REC(Addr), 0, Size * 4);
 }
 
-static void recNULL() {
+static void recNULL(void) {
 //	SysMessage("recUNK: %8.8x\n", psxRegs.code);
 }
 
@@ -1203,24 +1204,24 @@ static void recNULL() {
 *********************************************************/
 
 //REC_SYS(SPECIAL);
-static void recSPECIAL() {
+static void recSPECIAL(void) {
 	recSPC[_Funct_]();
 }
 
-static void recREGIMM() {
+static void recREGIMM(void) {
 	recREG[_Rt_]();
 }
 
-static void recCOP0() {
+static void recCOP0(void) {
 	recCP0[_Rs_]();
 }
 
 //REC_SYS(COP2);
-static void recCOP2() {
+static void recCOP2(void) {
 	recCP2[_Funct_]();
 }
 
-static void recBASIC() {
+static void recBASIC(void) {
 	recCP2BSC[_Rs_]();
 }
 
@@ -1241,7 +1242,7 @@ REC_FUNC(XORI);
 REC_FUNC(SLTI);
 REC_FUNC(SLTIU);*/
 #else
-static void recADDIU()  {
+static void recADDIU(void)  {
 // Rt = Rs + Im
 	if (!_Rt_) return;
 
@@ -1256,7 +1257,7 @@ static void recADDIU()  {
 	}
 }
 
-static void recADDI()  {
+static void recADDI(void)  {
 // Rt = Rs + Im
 	recADDIU();
 }
@@ -1264,7 +1265,7 @@ static void recADDI()  {
 //REC_FUNC(SLTI);
 //REC_FUNC(SLTIU);
 //CR0:	SIGN      | POSITIVE | ZERO  | SOVERFLOW | SOVERFLOW | OVERFLOW | CARRY
-static void recSLTI() {
+static void recSLTI(void) {
 // Rt = Rs < Im (signed)
 	if (!_Rt_) return;
 
@@ -1284,7 +1285,7 @@ static void recSLTI() {
 	}
 }
 
-static void recSLTIU() {
+static void recSLTIU(void) {
 // Rt = Rs < Im (unsigned)
 	if (!_Rt_) return;
 
@@ -1300,7 +1301,7 @@ static void recSLTIU() {
 	}
 }
 
-static void recANDI() {
+static void recANDI(void) {
 // Rt = Rs And Im
     if (!_Rt_) return;
 
@@ -1311,7 +1312,7 @@ static void recANDI() {
     }
 }
 
-static void recORI() {
+static void recORI(void) {
 // Rt = Rs Or Im
 	if (!_Rt_) return;
 
@@ -1326,7 +1327,7 @@ static void recORI() {
 	}
 }
 
-static void recXORI() {
+static void recXORI(void) {
 // Rt = Rs Xor Im
     if (!_Rt_) return;
 
@@ -1345,7 +1346,7 @@ static void recXORI() {
 *********************************************************/
 //REC_FUNC(LUI);
 //#if 0*/
-static void recLUI()  {
+static void recLUI(void)  {
 // Rt = Imm << 16
 	if (!_Rt_) return;
 
@@ -1372,7 +1373,7 @@ REC_FUNC(NOR);
 REC_FUNC(SLT);
 REC_FUNC(SLTU);*/
 #else
-static void recADDU() {
+static void recADDU(void) {
 // Rd = Rs + Rt 
 	if (!_Rd_) return;
 
@@ -1399,12 +1400,12 @@ static void recADDU() {
 	}
 }
 
-static void recADD() {
+static void recADD(void) {
 // Rd = Rs + Rt
 	recADDU();
 }
 
-static void recSUBU() {
+static void recSUBU(void) {
 // Rd = Rs - Rt
     if (!_Rd_) return;
 
@@ -1423,12 +1424,12 @@ static void recSUBU() {
     }
 }   
 
-static void recSUB() {
+static void recSUB(void) {
 // Rd = Rs - Rt
 	recSUBU();
 }
 
-static void recAND() {
+static void recAND(void) {
 // Rd = Rs And Rt
     if (!_Rd_) return;
     
@@ -1452,7 +1453,7 @@ static void recAND() {
     }
 }   
 
-static void recOR() {
+static void recOR(void) {
 // Rd = Rs Or Rt
     if (!_Rd_) return;
     
@@ -1482,7 +1483,7 @@ static void recOR() {
     }
 }
 
-static void recXOR() {
+static void recXOR(void) {
 // Rd = Rs Xor Rt
     if (!_Rd_) return;
     
@@ -1505,7 +1506,7 @@ static void recXOR() {
     }
 }
 
-static void recNOR() {
+static void recNOR(void) {
 // Rd = Rs Nor Rt
     if (!_Rd_) return;
     
@@ -1528,7 +1529,7 @@ static void recNOR() {
     }
 }
 
-static void recSLT() {
+static void recSLT(void) {
 // Rd = Rs < Rt (signed)
     if (!_Rd_) return;
 
@@ -1544,7 +1545,7 @@ static void recSLT() {
     }
 }
 
-static void recSLTU() { 
+static void recSLTU(void) {
 // Rd = Rs < Rt (unsigned)
     if (!_Rd_) return;
 
@@ -1585,7 +1586,7 @@ int DoShift(u32 k)
 //REC_FUNC(MULT);
 
 // FIXME: doesn't work in GT - wrong way marker
-static void recMULT() {
+static void recMULT(void) {
 // Lo/Hi = Rs * Rt (signed)
 	s32 k; int r;
 	int usehi, uselo;
@@ -1655,7 +1656,7 @@ static void recMULT() {
 	}
 }
 
-static void recMULTU() {
+static void recMULTU(void) {
 // Lo/Hi = Rs * Rt (unsigned)
 	u32 k; int r;
 	int usehi, uselo;
@@ -1717,7 +1718,7 @@ static void recMULTU() {
 	}
 }
 
-static void recDIV() {
+static void recDIV(void) {
 // Lo/Hi = Rs / Rt (signed)
 	int usehi;
 
@@ -1773,7 +1774,7 @@ static void recDIV() {
 	}
 }
 
-static void recDIVU() {
+static void recDIVU(void) {
 // Lo/Hi = Rs / Rt (unsigned)
 	int usehi;
 
@@ -1833,7 +1834,7 @@ REC_FUNC(LWR);
 REC_FUNC(SWL);
 REC_FUNC(SWR);
 #else
-static void preMemRead()
+static void preMemRead(void)
 {
 	int rs;
 	
@@ -1875,7 +1876,7 @@ static void preMemWrite(int size)
 	//FlushAllHWReg();
 }
 
-static void recLB() {
+static void recLB(void) {
 // Rt = mem[Rs + Im] (signed)
 	
     /*if (IsConst(_Rs_)) {
@@ -1917,7 +1918,7 @@ static void recLB() {
 	}
 }
 
-static void recLBU() {
+static void recLBU(void) {
 // Rt = mem[Rs + Im] (unsigned)
 
     /*if (IsConst(_Rs_)) {
@@ -1958,7 +1959,7 @@ static void recLBU() {
 	}
 }
 
-static void recLH() {
+static void recLH(void) {
 // Rt = mem[Rs + Im] (signed)
 
 	if (IsConst(_Rs_)) {
@@ -1998,7 +1999,7 @@ static void recLH() {
 	}
 }
 
-static void recLHU() {
+static void recLHU(void) {
 // Rt = mem[Rs + Im] (unsigned)
 
 	if (IsConst(_Rs_)) {
@@ -2091,7 +2092,7 @@ static void recLHU() {
 	}
 }
 
-static void recLW() {
+static void recLW(void) {
 // Rt = mem[Rs + Im] (unsigned)
 
 	if (IsConst(_Rs_)) {
@@ -2189,7 +2190,7 @@ void iLWLk(u32 shift) {
 	OR32RtoR (EAX, ECX);
 }
 
-void recLWL() {
+void recLWL(void) {
 // Rt = Rt Merge mem[Rs + Im]
 
 	if (IsConst(_Rs_)) {
@@ -2338,7 +2339,7 @@ void iLWRk(u32 shift) {
 	OR32RtoR (EAX, ECX);
 }
 
-void recLWR() {
+void recLWR(void) {
 // Rt = Rt Merge mem[Rs + Im]
 
 	if (IsConst(_Rs_)) {
@@ -2402,7 +2403,7 @@ void recLWR() {
 	}
 }*/
 
-static void recSB() {
+static void recSB(void) {
 // mem[Rs + Im] = Rt
 
 	/*if (IsConst(_Rs_)) {
@@ -2434,7 +2435,7 @@ static void recSB() {
 	CALLFunc((uptr)psxMemWrite8);
 }
 
-static void recSH() {
+static void recSH(void) {
 // mem[Rs + Im] = Rt
 
 	/*if (IsConst(_Rs_)) {
@@ -2481,7 +2482,7 @@ static void recSH() {
 	CALLFunc((uptr)psxMemWrite16);
 }
 
-static void recSW() {
+static void recSW(void) {
 // mem[Rs + Im] = Rt
 	u32 *b1, *b2;
 #if 0
@@ -2639,7 +2640,7 @@ void iSWLk(u32 shift) {
 	OR32RtoR (EAX, ECX);
 }
 
-void recSWL() {
+void recSWL(void) {
 // mem[Rs + Im] = Rt Merge mem[Rs + Im]
 
 	if (IsConst(_Rs_)) {
@@ -2718,7 +2719,7 @@ void iSWRk(u32 shift) {
 	OR32RtoR (EAX, ECX);
 }
 
-void recSWR() {
+void recSWR(void) {
 // mem[Rs + Im] = Rt Merge mem[Rs + Im]
 
 	if (IsConst(_Rs_)) {
@@ -2789,7 +2790,7 @@ void recSWR() {
 REC_FUNC(SRL);
 REC_FUNC(SRA);*/
 #else
-static void recSLL() {
+static void recSLL(void) {
 // Rd = Rt << Sa
     if (!_Rd_) return;
 
@@ -2800,7 +2801,7 @@ static void recSLL() {
     }
 }
 
-static void recSRL() {
+static void recSRL(void) {
 // Rd = Rt >> Sa
     if (!_Rd_) return;
 
@@ -2811,7 +2812,7 @@ static void recSRL() {
     }
 }
 
-static void recSRA() {
+static void recSRA(void) {
 // Rd = Rt >> Sa
     if (!_Rd_) return;
 
@@ -2829,7 +2830,7 @@ static void recSRA() {
 REC_FUNC(SRLV);
 REC_FUNC(SRAV);*/
 #else
-static void recSLLV() {
+static void recSLLV(void) {
 // Rd = Rt << Rs
 	if (!_Rd_) return;
 
@@ -2842,7 +2843,7 @@ static void recSLLV() {
 	}
 }
 
-static void recSRLV() {
+static void recSRLV(void) {
 // Rd = Rt >> Rs
 	if (!_Rd_) return;
 
@@ -2855,7 +2856,7 @@ static void recSRLV() {
 	}
 }
 
-static void recSRAV() {
+static void recSRAV(void) {
 // Rd = Rt >> Rs
 	if (!_Rd_) return;
 
@@ -2874,7 +2875,7 @@ static void recSRAV() {
 
 //#if 0*/
 /*int dump;*/
-static void recSYSCALL() {
+static void recSYSCALL(void) {
 //	dump=1;
 	iFlushRegs(0);
 	
@@ -2889,7 +2890,7 @@ static void recSYSCALL() {
 	iRet();
 }
 
-static void recBREAK() {
+static void recBREAK(void) {
 }
 //#endif
 
@@ -2899,7 +2900,7 @@ REC_FUNC(MTHI);
 REC_FUNC(MFLO);
 REC_FUNC(MTLO);*/
 #else
-static void recMFHI() {
+static void recMFHI(void) {
 // Rd = Hi
 	if (!_Rd_) return;
 	
@@ -2910,7 +2911,7 @@ static void recMFHI() {
 	}
 }
 
-static void recMTHI() {
+static void recMTHI(void) {
 // Hi = Rs
 
 	if (IsConst(_Rs_)) {
@@ -2920,7 +2921,7 @@ static void recMTHI() {
 	}
 }
 
-static void recMFLO() {
+static void recMFLO(void) {
 // Rd = Lo
 	if (!_Rd_) return;
 
@@ -2931,7 +2932,7 @@ static void recMFLO() {
 	}
 }
 
-static void recMTLO() {
+static void recMTLO(void) {
 // Lo = Rs
 
 	if (IsConst(_Rs_)) {
@@ -2957,7 +2958,7 @@ REC_BRANCH(BEQ);
 REC_BRANCH(BLEZ);
 REC_BRANCH(BGEZ);*/
 #else
-static void recBLTZ() {
+static void recBLTZ(void) {
 // Branch if Rs < 0
 	u32 bpc = _Imm_ * 4 + pc;
 	u32 *b;
@@ -2981,7 +2982,7 @@ static void recBLTZ() {
 	pc+=4;
 }
 
-static void recBGTZ() {
+static void recBGTZ(void) {
 // Branch if Rs > 0
     u32 bpc = _Imm_ * 4 + pc;
     u32 *b;
@@ -3005,7 +3006,7 @@ static void recBGTZ() {
     pc+=4;
 }
 
-static void recBLTZAL() {
+static void recBLTZAL(void) {
 // Branch if Rs < 0
     u32 bpc = _Imm_ * 4 + pc;
     u32 *b;
@@ -3033,7 +3034,7 @@ static void recBLTZAL() {
     pc+=4;
 }
 
-static void recBGEZAL() {
+static void recBGEZAL(void) {
 // Branch if Rs >= 0
     u32 bpc = _Imm_ * 4 + pc;
     u32 *b;
@@ -3061,20 +3062,20 @@ static void recBGEZAL() {
     pc+=4;
 }
 
-static void recJ() {
+static void recJ(void) {
 // j target
 
 	iJump(_Target_ * 4 + (pc & 0xf0000000));
 }
 
-static void recJAL() {
+static void recJAL(void) {
 // jal target
 	MapConst(31, pc + 4);
 
 	iJump(_Target_ * 4 + (pc & 0xf0000000));
 }
 
-static void recJR() {
+static void recJR(void) {
 // jr Rs
 
 	if (IsConst(_Rs_)) {
@@ -3086,7 +3087,7 @@ static void recJR() {
 	}
 }
 
-static void recJALR() {
+static void recJALR(void) {
 // jalr Rs
 
 	if (_Rd_) {
@@ -3102,7 +3103,7 @@ static void recJALR() {
 	}
 }
 
-static void recBEQ() {
+static void recBEQ(void) {
 // Branch if Rs == Rt
 	u32 bpc = _Imm_ * 4 + pc;
 	u32 *b;
@@ -3155,7 +3156,7 @@ static void recBEQ() {
 	}
 }
 
-static void recBNE() {
+static void recBNE(void) {
 // Branch if Rs != Rt
 	u32 bpc = _Imm_ * 4 + pc;
 	u32 *b;
@@ -3208,7 +3209,7 @@ static void recBNE() {
 	}
 }
 
-static void recBLEZ() {
+static void recBLEZ(void) {
 // Branch if Rs <= 0
 	u32 bpc = _Imm_ * 4 + pc;
 	u32 *b;
@@ -3232,7 +3233,7 @@ static void recBLEZ() {
 	pc+=4;
 }
 
-static void recBGEZ() {
+static void recBGEZ(void) {
 // Branch if Rs >= 0
 	u32 bpc = _Imm_ * 4 + pc;
 	u32 *b;
@@ -3264,20 +3265,20 @@ static void recBGEZ() {
 //REC_SYS(CTC0);
 REC_FUNC(RFE);
 //#else
-static void recMFC0() {
+static void recMFC0(void) {
 // Rt = Cop0->Rd
 	if (!_Rt_) return;
 	
 	LWZ(PutHWReg32(_Rt_), OFFSET(&psxRegs, &psxRegs.CP0.r[_Rd_]), GetHWRegSpecial(PSXREGS));
 }
 
-static void recCFC0() {
+static void recCFC0(void) {
 // Rt = Cop0->Rd
 
 	recMFC0();
 }
 
-static void recMTC0() {
+static void recMTC0(void) {
 // Cop0->Rd = Rt
 
 	/*if (IsConst(_Rt_)) {
@@ -3319,13 +3320,13 @@ static void recMTC0() {
 	}
 }
 
-static void recCTC0() {
+static void recCTC0(void) {
 // Cop0->Rd = Rt
 
 	recMTC0();
 }
 #else
-static void recRFE() {
+static void recRFE(void) {
 	// TODO: implement multiple temp registers or cop0 registers
 	RLWINM(t1,Status,0,0,27);
 	RLWINM(Status,Status,30,28,31);
@@ -3344,8 +3345,8 @@ static void recRFE() {
 
 #if 0
 #define CP2_FUNC(f) \
-void gte##f(); \
-static void rec##f() { \
+void gte##f(void); \
+static void rec##f(void) { \
 	iFlushRegs(0); \
 	LIW(0, (u32)psxRegs.code); \
 	STW(0, OFFSET(&psxRegs, &psxRegs.code), GetHWRegSpecial(PSXREGS)); \
@@ -3360,7 +3361,7 @@ CP2_FUNC(SWC2);
 #endif
 //
 
-static void recHLE() {
+static void recHLE(void) {
 	iFlushRegs(0);
 	FlushAllHWReg();
 	
@@ -3382,7 +3383,7 @@ static void recHLE() {
 
 //
 
-static void (*recBSC[64])() = {
+static void (*recBSC[64])(void) = {
 	recSPECIAL, recREGIMM, recJ   , recJAL  , recBEQ , recBNE , recBLEZ, recBGTZ,
 	recADDI   , recADDIU , recSLTI, recSLTIU, recANDI, recORI , recXORI, recLUI ,
 	recCOP0   , recNULL  , recCOP2, recNULL , recNULL, recNULL, recNULL, recNULL,
@@ -3393,7 +3394,7 @@ static void (*recBSC[64])() = {
 	recNULL   , recNULL  , recSWC2, recHLE  , recNULL, recNULL, recNULL, recNULL
 };
 
-static void (*recSPC[64])() = {
+static void (*recSPC[64])(void) = {
 	recSLL , recNULL, recSRL , recSRA , recSLLV   , recNULL , recSRLV, recSRAV,
 	recJR  , recJALR, recNULL, recNULL, recSYSCALL, recBREAK, recNULL, recNULL,
 	recMFHI, recMTHI, recMFLO, recMTLO, recNULL   , recNULL , recNULL, recNULL,
@@ -3404,21 +3405,21 @@ static void (*recSPC[64])() = {
 	recNULL, recNULL, recNULL, recNULL, recNULL   , recNULL , recNULL, recNULL
 };
 
-static void (*recREG[32])() = {
+static void (*recREG[32])(void) = {
 	recBLTZ  , recBGEZ  , recNULL, recNULL, recNULL, recNULL, recNULL, recNULL,
 	recNULL  , recNULL  , recNULL, recNULL, recNULL, recNULL, recNULL, recNULL,
 	recBLTZAL, recBGEZAL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL,
 	recNULL  , recNULL  , recNULL, recNULL, recNULL, recNULL, recNULL, recNULL
 };
 
-static void (*recCP0[32])() = {
+static void (*recCP0[32])(void) = {
 	recMFC0, recNULL, recCFC0, recNULL, recMTC0, recNULL, recCTC0, recNULL,
 	recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL,
 	recRFE , recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL,
 	recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL
 };
 
-static void (*recCP2[64])() = {
+static void (*recCP2[64])(void) = {
 	recBASIC, recRTPS , recNULL , recNULL, recNULL, recNULL , recNCLIP, recNULL, // 00
 	recNULL , recNULL , recNULL , recNULL, recOP  , recNULL , recNULL , recNULL, // 08
 	recDPCS , recINTPL, recMVMVA, recNCDS, recCDP , recNULL , recNCDT , recNULL, // 10
@@ -3429,14 +3430,14 @@ static void (*recCP2[64])() = {
 	recNULL , recNULL , recNULL , recNULL, recNULL, recGPF  , recGPL  , recNCCT  // 38
 };
 
-static void (*recCP2BSC[32])() = {
+static void (*recCP2BSC[32])(void) = {
 	recMFC2, recNULL, recCFC2, recNULL, recMTC2, recNULL, recCTC2, recNULL,
 	recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL,
 	recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL,
 	recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL
 };
 
-static void recRecompile() {
+static void recRecompile(void) {
 	//static int recCount = 0;
 	char *p;
 	u32 *ptr;

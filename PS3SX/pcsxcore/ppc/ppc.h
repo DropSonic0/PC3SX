@@ -26,30 +26,30 @@ extern "C" {
 #ifdef MDFNPS3
 #define LIP(REG, IMM) \
 { \
-    uptr __imm = (uptr)(IMM); \
+    uptr _lip_imm = (uptr)(IMM); \
     if (sizeof(uptr) == 8) { \
-        LID(REG, __imm); \
+        LID(REG, _lip_imm); \
     } else { \
-        LIW(REG, (u32)__imm); \
+        LIW(REG, (u32)_lip_imm); \
     } \
 }
 #define CALLFunc(FUNC) \
 { \
-    uptr _desc = (uptr)(FUNC); \
-    uptr _func, _toc; \
+    uptr _call_desc = (uptr)(FUNC); \
+    uptr _call_func, _call_toc; \
     if (sizeof(uptr) == 8) { \
-        _func = *(uptr*)_desc; \
-        _toc  = *(uptr*)(_desc + 8); \
+        _call_func = *(uptr*)_call_desc; \
+        _call_toc  = *(uptr*)(_call_desc + 8); \
     } else { \
-        _func = (uptr)*(u32*)_desc; \
-        _toc  = (uptr)*(u32*)(_desc + 4); \
+        _call_func = (uptr)*(u32*)_call_desc; \
+        _call_toc  = (uptr)*(u32*)(_call_desc + 4); \
     } \
     ReleaseArgs(); \
-    LIP(2, _toc); \
-    if ((_func & 0x1fffffc) == _func) { \
-        BLA(_func); \
+    LIP(2, _call_toc); \
+    if ((_call_func & 0x1fffffc) == _call_func) { \
+        BLA(_call_func); \
     } else { \
-        LIP(0, _func); \
+        LIP(0, _call_func); \
         MTCTR(0); \
         BCTRL(); \
     } \
@@ -75,16 +75,16 @@ extern u32 *ppcPtr;
 extern u8  *j8Ptr[32];
 extern u32 *j32Ptr[32];
 
-void ppcInit();
+void ppcInit(void);
 void ppcSetPtr(u32 *ptr);
-void ppcShutdown();
+void ppcShutdown(void);
 
 void ppcAlign(int bytes);
 #ifdef MDFNPS3
 extern uint8_t returnPC_recomp[];
-#define returnPC ((void(*)())returnPC_recomp)
+#define returnPC ((void(*)(void))returnPC_recomp)
 #else
-void returnPC();
+void returnPC(void);
 #endif
 void recRun(uptr func_code, uptr hw1, uptr hw2);
 u8 dynMemRead8(u32 mem);

@@ -35,23 +35,23 @@ int psxCP2time[64] = {
 };
 
 #define CP2_FUNC(f) \
-void gte##f(); \
-static void rec##f() { \
+void gte##f(void); \
+static void rec##f(void) { \
 	if (pc < cop2readypc) idlecyclecount += (cop2readypc - pc)>>2; \
 	iFlushRegs(0); \
 	LIW(0, (u32)psxRegs.code); \
 	STW(0, OFFSET(&psxRegs, &psxRegs.code), GetHWRegSpecial(PSXREGS)); \
 	FlushAllHWReg(); \
-	CALLFunc ((u32)gte##f); \
-	cop2readypc = pc + psxCP2time[_fFunct_(psxRegs.code)]<<2; \
+	CALLFunc ((uptr)gte##f); \
+	cop2readypc = pc + (psxCP2time[_fFunct_(psxRegs.code)]<<2); \
 }
 
 #define CP2_FUNCNC(f) \
-void gte##f(); \
-static void rec##f() { \
+void gte##f(void); \
+static void rec##f(void) { \
 	if (pc < cop2readypc) idlecyclecount += (cop2readypc - pc)>>2; \
 	iFlushRegs(0); \
-	CALLFunc ((u32)gte##f); \
+	CALLFunc ((uptr)gte##f); \
 /*	branch = 2; */\
 	cop2readypc = pc + psxCP2time[_fFunct_(psxRegs.code)]; \
 }

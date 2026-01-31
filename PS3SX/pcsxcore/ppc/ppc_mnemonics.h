@@ -184,10 +184,6 @@
 #define SUBCO_(REG_DST, REG1, REG2) \
 	{SUBFCO_(REG_DST, REG2, REG1)}
 
-#define SRAWI(REG_DST, REG_SRC, SHIFT) \
-	{int _src = (REG_SRC); int _dst=(REG_DST); \
-        INSTR = (0x7C000670 | (_src << 21) | (_dst << 16) | (SHIFT << 11));}
-
 #define MULHW(REG_DST, REG1, REG2) \
 	{int _reg1 = (REG1), _reg2 = (REG2); int _dst=(REG_DST); \
         INSTR = (0x7C000096 | (_dst << 21) | (_reg1 << 16) |  (_reg2 << 11));}
@@ -457,19 +453,19 @@
 /* 64-bit ops */
 #define RLDICR(REG_DST, REG_SRC, SHIFT, MASK_END) \
 	{int _src = (REG_SRC), _dst = (REG_DST); \
-        INSTR = (0x78000004 | (_src << 21) | (_dst << 16) | ((SHIFT & 0x1f) << 11) | ((MASK_END & 0x1f) << 6) | ((SHIFT & 0x20) >> 4) | (MASK_END & 0x20));}
+        INSTR = (0x78000004 | (_src << 21) | (_dst << 16) | (((SHIFT) & 0x1f) << 11) | (((MASK_END) & 0x1f) << 6) | (((SHIFT) & 0x20) >> 4) | ((MASK_END) & 0x20));}
 
 #define SLDI(REG_DST, REG_SRC, SHIFT) \
 	RLDICR(REG_DST, REG_SRC, SHIFT, 63 - (SHIFT))
 
 #define LID(REG, IMM) \
 { \
-    uint64_t __imm = (uint64_t)(IMM); \
-    LIS(REG, (__imm >> 48)); \
-    if (((__imm >> 32) & 0xffff) != 0) ORI(REG, REG, (__imm >> 32)); \
+    uint64_t _lid_imm = (uint64_t)(IMM); \
+    LIS(REG, (_lid_imm >> 48)); \
+    if (((_lid_imm >> 32) & 0xffff) != 0) ORI(REG, REG, (_lid_imm >> 32)); \
     SLDI(REG, REG, 32); \
-    ORIS(REG, REG, (__imm >> 16)); \
-    ORI(REG, REG, __imm); \
+    ORIS(REG, REG, (_lid_imm >> 16)); \
+    ORI(REG, REG, _lid_imm); \
 }
 
 /* floating point ops */
@@ -516,30 +512,30 @@
 #if 1
 #define LIW(REG, IMM) /* Load Immidiate Word */ \
 { \
-	int __reg = (REG); u32 __imm = (u32)(IMM); \
-	if ((s32)__imm == (s32)((s16)__imm)) \
+	int _liw_reg = (REG); u32 _liw_imm = (u32)(IMM); \
+	if ((s32)_liw_imm == (s32)((s16)_liw_imm)) \
 	{ \
-		LI(__reg, (s32)((s16)__imm)); \
-	} else if (__reg == 0) { \
-		LIS(__reg, (((u32)__imm)>>16)); \
-		if ((((u32)__imm) & 0xffff) != 0) \
+		LI(_liw_reg, (s32)((s16)_liw_imm)); \
+	} else if (_liw_reg == 0) { \
+		LIS(_liw_reg, (((u32)_liw_imm)>>16)); \
+		if ((((u32)_liw_imm) & 0xffff) != 0) \
 		{ \
-			ORI(__reg, __reg, __imm); \
+			ORI(_liw_reg, _liw_reg, _liw_imm); \
 		} \
 	} else { \
-		if ((((u32)__imm) & 0xffff) == 0) { \
-			LIS(__reg, (((u32)__imm)>>16)); \
+		if ((((u32)_liw_imm) & 0xffff) == 0) { \
+			LIS(_liw_reg, (((u32)_liw_imm)>>16)); \
 		} else { \
-			LI(__reg, __imm); \
-			if ((__imm & 0x8000) == 0) { \
-				ADDIS(__reg, __reg, ((u32)__imm)>>16); \
+			LI(_liw_reg, _liw_imm); \
+			if ((_liw_imm & 0x8000) == 0) { \
+				ADDIS(_liw_reg, _liw_reg, ((u32)_liw_imm)>>16); \
 			} else { \
-				ADDIS(__reg, __reg, ((((u32)__imm)>>16) & 0xffff) + 1); \
+				ADDIS(_liw_reg, _liw_reg, ((((u32)_liw_imm)>>16) & 0xffff) + 1); \
 			} \
 		} \
-		/*if ((((u32)__imm) & 0xffff) != 0) \
+		/*if ((((u32)_liw_imm) & 0xffff) != 0) \
 		{ \
-			ORI(__reg, __reg, __imm); \
+			ORI(_liw_reg, _liw_reg, _liw_imm); \
 		}*/ \
 	} \
 }
