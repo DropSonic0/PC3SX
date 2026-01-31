@@ -15,8 +15,6 @@ recRun:
 .globl returnPC
 returnPC:
     .long .returnPC, .TOC.@tocbase32
-.globl returnPC_recomp
-returnPC_recomp = .returnPC
 #endif
 
 #define OLD_REGISTER_OFFSET	(19*4)
@@ -55,6 +53,8 @@ C(returnPC):
 #else
         .globl  C(.returnPC)
 C(.returnPC):
+        .globl  returnPC_recomp
+returnPC_recomp:
 #endif
 	// end code
 	lwz		0, (32-13)*4+8+4(1)

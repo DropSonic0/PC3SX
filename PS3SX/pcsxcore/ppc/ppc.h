@@ -23,6 +23,23 @@ extern "C" {
 #define write32(val) *(u32*)ppcPtr = val; ppcPtr+=4;
 #define write64(val) *(u64*)ppcPtr = val; ppcPtr+=8;
 
+#ifdef MDFNPS3
+#define CALLFunc(FUNC) \
+{ \
+    u32 _desc = (u32)(FUNC); \
+    u32 _func = *(u32*)_desc; \
+    u32 _toc  = *(u32*)(_desc + 4); \
+    ReleaseArgs(); \
+    LIW(2, _toc); \
+    if ((_func & 0x1fffffc) == _func) { \
+        BLA(_func); \
+    } else { \
+        LIW(0, _func); \
+        MTCTR(0); \
+        BCTRL(); \
+    } \
+}
+#else
 #define CALLFunc(FUNC) \
 { \
     u32 _func = (FUNC); \
@@ -35,6 +52,7 @@ extern "C" {
         BCTRL(); \
     } \
 }
+#endif
 
 extern int cpuHWRegisters[NUM_HW_REGISTERS];
 
@@ -48,8 +66,8 @@ void ppcShutdown();
 
 void ppcAlign(int bytes);
 #ifdef MDFNPS3
-void returnPC_recomp();
-#define returnPC returnPC_recomp
+extern uint8_t returnPC_recomp[];
+#define returnPC ((void(*)())returnPC_recomp)
 #else
 void returnPC();
 #endif
