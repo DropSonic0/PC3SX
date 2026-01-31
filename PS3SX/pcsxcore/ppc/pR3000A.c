@@ -583,7 +583,7 @@ static int GetHWRegSpecial(int which)
 				break;
 			case TARGETPTR:
 				HWRegisters[index].flush = NULL;
-				LIW(HWRegisters[index].code, (uptr)&target);
+				LIP(HWRegisters[index].code, (uptr)&target);
 				break;
 			case REG_RZERO:
 				HWRegisters[index].flush = NULL;
@@ -738,14 +738,9 @@ static void Return()
 {
 	iFlushRegs(0);
 	FlushAllHWReg();
-	if (((uptr)returnPC & 0x1fffffc) == (uptr)returnPC) {
-		BA((uptr)returnPC);
-	}
-	else {
-		LIW(0, (uptr)returnPC);
-		MTLR(0);
-		BLR();
-	}
+	LIP(0, (uptr)returnPC);
+	MTLR(0);
+	BLR();
 }
 
 static void iRet() {
@@ -887,7 +882,7 @@ static void iJump(u32 branchPC) {
 	CMPLW(GetHWRegSpecial(PSXPC), 0);
 	BNE_L(b1);
 	
-	LIW(3, PC_REC(branchPC));
+	LIP(3, PC_REC(branchPC));
 	LWZ(3, 0, 3);
 	CMPLWI(3, 0);
 	BNE_L(b2);
@@ -962,7 +957,7 @@ static void iBranch(u32 branchPC, int savectx) {
 	CMPLW(GetHWRegSpecial(PSXPC), 0);
 	BNE_L(b1);
 	
-	LIW(3, PC_REC(branchPC));
+	LIP(3, PC_REC(branchPC));
 	LWZ(3, 0, 3);
 	CMPLWI(3, 0);
 	BNE_L(b2);
@@ -1167,7 +1162,7 @@ __inline static void execute() {
 	if (*(uptr*)recFunc == 0) {
 		recRecompile();
 	}
-	recRun((void(*)())*(uptr*)recFunc, (uptr)&psxRegs, (uptr)&psxM);
+	recRun(*(uptr*)recFunc, (uptr)&psxRegs, (uptr)&psxM);
 }
 
 #ifndef MDFNPS3 //Leave on command
@@ -1971,7 +1966,7 @@ static void recLH() {
 		if ((t & 0x1fe0) == 0 && (t & 0x1fff) != 0) {
 			if (!_Rt_) return;
 
-			LIW(PutHWReg32(_Rt_), (u32)&psxM[addr & 0x1fffff]);
+			LIP(PutHWReg32(_Rt_), (uptr)&psxM[addr & 0x1fffff]);
 			LHBRX(PutHWReg32(_Rt_), 0, GetHWReg32(_Rt_));
 			EXTSH(PutHWReg32(_Rt_), GetHWReg32(_Rt_));
 			return;
@@ -1979,7 +1974,7 @@ static void recLH() {
 		if (t == 0x1f80 && addr < 0x1f801000) {
 			if (!_Rt_) return;
 
-			LIW(PutHWReg32(_Rt_), (u32)&psxH[addr & 0xfff]);
+			LIP(PutHWReg32(_Rt_), (uptr)&psxH[addr & 0xfff]);
 			LHBRX(PutHWReg32(_Rt_), 0, GetHWReg32(_Rt_));
 			EXTSH(PutHWReg32(_Rt_), GetHWReg32(_Rt_));
 			return;
@@ -2011,14 +2006,14 @@ static void recLHU() {
 		if ((t & 0x1fe0) == 0 && (t & 0x1fff) != 0) {
 			if (!_Rt_) return;
 
-			LIW(PutHWReg32(_Rt_), (u32)&psxM[addr & 0x1fffff]);
+			LIP(PutHWReg32(_Rt_), (uptr)&psxM[addr & 0x1fffff]);
 			LHBRX(PutHWReg32(_Rt_), 0, GetHWReg32(_Rt_));
 			return;
 		}
 		if (t == 0x1f80 && addr < 0x1f801000) {
 			if (!_Rt_) return;
 
-			LIW(PutHWReg32(_Rt_), (u32)&psxH[addr & 0xfff]);
+			LIP(PutHWReg32(_Rt_), (uptr)&psxH[addr & 0xfff]);
 			LHBRX(PutHWReg32(_Rt_), 0, GetHWReg32(_Rt_));
 			return;
 		}
@@ -2104,14 +2099,14 @@ static void recLW() {
 		if ((t & 0x1fe0) == 0 && (t & 0x1fff) != 0) {
 			if (!_Rt_) return;
 
-			LIW(PutHWReg32(_Rt_), (u32)&psxM[addr & 0x1fffff]);
+			LIP(PutHWReg32(_Rt_), (uptr)&psxM[addr & 0x1fffff]);
 			LWBRX(PutHWReg32(_Rt_), 0, GetHWReg32(_Rt_));
 			return;
 		}
 		if (t == 0x1f80 && addr < 0x1f801000) {
 			if (!_Rt_) return;
 
-			LIW(PutHWReg32(_Rt_), (u32)&psxH[addr & 0xfff]);
+			LIP(PutHWReg32(_Rt_), (uptr)&psxH[addr & 0xfff]);
 			LWBRX(PutHWReg32(_Rt_), 0, GetHWReg32(_Rt_));
 			return;
 		}
@@ -2128,7 +2123,7 @@ static void recLW() {
 				case 0x1f8010f0: case 0x1f8010f4:
 					if (!_Rt_) return;
 					
-					LIW(PutHWReg32(_Rt_), (u32)&psxH[addr & 0xffff]);
+					LIP(PutHWReg32(_Rt_), (uptr)&psxH[addr & 0xffff]);
 					LWBRX(PutHWReg32(_Rt_), 0, GetHWReg32(_Rt_));
 					return;
 
@@ -2165,6 +2160,8 @@ static void recLW() {
 		PutHWReg32(_Rt_);
 	}
 }
+
+static void recLWBlock(int count);
 
 REC_FUNC(LWL);
 REC_FUNC(LWR);
@@ -2874,7 +2871,7 @@ static void recSYSCALL() {
 	iFlushRegs(0);
 	
 	ReserveArgs(2);
-	LIW(PutHWRegSpecial(PSXPC), pc - 4);
+	LIP(PutHWRegSpecial(PSXPC), (uptr)pc);
 	LIW(PutHWRegSpecial(ARG1), 0x20);
 	LIW(PutHWRegSpecial(ARG2), (branch == 1 ? 1 : 0));
 	FlushAllHWReg();

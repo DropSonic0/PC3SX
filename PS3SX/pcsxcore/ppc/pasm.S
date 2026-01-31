@@ -65,7 +65,7 @@ C(.recRun):
 	mtctr	3
 	mr	31, 4
 	mr	30, 5
-	bctrl
+	bctr
 /*
 }
 asm void returnPC()

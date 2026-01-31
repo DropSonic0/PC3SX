@@ -86,7 +86,7 @@ extern uint8_t returnPC_recomp[];
 #else
 void returnPC();
 #endif
-void recRun(void (*func)(), uptr hw1, uptr hw2);
+void recRun(uptr func_code, uptr hw1, uptr hw2);
 u8 dynMemRead8(u32 mem);
 u16 dynMemRead16(u32 mem);
 u32 dynMemRead32(u32 mem);
