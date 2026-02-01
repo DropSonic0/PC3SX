@@ -54,7 +54,7 @@ extern "C"
 #include "misc.h"
 #include "R3000a.h"
 
-void SysPrintf(char *fmt, ...);
+void SysPrintf(const char *fmt, ...);
 
 int NeedReset = 0;
 int Running =0;
@@ -382,7 +382,7 @@ void SysReset() {
 	SysPrintf("end SysReset()\n");
 }
 
-void SysPrintf(char *fmt, ...) {
+void SysPrintf(const char *fmt, ...) {
     va_list list;
     char msg[512];
 
@@ -399,7 +399,7 @@ void SysPrintf(char *fmt, ...) {
 	printf(msg);
 }
 
-void SysMessage(char *fmt, ...) {
+void SysMessage(const char *fmt, ...) {
 	va_list list;
     char msg[512];
 
@@ -417,11 +417,11 @@ void SysMessage(char *fmt, ...) {
 	printf(msg);
 }
 
-void *SysLoadLibrary(char *lib) {
-		return lib;
+void *SysLoadLibrary(const char *lib) {
+		return (void *)lib;
 }
 
-void *SysLoadSym(void *lib, char *sym) {
+void *SysLoadSym(void *lib, const char *sym) {
 	return lib; //smhzc
 }
 

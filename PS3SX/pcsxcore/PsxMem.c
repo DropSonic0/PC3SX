@@ -46,7 +46,7 @@
 #include "R3000A.h"
 #include "PsxHw.h"
 
-extern void SysMessage(char *fmt, ...);
+extern void SysMessage(const char *fmt, ...);
 
 s8 psxM[0x00220000] __attribute__((aligned(32)));
 s8 psxR[0x00080000] __attribute__((aligned(32)));
