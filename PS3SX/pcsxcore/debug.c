@@ -229,7 +229,7 @@ static int debugger_active = 0, paused = 0, trace = 0, reset = 0, resetting = 0;
 static int mapping_e = 0, mapping_r8 = 0, mapping_r16 = 0, mapping_r32 = 0, mapping_w8 = 0, mapping_w16 = 0, mapping_w32 = 0;
 static int breakmp_e = 0, breakmp_r8 = 0, breakmp_r16 = 0, breakmp_r32 = 0, breakmp_w8 = 0, breakmp_w16 = 0, breakmp_w32 = 0;
 
-static void ProcessCommands();
+static void ProcessCommands(void);
 
 static u8 *MemoryMap = NULL;
 
@@ -308,7 +308,7 @@ breakpoint_t *find_breakpoint(int number) {
     return 0;
 }
 
-void StartDebugger() {
+void StartDebugger(void) {
     if (debugger_active)
         return;
 
@@ -327,7 +327,7 @@ void StartDebugger() {
     debugger_active = 1;
 }
 
-void StopDebugger() {
+void StopDebugger(void) {
     if (debugger_active) {
         StopServer();
         SysPrintf(_("Debugger stopped.\n"));
@@ -343,17 +343,17 @@ void StopDebugger() {
     debugger_active = 0;
 }
 
-void PauseDebugger() {
+void PauseDebugger(void) {
     trace = 0;
     paused = 1;
 }
 
-void ResumeDebugger() {
+void ResumeDebugger(void) {
     trace = 0;
     paused = 0;
 }
 
-void DebugVSync() {
+void DebugVSync(void) {
     if (!debugger_active || resetting)
         return;
 
@@ -380,7 +380,7 @@ int IsMapMarked(u32 address, int mask) {
     return (MemoryMap[address & 0x001fffff] & mask) != 0;
 }
 
-void ProcessDebug() {
+void ProcessDebug(void) {
     if (!debugger_active || reset || resetting)
         return;
     if (trace) {
@@ -408,7 +408,7 @@ void ProcessDebug() {
     }
 }
 
-static void ProcessCommands() {
+static void ProcessCommands(void) {
     int code, i, dumping;
     FILE *sfile;
     char cmd[257], *arguments, *p, reply[10240], *save, *dump;

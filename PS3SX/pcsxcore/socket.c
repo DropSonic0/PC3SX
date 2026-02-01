@@ -24,11 +24,15 @@
 
 #ifndef _WIN32
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <fcntl.h>
+#include <sys/select.h>
+#include <errno.h>
+
+#ifndef SO_NBIO
+#define SO_NBIO 0x1100
+#endif
 #endif
 
 static int server_socket = 0;
@@ -39,7 +43,7 @@ static int ptr = 0;
 
 #define PORT_NUMBER 12345
 
-int StartServer() {
+int StartServer(void) {
     struct in_addr localhostaddr;
     struct sockaddr_in localsocketaddr;
 
@@ -83,7 +87,7 @@ int StartServer() {
     return 0;
 }
 
-void StopServer() {
+void StopServer(void) {
 #ifdef _WIN32
     shutdown(server_socket, SD_BOTH);
     closesocket(server_socket);
@@ -94,7 +98,7 @@ void StopServer() {
 #endif
 }
 
-void GetClient() {
+void GetClient(void) {
     int new_socket;
     char hello[256];
 
@@ -113,9 +117,8 @@ void GetClient() {
 
 #ifndef _WIN32
     {
-        int flags;
-        flags = fcntl(client_socket, F_GETFL, 0);
-        fcntl(client_socket, F_SETFL, flags | O_NONBLOCK);
+        int on = 1;
+        setsockopt(client_socket, SOL_SOCKET, SO_NBIO, &on, sizeof(on));
     }
 #endif
 
@@ -124,7 +127,7 @@ void GetClient() {
     ptr = 0;
 }
 
-void CloseClient() {
+void CloseClient(void) {
     if (client_socket) {
 #ifdef _WIN32
         shutdown(client_socket, SD_BOTH);
@@ -137,13 +140,14 @@ void CloseClient() {
     }
 }
 
-int HasClient() {
+int HasClient(void) {
     return client_socket ? 1 : 0;
 }
 
 int ReadSocket(char * buffer, int len) {
     int r;
     char * endl;
+    (void)len;
 
     if (!client_socket)
         return -1;
@@ -233,22 +237,22 @@ void WriteSocket(char * buffer, int len) {
     send(client_socket, buffer, len, 0);
 }
 
-void SetsBlock() {
+void SetsBlock(void) {
 #ifdef _WIN32
     u_long b = 0;
     ioctlsocket(server_socket, FIONBIO, &b);
 #else
-    int flags = fcntl(server_socket, F_GETFL, 0);
-    fcntl(server_socket, F_SETFL, flags & ~O_NONBLOCK);
+    int on = 0;
+    setsockopt(server_socket, SOL_SOCKET, SO_NBIO, &on, sizeof(on));
 #endif
 }
 
-void SetsNonblock() {
+void SetsNonblock(void) {
 #ifdef _WIN32
     u_long b = 1;
     ioctlsocket(server_socket, FIONBIO, &b);
 #else
-    int flags = fcntl(server_socket, F_GETFL, 0);
-    fcntl(server_socket, F_SETFL, flags | O_NONBLOCK);
+    int on = 1;
+    setsockopt(server_socket, SOL_SOCKET, SO_NBIO, &on, sizeof(on));
 #endif
 }

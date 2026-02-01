@@ -28,16 +28,16 @@ enum breakpoint_types {
 	BE, BR1, BR2, BR4, BW1, BW2, BW4
 };
 
-void StartDebugger();
-void StopDebugger();
+void StartDebugger(void);
+void StopDebugger(void);
 
-void DebugVSync();
-void ProcessDebug();
+void DebugVSync(void);
+void ProcessDebug(void);
 
 void DebugCheckBP(u32 address, enum breakpoint_types type);
 
-void PauseDebugger();
-void ResumeDebugger();
+void PauseDebugger(void);
+void ResumeDebugger(void);
 
 extern char *disRNameCP0[];
 

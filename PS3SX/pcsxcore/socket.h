@@ -22,20 +22,20 @@
 extern "C" {
 #endif
 
-int StartServer();
-void StopServer();
+int StartServer(void);
+void StopServer(void);
 
-void GetClient();
-void CloseClient();
+void GetClient(void);
+void CloseClient(void);
 
-int HasClient();
+int HasClient(void);
 
 int ReadSocket(char * buffer, int len);
 int RawReadSocket(char * buffer, int len);
 void WriteSocket(char * buffer, int len);
 
-void SetsBlock();
-void SetsNonblock();
+void SetsBlock(void);
+void SetsNonblock(void);
 
 #ifdef __cplusplus
 }
