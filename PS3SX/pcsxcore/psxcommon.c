@@ -21,26 +21,43 @@
 #include "R3000A.h"
 #include "PsxBios.h"
 
+//#include "cheat.h"
+//#include "ppf.h"
+
 PcsxConfig Config;
 boolean NetOpened = FALSE;
 
 int Log = 0;
 FILE *emuLog = NULL;
+boolean hleSoftCall = FALSE;
 
 int EmuInit(void) {
 	return psxInit();
 }
 
 void EmuReset(void) {
+//	FreeCheatSearchResults();
+//	FreeCheatSearchMem();
+
 	psxReset();
 }
 
 void EmuShutdown(void) {
+//	ClearAllCheats();
+//	FreeCheatSearchResults();
+//	FreeCheatSearchMem();
+
+//	FreePPFCache();
+
 	psxShutdown();
 }
 
 void EmuUpdate(void) {
-	SysUpdate();
+	// Do not allow hotkeys inside a softcall from HLE BIOS
+	if (!Config.HLE || !hleSoftCall)
+		SysUpdate();
+
+//	ApplyCheats();
 }
 
 void __Log(char *fmt, ...) {
@@ -48,7 +65,13 @@ void __Log(char *fmt, ...) {
 	char tmp[1024];
 
 	va_start(list, fmt);
-	vsprintf(tmp, fmt, list);
+	if (emuLog != NULL) {
+		va_list list2;
+		va_copy(list2, list);
+		vfprintf(emuLog, fmt, list2);
+		va_end(list2);
+	}
+	vsnprintf(tmp, sizeof(tmp), fmt, list);
 	SysPrintf("%s", tmp);
 	va_end(list);
 }

@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,13 +14,17 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
 #ifndef __MDEC_H__
 #define __MDEC_H__
 
-#include "PsxCommon.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "psxcommon.h"
 #include "R3000A.h"
 #include "PsxHw.h"
 #include "PsxDma.h"
@@ -37,4 +40,7 @@ void mdec0Interrupt(void);
 void mdec1Interrupt(void);
 int  mdecFreeze(gzFile f, int Mode);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __MDEC_H__ */

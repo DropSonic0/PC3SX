@@ -282,15 +282,19 @@ static FileDesc FDesc[32];
 static __inline void softCall(u32 pc) {
 	pc0 = pc;
 	ra = 0x80001000;
+	hleSoftCall = TRUE;
 	while (pc0 != 0x80001000) psxCpu->ExecuteBlock();
+	hleSoftCall = FALSE;
 }
 
 static __inline void softCall2(u32 pc) {
 	u32 sra = ra;
 	pc0 = pc;
 	ra = 0x80001000;
+	hleSoftCall = TRUE;
 	while (pc0 != 0x80001000) psxCpu->ExecuteBlock();
 	ra = sra;
+	hleSoftCall = FALSE;
 }
 
 static __inline void DeliverEvent(u32 ev, u32 spec) {
@@ -2175,6 +2179,8 @@ void psxBiosInit(void) {
 	psxMu32ref(0x07a0) = SWAPu32((0x3b << 26) | 0);
 	psxMu32ref(0x0884) = SWAPu32((0x3b << 26) | 0);
 	psxMu32ref(0x0894) = SWAPu32((0x3b << 26) | 0);
+
+	hleSoftCall = FALSE;
 }
 
 void psxBiosShutdown(void) {
