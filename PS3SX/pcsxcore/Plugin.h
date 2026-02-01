@@ -4,7 +4,6 @@
 #include "Decode_XA.h"
 #include "PSEmu_Plugin_Defs.h"
 
-long CDR__open(void);
 long CDR__init(void);
 long CDR__shutdown(void);
 long CDR__open(void);

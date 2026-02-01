@@ -27,7 +27,7 @@
 // Dma0/1 in Mdec.c
 // Dma3 in CdRom.c
 
-void spuInterrupt() {
+void spuInterrupt(void) {
 	HW_DMA4_CHCR &= SWAP32(~0x01000000);
 	DMA_INTERRUPT(4);
 }
@@ -135,7 +135,7 @@ void psxDma6(u32 madr, u32 bcr, u32 chcr) {
 	DMA_INTERRUPT(6);
 }
 
-void gpuotcInterrupt() {
+void gpuotcInterrupt(void) {
 	HW_DMA6_CHCR &= SWAP32(~0x01000000);
 	DMA_INTERRUPT(6);
 }
@@ -203,7 +203,7 @@ void psxDma2(u32 madr, u32 bcr, u32 chcr) { // GPU
 			}
 			// BA blocks * BS words (word = 32-bits)
 			size = (bcr >> 16) * (bcr & 0xffff);
-			GPU_readDataMem(ptr, size);
+			GPU_readDataMem((unsigned long *)ptr, size);
 			psxCpu->Clear(madr, size);
 
 #if 1
@@ -228,7 +228,7 @@ void psxDma2(u32 madr, u32 bcr, u32 chcr) { // GPU
 			}
 			// BA blocks * BS words (word = 32-bits)
 			size = (bcr >> 16) * (bcr & 0xffff);
-			GPU_writeDataMem(ptr, size);
+			GPU_writeDataMem((unsigned long *)ptr, size);
 
 #if 1
 			// already 32-bit word size ((size * 4) / 4)
@@ -246,7 +246,7 @@ void psxDma2(u32 madr, u32 bcr, u32 chcr) { // GPU
 #endif
 
 			size = gpuDmaChainSize(madr);
-			GPU_dmaChain((u32 *)psxM, madr & 0x1fffff);
+			GPU_dmaChain((unsigned long *)psxM, madr & 0x1fffff);
 
 			// Tekken 3 = use 1.0 only (not 1.5x)
 
@@ -268,7 +268,7 @@ void psxDma2(u32 madr, u32 bcr, u32 chcr) { // GPU
 	DMA_INTERRUPT(2);
 }
 
-void gpuInterrupt() {
+void gpuInterrupt(void) {
 	HW_DMA2_CHCR &= SWAP32(~0x01000000);
 	DMA_INTERRUPT(2);
 }

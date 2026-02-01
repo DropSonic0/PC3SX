@@ -309,7 +309,7 @@ void mdec1Interrupt() {
 	}
 }
 
-void mdec0Interrupt() {
+void mdec0Interrupt(void) {
 	HW_DMA0_CHCR &= SWAP32(~0x01000000);
 	DMA_INTERRUPT(0);
 }

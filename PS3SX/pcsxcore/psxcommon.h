@@ -55,6 +55,16 @@ typedef uint32_t u32;
 typedef uint64_t u64;
 typedef uintptr_t uptr;
 
+typedef uint8_t boolean;
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
 /* Local includes */
 #include "system.h"
 #include "debug.h"
@@ -86,8 +96,6 @@ typedef uintptr_t uptr;
 #endif
 
 extern int Log;
-void __Log(char *fmt, ...);
-
 void __Log(char *fmt, ...);
 
 typedef struct {

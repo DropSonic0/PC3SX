@@ -1052,7 +1052,7 @@ void psxDma3(u32 madr, u32 bcr, u32 chcr) {
 	DMA_INTERRUPT(3);
 }
 
-void cdrDmaInterrupt() {
+void cdrDmaInterrupt(void) {
 	HW_DMA3_CHCR &= SWAP32(~0x01000000);
 	DMA_INTERRUPT(3);
 }
