@@ -71,7 +71,7 @@ void __Log(char *fmt, ...) {
 		vfprintf(emuLog, fmt, list2);
 		va_end(list2);
 	}
-	vsprintf(tmp, fmt, list);
+	vsnprintf(tmp, sizeof(tmp), fmt, list);
 	SysPrintf("%s", tmp);
 	va_end(list);
 }
