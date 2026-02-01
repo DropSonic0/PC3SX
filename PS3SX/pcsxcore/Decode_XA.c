@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
 /* 
@@ -24,7 +23,7 @@
 
 #include "Decode_XA.h"
 
-#define _FIXED
+#define FIXED
 
 #define NOT(_X_)				(!(_X_))
 #define XACLAMP(_X_,_MI_,_MA_)	{if(_X_<_MI_)_X_=_MI_;if(_X_>_MA_)_X_=_MA_;}
@@ -36,7 +35,7 @@
 //===  ADPCM DECODING ROUTINES
 //============================================
 
-#ifndef _FIXED
+#ifndef FIXED
 static double K0[4] = {
     0.0,
     0.9375,
@@ -52,17 +51,17 @@ static double K1[4] = {
 };
 #else
 static int K0[4] = {
-	0.0       * (1<<SHC),
-	0.9375    * (1<<SHC),
-	1.796875  * (1<<SHC),
-	1.53125   * (1<<SHC)
+	(int)(0.0       * (1<<SHC)),
+	(int)(0.9375    * (1<<SHC)),
+	(int)(1.796875  * (1<<SHC)),
+	(int)(1.53125   * (1<<SHC))
 };
  
 static int K1[4] = {
-	0.0       * (1<<SHC),
-	0.0       * (1<<SHC),
-	-0.8125   * (1<<SHC),
-	-0.859375 * (1<<SHC)
+	(int)(0.0       * (1<<SHC)),
+	(int)(0.0       * (1<<SHC)),
+	(int)(-0.8125   * (1<<SHC)),
+	(int)(-0.859375 * (1<<SHC))
 };
 #endif
 
@@ -75,7 +74,7 @@ void ADPCM_InitDecode(ADPCM_Decode_t *decp) {
 }
 
 //===========================================
-#ifndef _FIXED
+#ifndef FIXED
 #define IK0(fid)	((int)((-K0[fid]) * (1<<SHC)))
 #define IK1(fid)	((int)((-K1[fid]) * (1<<SHC)))
 #else
@@ -348,21 +347,3 @@ s32 xa_decode_sector( xa_decode_t *xdp,
 
 	return 0;
 }
-
-/* EXAMPLE:
-"nsamples" is the number of 16 bit samples
-every sample is 2 bytes in mono and 4 bytes in stereo
-
-xa_decode_t	xa;
-
-	sectorp = read_first_sector();
-	xa_decode_sector( &xa, sectorp, 1 );
-	play_wave( xa.pcm, xa.freq, xa.nsamples );
-
-	while ( --n_sectors )
-	{
-		sectorp = read_next_sector();
-		xa_decode_sector( &xa, sectorp, 0 );
-		play_wave( xa.pcm, xa.freq, xa.nsamples );
-	}
-*/
