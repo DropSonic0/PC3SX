@@ -26,7 +26,7 @@ extern char *disRNameCP0[];
 
 char* disR3000AF(u32 code, u32 pc);
 
-FILE *emuLog;
+extern FILE *emuLog;
 
 //#define GTE_DUMP
 

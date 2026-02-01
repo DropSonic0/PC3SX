@@ -47,7 +47,6 @@ static void psxRcntReset(unsigned long index) {
 
 //	if (index == 2) SysPrintf("rcnt2 %x\n", psxCounters[index].mode);
 	psxHu32ref(0x1070)|= SWAPu32(psxCounters[index].interrupt);
-	psxRegs.interrupt|= 0x80000000;
 	if (!(psxCounters[index].mode & 0x40)) { // Only 1 interrupt
 		psxCounters[index].Cycle = 0xffffffff;
 	} // else Continuos interrupt mode
@@ -76,7 +75,7 @@ static void psxRcntSet() {
 	}
 }
 
-void psxRcntInit() {
+void psxRcntInit(void) {
 
 	memset(psxCounters, 0, sizeof(psxCounters));
 
@@ -101,7 +100,7 @@ void psxRcntInit() {
 	psxRcntSet();
 }
 
-void psxUpdateVSyncRate() {
+void psxUpdateVSyncRate(void) {
 	if (Config.PsxType) // ntsc - 0 | pal - 1
 	     psxCounters[3].rate = (PSXCLK / 50);// / BIAS;
 	else psxCounters[3].rate = (PSXCLK / 60);// / BIAS;
@@ -109,7 +108,7 @@ void psxUpdateVSyncRate() {
 	if (Config.VSyncWA) psxCounters[3].rate/= 2;
 }
 
-void psxUpdateVSyncRateEnd() {
+void psxUpdateVSyncRateEnd(void) {
 	if (Config.PsxType) // ntsc - 0 | pal - 1
 	     psxCounters[3].rate = (PSXCLK / 50);// / BIAS;
 	else psxCounters[3].rate = (PSXCLK / 60);// / BIAS;
@@ -117,7 +116,7 @@ void psxUpdateVSyncRateEnd() {
 	if (Config.VSyncWA) psxCounters[3].rate/= 2;
 }
 
-void psxRcntUpdate() {
+void psxRcntUpdate(void) {
 	if ((psxRegs.cycle - psxCounters[3].sCycle) >= psxCounters[3].Cycle) {
 		if (psxCounters[3].mode & 0x10000) { // VSync End (22 hsyncs)
 			psxCounters[3].mode&=~0x10000;
@@ -133,7 +132,6 @@ void psxRcntUpdate() {
 			psxUpdateVSyncRateEnd();
 			psxRcntUpd(3);
 			psxHu32ref(0x1070)|= SWAPu32(1);
-			psxRegs.interrupt|= 0x80000000;
 		}
 	}
 

@@ -21,18 +21,22 @@
 #ifndef __R3000A_H__
 #define __R3000A_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "PsxCommon.h"
 #include "PsxMem.h"
 #include "PsxCounters.h"
 #include "PsxBios.h"
 
 typedef struct {
-	int  (*Init)();
-	void (*Reset)();
-	void (*Execute)();		/* executes up to a break */
-	void (*ExecuteBlock)();	/* executes up to a jump */
+	int  (*Init)(void);
+	void (*Reset)(void);
+	void (*Execute)(void);		/* executes up to a break */
+	void (*ExecuteBlock)(void);	/* executes up to a jump */
 	void (*Clear)(u32 Addr, u32 Size);
-	void (*Shutdown)();
+	void (*Shutdown)(void);
 } R3000Acpu;
 
 extern R3000Acpu *psxCpu;
@@ -126,6 +130,27 @@ typedef union {
 } psxCP2Ctrl;
 
 typedef struct {
+	u32 sCycle, cycle;
+} psxIntCycle;
+
+enum {
+	PSXINT_SIO = 0,
+	PSXINT_CDR,
+	PSXINT_CDREAD,
+	PSXINT_GPUDMA,
+	PSXINT_MDECOUTDMA,
+	PSXINT_SPUDMA,
+	PSXINT_GPUBUSY,
+	PSXINT_MDECINDMA,
+	PSXINT_GPUOTCDMA,
+	PSXINT_CDRDMA,
+	PSXINT_SPUASYNC,
+	PSXINT_CDRDBUF,
+	PSXINT_CDRLID,
+	PSXINT_CDRPLAY
+};
+
+typedef struct {
 	psxGPRRegs GPR;		/* General Purpose Registers */
 	psxCP0Regs CP0;		/* Coprocessor0 Registers */
 	psxCP2Data CP2D; 	/* Cop2 data registers */
@@ -134,7 +159,7 @@ typedef struct {
     u32 code;			/* The instruction */
 	u32 cycle;
 	u32 interrupt;
-	u32 intCycle[32];
+	psxIntCycle intCycle[32];
 } psxRegisters;
 
 extern psxRegisters psxRegs;
@@ -209,16 +234,19 @@ extern psxRegisters psxRegs;
 
 #define _SetLink(x)     psxRegs.GPR.r[x] = _PC_ + 4;       // Sets the return address in the link register
 
-int  psxInit();
-void psxReset();
-void psxShutdown();
+int  psxInit(void);
+void psxReset(void);
+void psxShutdown(void);
 void psxException(u32 code, u32 bd);
-void psxBranchTest();
-void psxExecuteBios();
+void psxBranchTest(void);
+void psxExecuteBios(void);
 int  psxTestLoadDelay(int reg, u32 tmp);
 void psxDelayTest(int reg, u32 bpc);
-void psxTestSWInts();
-void psxTestHWInts();
-void psxJumpTest();
+void psxTestSWInts(void);
+void psxTestHWInts(void);
+void psxJumpTest(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __R3000A_H__ */

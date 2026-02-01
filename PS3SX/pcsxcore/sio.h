@@ -58,10 +58,10 @@ extern unsigned short BaudReg;
 
 extern char Mcd1Data[MCD_SIZE], Mcd2Data[MCD_SIZE];
 
-unsigned char sioRead8();
+unsigned char sioRead8(void);
 void sioWrite8(unsigned char value);
 void sioWriteCtrl16(unsigned short value);
-void sioInterrupt();
+void sioInterrupt(void);
 int sioFreeze(gzFile f, int Mode);
 
 void LoadMcd(int mcd, char *str);

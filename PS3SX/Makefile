@@ -27,6 +27,7 @@ PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.
 	./pcsxcore/sio.c	\
 	./pcsxcore/psxhw.c	\
 	./pcsxcore/mdec.c	\
+	./pcsxcore/psxcommon.c \
 	./pcsxcore/psxmem.c	\
 	./pcsxcore/misc.c	\
 	./pcsxcore/GPU_SOFT/cfg.c \

@@ -251,8 +251,7 @@ void psxDma0(u32 adr, u32 bcr, u32 chcr) {
 	else {
 	}
 
-	HW_DMA0_CHCR &= SWAP32(~0x01000000);
-	DMA_INTERRUPT(0);
+	MDECINDMA_INT(size / 4);
 }
 
 void psxDma1(u32 adr, u32 bcr, u32 chcr) {
@@ -270,7 +269,6 @@ void psxDma1(u32 adr, u32 bcr, u32 chcr) {
 
     image = (u16*)PSXM(adr);
 	if (mdec.command&0x08000000) {
-//		MDECOUTDMA_INT(((size * (1000000 / 9000)) / 4) /** 4*/ / BIAS);
 		MDECOUTDMA_INT((size / 4) / BIAS);
 		size = size / ((16*16)/2);
 		for (;size>0;size--,image+=(16*16)) {
@@ -278,7 +276,6 @@ void psxDma1(u32 adr, u32 bcr, u32 chcr) {
 			yuv2rgb15(blk,image);
 		}
 	} else {
-//		MDECOUTDMA_INT(((size * (1000000 / 9000)) / 4) /** 4*/ / BIAS);
 		MDECOUTDMA_INT((size / 4) / BIAS);
 		size = size / ((24*16)/2);
 		for (;size>0;size--,image+=(24*16)) {
@@ -289,7 +286,7 @@ void psxDma1(u32 adr, u32 bcr, u32 chcr) {
 	mdec.status|= MDEC_BUSY;
 }
 
-void mdec1Interrupt() {
+void mdec1Interrupt(void) {
 #ifdef CDR_LOG
 	CDR_LOG("mdec1Interrupt\n");
 #endif
@@ -310,6 +307,11 @@ void mdec1Interrupt() {
 	} else {
 		mdec.status&= ~MDEC_BUSY;
 	}
+}
+
+void mdec0Interrupt(void) {
+	HW_DMA0_CHCR &= SWAP32(~0x01000000);
+	DMA_INTERRUPT(0);
 }
 
 #define	RUNOF(a)	((a)>>10)

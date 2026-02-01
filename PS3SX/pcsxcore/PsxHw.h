@@ -21,6 +21,10 @@
 #ifndef __PSXHW_H__
 #define __PSXHW_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "PsxCommon.h"
 #include "R3000A.h"
 #include "PsxMem.h"
@@ -58,11 +62,10 @@
 	if (SWAPu32(HW_DMA_ICR) & (1 << (16 + n))) { \
 		HW_DMA_ICR|= SWAP32(1 << (24 + n)); \
 		psxHu32ref(0x1070) |= SWAP32(8);                \
-		psxRegs.interrupt|= 0x80000000;                 \
 	}
 
 
-void psxHwReset();
+void psxHwReset(void);
 u8   psxHwRead8 (u32 add);
 u16  psxHwRead16(u32 add);
 u32  psxHwRead32(u32 add);
@@ -71,4 +74,7 @@ void psxHwWrite16(u32 add, u16 value);
 void psxHwWrite32(u32 add, u32 value);
 int psxHwFreeze(gzFile f, int Mode);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __PSXHW_H__ */

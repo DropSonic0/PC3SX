@@ -53,7 +53,7 @@ s8 psxR[0x00080000] __attribute__((aligned(32)));
 u8* psxMemWLUT[0x10000] __attribute__((aligned(32)));
 u8* psxMemRLUT[0x10000] __attribute__((aligned(32)));
 
-int psxMemInit() {
+int psxMemInit(void) {
 	int i;
 
 	//psxMemRLUT = (u8**)memalign(32,0x10000 * sizeof(void*));
@@ -93,7 +93,7 @@ int psxMemInit() {
 	return 0;
 }
 
-void psxMemReset() {
+void psxMemReset(void) {
 	FILE *f = NULL;
 	memset(psxM, 0, 0x00200000);
 	memset(psxP, 0, 0x00010000);
@@ -115,7 +115,7 @@ void psxMemReset() {
 	} else Config.HLE = 1;
 }
 
-void psxMemShutdown() {
+void psxMemShutdown(void) {
 /*	free(psxM);
 	free(psxR);
 	free(psxMemRLUT);

@@ -54,7 +54,7 @@ extern s8 psxM[0x00220000] __attribute__((aligned(32)));
 #define psxMs8(mem)		psxM[(mem) & 0x1fffff]
 #define psxMs16(mem)	(SWAP16(*(s16*)&psxM[(mem) & 0x1fffff]))
 #define psxMs32(mem)	(SWAP32(*(s32*)&psxM[(mem) & 0x1fffff]))
-#define psxMu8(mem)		(*(u8*)&psxM[(mem) & 0x1fffff]))
+#define psxMu8(mem)		(*(u8*)&psxM[(mem) & 0x1fffff])
 #define psxMu16(mem)	(SWAP16(*(u16*)&psxM[(mem) & 0x1fffff]))
 #define psxMu32(mem)	(SWAP32(*(u32*)&psxM[(mem) & 0x1fffff]))
 
@@ -128,9 +128,9 @@ extern u8* psxMemRLUT[0x10000] __attribute__((aligned(32)));
 #define PSXREC
 #endif
 
-int  psxMemInit();
-void psxMemReset();
-void psxMemShutdown();
+int  psxMemInit(void);
+void psxMemReset(void);
+void psxMemShutdown(void);
 
 u8   psxMemRead8 (u32 mem);
 u16  psxMemRead16(u32 mem);

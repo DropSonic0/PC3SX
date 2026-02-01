@@ -359,7 +359,7 @@ void InitConfig()
 
 static int sysInited = 0;
 
-int SysInit()
+int SysInit(void)
 {
 	sysInited = 1;
 
@@ -376,7 +376,7 @@ int SysInit()
 	return 0;
 }
 
-void SysReset() {
+void SysReset(void) {
     SysPrintf("start SysReset()\n");
 	psxReset();
 	SysPrintf("end SysReset()\n");
@@ -425,25 +425,26 @@ void *SysLoadSym(void *lib, const char *sym) {
 	return lib; //smhzc
 }
 
-const char *SysLibError() {
+const char *SysLibError(void) {
+	return NULL;
 }
 
 void SysCloseLibrary(void *lib) {
 }
 
 // Called periodically from the emu thread
-void SysUpdate() {
+void SysUpdate(void) {
 
 }
 
 // Returns to the Gui
-void SysRunGui()
+void SysRunGui(void)
 {
 
 }
 
 // Close mem and plugins
-void SysClose() {
+void SysClose(void) {
 	psxShutdown();
 	ReleasePlugins();
 }
