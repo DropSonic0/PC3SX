@@ -48,7 +48,7 @@ extern "C"
 {
 
 #include "psxcommon.h"
-#include "Sio.h"
+#include "sio.h"
 #include "PlugCD.h"
 #include "plugins.h"
 #include "misc.h"

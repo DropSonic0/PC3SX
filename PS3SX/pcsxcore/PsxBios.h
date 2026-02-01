@@ -24,8 +24,7 @@
 #include "PsxCommon.h"
 #include "R3000A.h"
 #include "PsxMem.h"
-#include "Misc.h"
-#include "Sio.h"
+#include "sio.h"
 
 extern char *biosA0n[256];
 extern char *biosB0n[256];
