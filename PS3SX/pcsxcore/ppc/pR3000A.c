@@ -193,6 +193,18 @@ static int PutHWRegSpecial(int which);
 static void recRecompile(void);
 static void recError(void);
 
+void debugHeartbeat(u32 pc) {
+	if (execCount < 100 || execCount % 10000 == 0) {
+		SysPrintf("Dynarec Heartbeat: PC=%08x, blocks=%d\n", pc, execCount);
+	}
+}
+
+void debugReturn(u32 pc) {
+	if (execCount < 100 || execCount % 10000 == 0) {
+		SysPrintf("Dynarec Return: PC=%08x, blocks=%d\n", pc, execCount);
+	}
+}
+
 #pragma mark --- Generic register mapping ---
 
 static int GetFreeHWReg(void)
@@ -740,6 +752,11 @@ static void Return(void)
 {
 	iFlushRegs(0);
 	FlushAllHWReg();
+
+	// Add return log
+	LIP(PutHWRegSpecial(ARG1), psxRegs.pc);
+	CALLFunc(debugReturn);
+
 	// returnPC is a function pointer (descriptor on PS3)
 	// We jump directly to the code address (first word of descriptor)
 	uptr code_addr = *(uptr*)returnPC;
@@ -3500,6 +3517,10 @@ static void recRecompile(void) {
 
 	ppcAlign(/*32*/4);
 	ptr = ppcPtr;
+
+	// Add heartbeat to every block for debugging
+	LIP(PutHWRegSpecial(ARG1), psxRegs.pc);
+	CALLFunc(debugHeartbeat);
 	
 	// give us write access
 	//mprotect(recMem, RECMEM_SIZE, PROT_EXEC|PROT_READ|PROT_WRITE);
@@ -3515,6 +3536,10 @@ static void recRecompile(void) {
 		p = (char *)PSXM(pc);
 		if (p == NULL) recError();
 		psxRegs.code = SWAP32(*(u32 *)p);
+
+		if (execCount < 100 || execCount % 10000 == 0) {
+			SysPrintf("recompile: %08x %08x\n", pc, psxRegs.code);
+		}
 /*
 		if ((psxRegs.code >> 26) == 0x23) { // LW
 			int i;
@@ -3581,8 +3606,13 @@ done:;
 		uptr a = (uptr)(u8*)ptr;
 		uptr end = (uptr)(u8*)ppcPtr;
 		while(a < end) {
-			__asm__ __volatile__("icbi 0,%0" : : "r" (a));
 			__asm__ __volatile__("dcbst 0,%0" : : "r" (a));
+			a += 4;
+		}
+		__asm__ __volatile__("sync");
+		a = (uptr)(u8*)ptr;
+		while(a < end) {
+			__asm__ __volatile__("icbi 0,%0" : : "r" (a));
 			a += 4;
 		}
 		__asm__ __volatile__("sync");

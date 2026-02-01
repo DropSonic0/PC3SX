@@ -7,14 +7,18 @@
 #endif
 
 #ifdef MDFNPS3
-.section .opd, "aw"
+.section ".opd", "aw"
 .align 3
 .globl recRun
 recRun:
-    .quad .recRun, .TOC.@tocbase, 0
+    .quad .recRun
+    .quad .TOC.
+    .quad 0
 .globl returnPC
 returnPC:
-    .quad .returnPC, .TOC.@tocbase, 0
+    .quad .returnPC
+    .quad .TOC.
+    .quad 0
 #endif
 
 #define OLD_REGISTER_OFFSET	(19*4)
