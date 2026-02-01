@@ -396,7 +396,7 @@ void SysPrintf(const char *fmt, ...) {
 		fputs(msg, emuLog);
 		fflush(emuLog);
 	}
-	printf(msg);
+	printf("%s", msg);
 }
 
 void SysMessage(const char *fmt, ...) {
@@ -414,7 +414,7 @@ void SysMessage(const char *fmt, ...) {
 		fflush(emuLog);
 		fclose(emuLog);
 	}
-	printf(msg);
+	printf("%s", msg);
 }
 
 void *SysLoadLibrary(const char *lib) {
