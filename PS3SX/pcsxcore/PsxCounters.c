@@ -22,6 +22,7 @@
  */
 
 #include "PsxCounters.h"
+#include "debug.h"
 
 /******************************************************************************/
 
@@ -293,6 +294,7 @@ void psxRcntUpdate(void)
 
             GPU_updateLace();
             EmuUpdate();
+            DebugVSync();
         }
     }
 }

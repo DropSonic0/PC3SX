@@ -22,7 +22,9 @@
 * Miscellaneous functions, including savesates and CD-ROM loading.
 */
 
+#include <ctype.h>
 #include "misc.h"
+#include "ppf.h"
 
 /* PSX Executable types */
 #define PSX_EXE     1
@@ -321,6 +323,9 @@ int CheckCdrom(void) {
 	SysPrintf("CD-ROM Label: %.32s\n", CdromLabel);
 	SysPrintf("CD-ROM ID: %.9s\n", CdromId);
 
+	BuildPPFCache();
+	LoadSBI();
+
 	return 0;
 }
 
@@ -397,7 +402,7 @@ int Load(char *ExePath) {
 
 // STATES
 
-const char PcsxHeader[32] = "STv3 PCSX v" PACKAGE_VERSION;
+const char PcsxHeader[32] = "STv3 PCSX v" "1.9.92";
 
 int SaveState(char *file) {
 	gzFile f;
