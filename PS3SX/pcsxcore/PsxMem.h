@@ -15,15 +15,19 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307, USA.          *
  ***************************************************************************/
 
 #ifndef __PSXMEMORY_H__
 #define __PSXMEMORY_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "PsxCommon.h"
 
-#if defined(HW_RVL) || defined(HW_DOL) || defined(BIG_ENDIAN)
+#if defined(__BIGENDIAN__) || defined(HW_RVL) || defined(HW_DOL) || defined(BIG_ENDIAN)
 
 #define _SWAP16(b) ((((unsigned char*)&(b))[0]&0xff) | (((unsigned char*)&(b))[1]&0xff)<<8)
 #define _SWAP32(b) ((((unsigned char*)&(b))[0]&0xff) | ((((unsigned char*)&(b))[1]&0xff)<<8) | ((((unsigned char*)&(b))[2]&0xff)<<16) | (((unsigned char*)&(b))[3]<<24))
@@ -50,7 +54,7 @@
 
 #endif
 
-extern s8 psxM[0x00220000] __attribute__((aligned(32)));
+extern s8 *psxM;
 #define psxMs8(mem)		psxM[(mem) & 0x1fffff]
 #define psxMs16(mem)	(SWAP16(*(s16*)&psxM[(mem) & 0x1fffff]))
 #define psxMs32(mem)	(SWAP32(*(s32*)&psxM[(mem) & 0x1fffff]))
@@ -65,7 +69,7 @@ extern s8 psxM[0x00220000] __attribute__((aligned(32)));
 #define psxMu16ref(mem)	(*(u16*)&psxM[(mem) & 0x1fffff])
 #define psxMu32ref(mem)	(*(u32*)&psxM[(mem) & 0x1fffff])
 
-s8 *psxP;
+extern s8 *psxP;
 #define psxPs8(mem)	    psxP[(mem) & 0xffff]
 #define psxPs16(mem)	(SWAP16(*(s16*)&psxP[(mem) & 0xffff]))
 #define psxPs32(mem)	(SWAP32(*(s32*)&psxP[(mem) & 0xffff]))
@@ -80,7 +84,7 @@ s8 *psxP;
 #define psxPu16ref(mem)	(*(u16*)&psxP[(mem) & 0xffff])
 #define psxPu32ref(mem)	(*(u32*)&psxP[(mem) & 0xffff])
 
-extern s8 psxR[0x00080000] __attribute__((aligned(32)));
+extern s8 *psxR;
 #define psxRs8(mem)		psxR[(mem) & 0x7ffff]
 #define psxRs16(mem)	(SWAP16(*(s16*)&psxR[(mem) & 0x7ffff]))
 #define psxRs32(mem)	(SWAP32(*(s32*)&psxR[(mem) & 0x7ffff]))
@@ -95,7 +99,7 @@ extern s8 psxR[0x00080000] __attribute__((aligned(32)));
 #define psxRu16ref(mem)	(*(u16*)&psxR[(mem) & 0x7ffff])
 #define psxRu32ref(mem)	(*(u32*)&psxR[(mem) & 0x7ffff])
 
-s8 *psxH;
+extern s8 *psxH;
 #define psxHs8(mem)		psxH[(mem) & 0xffff]
 #define psxHs16(mem)	(SWAP16(*(s16*)&psxH[(mem) & 0xffff]))
 #define psxHs32(mem)	(SWAP32(*(s32*)&psxH[(mem) & 0xffff]))
@@ -110,8 +114,8 @@ s8 *psxH;
 #define psxHu16ref(mem)	(*(u16*)&psxH[(mem) & 0xffff])
 #define psxHu32ref(mem)	(*(u32*)&psxH[(mem) & 0xffff])
 
-extern u8* psxMemWLUT[0x10000] __attribute__((aligned(32)));
-extern u8* psxMemRLUT[0x10000] __attribute__((aligned(32)));
+extern u8 **psxMemWLUT;
+extern u8 **psxMemRLUT;
 
 #define PSXM(mem)		(psxMemRLUT[(mem) >> 16] == 0 ? NULL : (u8*)(psxMemRLUT[(mem) >> 16] + ((mem) & 0xffff)))
 #define PSXMs8(mem)		(*(s8 *)PSXM(mem))
@@ -124,7 +128,7 @@ extern u8* psxMemRLUT[0x10000] __attribute__((aligned(32)));
 #define PSXMu32ref(mem)	(*(u32*)PSXM(mem))
 
 
-#if !defined PSXREC && (defined(__x86_64__) || defined(__i386__) || defined(__sh__) || defined(__ppc__) || defined(HW_RVL)) || defined(HW_DOL)
+#if !defined(PSXREC) && (defined(__x86_64__) || defined(__i386__) || defined(__ppc__)) && !defined(NOPSXREC)
 #define PSXREC
 #endif
 
@@ -140,5 +144,7 @@ void psxMemWrite16(u32 mem, u16 value);
 void psxMemWrite32(u32 mem, u32 value);
 void *psxMemPointer(u32 mem);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __PSXMEMORY_H__ */
-
