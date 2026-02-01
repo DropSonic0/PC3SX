@@ -374,6 +374,11 @@ void psxRcntWtarget( u32 index, u32 value )
     psxRcntSet();
 }
 
+void psxUpdateVSyncRate(void)
+{
+    psxRcntWtarget(3, (PSXCLK / (FrameRate[Config.PsxType] * HSyncTotal[Config.PsxType])));
+}
+
 /******************************************************************************/
 
 u32 psxRcntRcount( u32 index )

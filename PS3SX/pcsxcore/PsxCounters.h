@@ -53,6 +53,8 @@ u32 psxRcntRtarget(u32 index);
 
 s32 psxRcntFreeze(gzFile f, s32 Mode);
 
+void psxUpdateVSyncRate(void);
+
 #ifdef __cplusplus
 }
 #endif
