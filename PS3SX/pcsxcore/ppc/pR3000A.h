@@ -103,9 +103,9 @@
 
 /* externals */
 extern void SysRunGui();
-extern void SysMessage(char *fmt, ...);
+extern void SysMessage(const char *fmt, ...);
 extern void SysReset();
-extern void SysPrintf(char *fmt, ...);
+extern void SysPrintf(const char *fmt, ...);
 extern int stop;
 
 /* structs */

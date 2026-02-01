@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "plugins.h"
-#include "Spu.h"
+#include "spu.h"
 
 //extern GPUopen GPU_open;
 extern CBGPUopen GPU_open;
