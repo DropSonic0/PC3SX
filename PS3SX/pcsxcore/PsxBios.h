@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
+ *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -14,38 +15,29 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
 #ifndef __PSXBIOS_H__
 #define __PSXBIOS_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "psxcommon.h"
-#include "r3000a.h"
-#include "psxmem.h"
-#include "misc.h"
-#include "sio.h"
+#include "PsxCommon.h"
+#include "R3000A.h"
+#include "PsxMem.h"
+#include "Misc.h"
+#include "Sio.h"
 
 extern char *biosA0n[256];
 extern char *biosB0n[256];
 extern char *biosC0n[256];
 
-void psxBiosInit(void);
-void psxBiosShutdown(void);
-void psxBiosException(void);
+void psxBiosInit();
+void psxBiosShutdown();
+void psxBiosException();
 void psxBiosFreeze(int Mode);
 
-extern void (*biosA0[256])(void);
-extern void (*biosB0[256])(void);
-extern void (*biosC0[256])(void);
+extern void (*biosA0[256])();
+extern void (*biosB0[256])();
+extern void (*biosC0[256])();
 
-extern boolean hleSoftCall;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
+#endif /* __PSXBIOS_H__ */

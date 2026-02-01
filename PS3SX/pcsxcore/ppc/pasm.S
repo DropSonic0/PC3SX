@@ -1,117 +1,39 @@
-#if defined (__ppc__) || defined (__ppc64__) || defined (__powerpc__) || (__powerpc64__) || defined __POWERPC__
-
-#if defined (ELF) || defined (__linux__) || defined(MDFNPS3) //Token decoration
-#define C(label) label
-#else
-#define C(label) _##label
-#endif
-
-#ifdef MDFNPS3
+###FUNCTION ENTRY POINT DECLARATION###
 .section .opd, "aw"
-.align 3
-.globl recRun
-recRun:
-    .long .recRun, .TOC.@tocbase32
-.globl returnPC
-returnPC:
-    .long .returnPC, .TOC.@tocbase32
-#endif
 
-#define OLD_REGISTER_OFFSET	(19*4)
-#define SP_SIZE			(OLD_REGISTER_OFFSET+4+8)
+recRun:  
+   .long .recRun, .TOC.@tocbase32
 
-/*asm void recRun(register void (*func)(), register u32 hw1, register u32 hw2)*/
-        .text
-        .align  4
-#ifndef MDFNPS3 //Token decoration
-        .globl  C(recRun)
-C(recRun):
-#else
-        .globl  C(.recRun)
-C(.recRun):
-#endif
-	/* prologue code */
-	mflr	0
-	stmw	13, -(32-13)*4(1)
-	stw		0, 4(1)
-	stwu	1, -((32-13)*4+8)(1)
+returnPC:  
+   .long .returnPC, .TOC.@tocbase32
+
+
+###FUNCTION CODE HERE###
+# void recRun(u32 *func,u32 hw1,u32 hw2)
+.text
+.align  4
+.globl  .recRun
+.recRun:
+	# prologue code
+	mflr	r0            # move from LR to r0
+	stmw	r14, -72(r1)  # store non-volatiles (-72 == -(32-14)*4)
+	stw		r0, 4(r1)     # store old LR
+	stwu	r1, -80(r1)   # increment and store sp (-80 == -((32-14)*4+8))
 	
-	/* execute code */
-	mtctr	3
-	mr	31, 4
-	mr	30, 5
-	bctrl
-/*
-}
-asm void returnPC()
-{*/
-        .text
-        .align  4
-#ifndef MDFNPS3
-        .globl  C(returnPC)
-C(returnPC):
-#else
-        .globl  C(.returnPC)
-C(.returnPC):
-        .globl  returnPC_recomp
-returnPC_recomp:
-#endif
-	// end code
-	lwz		0, (32-13)*4+8+4(1)
-	addi	1, 1, (32-13)*4+8
-	mtlr	0
-	lmw		13, -(32-13)*4(1)
-	blr
-//}*/
-
-// Memory functions that only works with a linear memory
-
-/*
-u32 MEM_read32(u32 addr)
-{
-*/
-        .text
-        .align  4
-        .globl  C(MEM_read32)
-C(MEM_read32):
-	lwbrx	3, 0, 3
-	blr
-//}
-
-/*
-u16 MEM_read16(u32 addr)
-{
-*/
-        .text
-        .align  4
-        .globl  C(MEM_read16)
-C(MEM_read16):
-	lhbrx	3, 0, 3
-	blr
-//}
-
-/*
-void MEM_write32(u32 addr, u32 val)
-{
-*/
-        .text
-        .align  4
-        .globl  C(MEM_write32)
-C(MEM_write32):
-	stwbrx	4, 0, 3
-	blr
-//}
-
-/*
-void MEM_write16(u32 addr, u16 val)
-{
-*/
-        .text
-        .align  4
-        .globl  C(MEM_write16)
-C(MEM_write16):
-	sthbrx	4, 0, 3
-	blr
-//}
-
-#endif
+	# execute code
+	mtctr	r3            # move func ptr to ctr
+	mr	r31, r4         # save hw1 to r31
+	mr	r30, r5         # save hw2 to r30
+	bctrl               # branch to ctr (*func)
+	
+	
+.text
+.align  4
+.globl  returnPC
+.returnPC:
+	# end code
+	lwz		r0, 84(r1)    # re-load LR (84 == (32-14)*4+8+4)
+	addi	r1, r1, 80    # increment SP (80 == (32-14)*4+8)
+	mtlr	r0            # set LR
+	lmw		r14, -72(r1)  # reload non-volatiles (-72 == -((32-14)*4))
+	blr                 # return

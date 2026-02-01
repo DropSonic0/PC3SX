@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
+ *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -14,15 +15,11 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
 #ifndef __MISC_H__
 #define __MISC_H__
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include "psxcommon.h"
 #include "coff.h"
@@ -53,25 +50,22 @@ typedef struct {
     u32 SavedS0;
 } EXE_HEADER;
 
-extern char CdromId[10];
-extern char CdromLabel[33];
+char CdromId[10];
+char CdromLabel[33];
 
-int LoadCdrom(void);
-int LoadCdromFile(const char *filename, EXE_HEADER *head);
-int CheckCdrom(void);
-int Load(const char *ExePath);
+int LoadCdrom();
+int LoadCdromFile(char *filename, EXE_HEADER *head);
+int CheckCdrom();
+int Load(char *ExePath);
 
-int SaveState(const char *file);
-int LoadState(const char *file);
-int CheckState(const char *file);
+int SaveState(char *file);
+int LoadState(char *file);
+int CheckState(char *file);
 
-int SendPcsxInfo(void);
-int RecvPcsxInfo(void);
+int SendPcsxInfo();
+int RecvPcsxInfo();
 
-void trim(char *str);
-u16 calcCrc(u8 *d, int len);
+extern char *LabelAuthors;
+extern char *LabelGreets;
 
-#ifdef __cplusplus
-}
-#endif
-#endif
+#endif /* __MISC_H__ */

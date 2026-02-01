@@ -60,9 +60,9 @@ void CDDAclose(void);
 void openCue(const char* filename);
 void openBin(const char* filename);
 void openIso(const char* filename);
-char getNumTracks(void);
+char getNumTracks();
 void seekSector(const unsigned char m, const unsigned char s, const unsigned char f);
-unsigned char* getSector(void);
+unsigned char* getSector();
 void newCD(const char * filename);
 void readit(const unsigned char m, const unsigned char s, const unsigned char f);
 

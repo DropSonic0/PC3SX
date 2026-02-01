@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
+ *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -14,32 +15,25 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
 #ifndef __MDEC_H__
 #define __MDEC_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "PsxCommon.h"
+#include "R3000A.h"
+#include "PsxHw.h"
+#include "PsxDma.h"
 
-#include "psxcommon.h"
-#include "r3000a.h"
-#include "psxhw.h"
-#include "psxdma.h"
-
-void mdecInit(void);
+void mdecInit();
 void mdecWrite0(u32 data);
 void mdecWrite1(u32 data);
-u32 mdecRead0(void);
-u32 mdecRead1(void);
+u32  mdecRead0();
+u32  mdecRead1();
 void psxDma0(u32 madr, u32 bcr, u32 chcr);
 void psxDma1(u32 madr, u32 bcr, u32 chcr);
-void mdec1Interrupt(void);
-int mdecFreeze(gzFile f, int Mode);
+void mdec1Interrupt();
+int  mdecFreeze(gzFile f, int Mode);
 
-#ifdef __cplusplus
-}
-#endif
-#endif
+#endif /* __MDEC_H__ */

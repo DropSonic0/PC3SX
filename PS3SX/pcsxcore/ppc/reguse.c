@@ -1,10 +1,8 @@
 
-#if defined (__ppc__) || defined (__ppc64__) || defined (__powerpc__) || (__powerpc64__)
-
-#include "../psxcommon.h"
+#include "../PsxCommon.h"
 #include "reguse.h"
 
-#include "../r3000a.h"
+#include "../R3000A.h"
 
 //#define SAME_CYCLE_MODE
 
@@ -281,7 +279,7 @@ static int _nextPsxRegUse(u32 pc, int psxreg, int numInstr)
 
     for (i=0; i<numInstr; ) {
         // load current instruction
-		  ptr = PSXM(pc);
+		  ptr = (u32*)PSXM(pc);
 		  if (ptr==NULL) {
 				// going nowhere... might as well assume a write, since we will hopefully never reach here
 				reguse = REGUSE_WRITE;
@@ -419,5 +417,3 @@ int isPsxRegUsed(u32 pc, int psxreg)
     else
         return 0; // the next use is a write, i.e. current value is not important
 }
-
-#endif

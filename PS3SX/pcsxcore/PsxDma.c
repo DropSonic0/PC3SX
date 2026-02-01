@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
+ *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -14,127 +15,175 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
 /*
- * Handles PSX DMA functions.
- */
-
-#include "psxdma.h"
+* Handles PSX DMA functions.
+*/
+#include "PsxDma.h"
 
 // Dma0/1 in Mdec.c
-// Dma3 in CdRom.c
-
-void spuInterrupt() {
-	HW_DMA4_CHCR &= SWAP32(~0x01000000);
-	DMA_INTERRUPT(4);
-}
+// Dma3   in CdRom.c
 
 void psxDma4(u32 madr, u32 bcr, u32 chcr) { // SPU
+
 	u16 *ptr;
 	u32 size;
 
 	switch (chcr) {
 		case 0x01000201: //cpu to spu transfer
-#ifdef PSXDMA_LOG
-			PSXDMA_LOG("*** DMA4 SPU - mem2spu *** %x addr = %x size = %x\n", chcr, madr, bcr);
+#ifdef DEBUG_DMA
+      sprintf(txtbuffer,"*** DMA4 SPU - mem2spu *** %08x addr = %08x size = %08x\n", chcr, madr, bcr);
+      DEBUG_print(txtbuffer, 5);
 #endif
 			ptr = (u16 *)PSXM(madr);
 			if (ptr == NULL) {
-#ifdef CPU_LOG
-				CPU_LOG("** DMA4 SPU - mem2spu *** NULL Pointer!!!\n");
+#ifdef DEBUG_DMA
+        DEBUG_print("*** DMA4 SPU - mem2spu *** NULL Pointer!!!\n", 5);
 #endif
 				break;
 			}
 			SPU_writeDMAMem(ptr, (bcr >> 16) * (bcr & 0xffff) * 2);
-
-			// Jungle Book - 0-0.333x DMA
-			SPUDMA_INT((bcr >> 16) * (bcr & 0xffff) / 3);
-			return;
+			break;
 
 		case 0x01000200: //spu to cpu transfer
-#ifdef PSXDMA_LOG
-			PSXDMA_LOG("*** DMA4 SPU - spu2mem *** %x addr = %x size = %x\n", chcr, madr, bcr);
+#ifdef DEBUG_DMA
+      sprintf(txtbuffer,"*** DMA4 SPU - spu2mem *** %08x addr = %08x size = %08x\n", chcr, madr, bcr);
+      DEBUG_print(txtbuffer, 6);
 #endif
 			ptr = (u16 *)PSXM(madr);
 			if (ptr == NULL) {
-#ifdef CPU_LOG
-				CPU_LOG("** DMA4 SPU - spu2mem *** NULL Pointer!!!\n");
+#ifdef DEBUG_DMA
+        DEBUG_print("*** DMA4 SPU - spu2mem *** NULL Pointer!!!\n", 6);
 #endif
 				break;
 			}
 			size = (bcr >> 16) * (bcr & 0xffff) * 2;
-			SPU_readDMAMem(ptr, size);
+    		SPU_readDMAMem(ptr, size);
 			psxCpu->Clear(madr, size);
+			break;
 
-#if 1
-			SPUDMA_INT((bcr >> 16) * (bcr & 0xffff) / 2);
-#else
-			// Experimental burst dma transfer (0.333x max)
-			SPUDMA_INT((bcr >> 16) * (bcr & 0xffff) / 3);
-#endif
-			return;
-
-#ifdef PSXDMA_LOG
+#ifdef DEBUG_DMA
 		default:
-			PSXDMA_LOG("*** DMA4 SPU - unknown *** %x addr = %x size = %x\n", chcr, madr, bcr);
+  		sprintf(txtbuffer,"*** DMA4 SPU - unknown *** %08x addr = %08x size = %08x\n", chcr, madr, bcr);
+      DEBUG_print(txtbuffer, 7);
 			break;
 #endif
 	}
 
-	HW_DMA4_CHCR &= SWAP32(~0x01000000);
+	HW_DMA4_CHCR &= SWAPu32(~0x01000000);
 	DMA_INTERRUPT(4);
+
+}
+
+void psxDma2(u32 madr, u32 bcr, u32 chcr) { // GPU
+#ifdef PROFILE
+  start_section(GFX_SECTION);
+#endif
+	u32 *ptr;
+	u32 size;
+
+	switch(chcr) {
+		case 0x01000200: // vram2mem
+#ifdef DEBUG_DMA
+      sprintf(txtbuffer,"*** DMA2 GPU - vram2mem *** %08x addr = %08x size = %08x\n", chcr, madr, bcr);
+      DEBUG_print(txtbuffer, 8);
+#endif
+			ptr = (u32 *)PSXM(madr);
+			if (ptr == NULL) {
+#ifdef DEBUG_DMA
+				DEBUG_print("*** DMA2 GPU - vram2mem *** NULL Pointer!!!\n", 8);
+#endif
+				break;
+			}
+			size = (bcr >> 16) * (bcr & 0xffff);
+			GPU_readDataMem((unsigned long*)ptr, size);
+			psxCpu->Clear(madr, size);
+			break;
+
+		case 0x01000201: // mem2vram
+#ifdef DEBUG_DMA
+      sprintf(txtbuffer,"*** DMA 2 - GPU mem2vram *** %08x addr = %08x size = %08x\n", chcr, madr, bcr);
+      DEBUG_print(txtbuffer, 9);
+#endif
+			ptr = (u32 *)PSXM(madr);
+			if (ptr == NULL) {
+#ifdef DEBUG_DMA
+        DEBUG_print("*** DMA2 GPU - mem2vram *** NULL Pointer!!!\n", 9);
+#endif
+				break;
+			}
+			size = (bcr >> 16) * (bcr & 0xffff);
+			GPU_writeDataMem((unsigned long*)ptr, size);
+			GPUDMA_INT((size / 4) / BIAS);
+#ifdef PROFILE
+	end_section(GFX_SECTION);
+#endif
+			return;
+//			break;
+
+		case 0x01000401: // dma chain
+#ifdef DEBUG_DMA
+      sprintf(txtbuffer,"*** DMA 2 - GPU dma chain *** %08x addr = %08x size = %08x\n", chcr, madr, bcr);
+      DEBUG_print(txtbuffer, 10);
+#endif
+			GPU_dmaChain((u32 *)psxM, madr & 0x1fffff);
+			break;
+
+#ifdef DEBUG_DMA
+		default:
+		  sprintf(txtbuffer,"*** DMA 2 - GPU unknown *** %08x addr = %08x size = %08x\n", chcr, madr, bcr);
+      DEBUG_print(txtbuffer, 11);
+			break;
+#endif
+	}
+
+	HW_DMA2_CHCR &= SWAPu32(~0x01000000);
+	DMA_INTERRUPT(2);
+#ifdef PROFILE
+	end_section(GFX_SECTION);
+#endif
+}
+
+void gpuInterrupt() {
+	HW_DMA2_CHCR &= SWAPu32(~0x01000000);
+	DMA_INTERRUPT(2);
 }
 
 void psxDma6(u32 madr, u32 bcr, u32 chcr) {
-	u32 size;
 	u32 *mem = (u32 *)PSXM(madr);
 
-#ifdef PSXDMA_LOG
-	PSXDMA_LOG("*** DMA6 OT *** %x addr = %x size = %x\n", chcr, madr, bcr);
+#ifdef DEBUG_DMA
+	sprintf(txtbuffer,"*** DMA6 OT *** %08x addr = %08x size = %08x\n", chcr, madr, bcr);
+  DEBUG_print(txtbuffer, 12);
 #endif
 
 	if (chcr == 0x11000002) {
 		if (mem == NULL) {
-#ifdef CPU_LOG
-			CPU_LOG("*** DMA6 OT *** NULL Pointer!!!\n");
+#ifdef DEBUG_DMA
+      DEBUG_print("*** DMA6 OT *** NULL Pointer!!!\n", 12);
 #endif
-			HW_DMA6_CHCR &= SWAP32(~0x01000000);
+			HW_DMA6_CHCR &= SWAPu32(~0x01000000);
 			DMA_INTERRUPT(6);
 			return;
 		}
 
-		// already 32-bit size
-		size = bcr;
-
 		while (bcr--) {
-			*mem-- = SWAP32((madr - 4) & 0xffffff);
+			*mem-- = SWAPu32((madr - 4) & 0xffffff);
 			madr -= 4;
 		}
-		mem++;
-		*mem = 0xffffff;
-
-#if 1
-		GPUOTCDMA_INT(size);
-#else
-		// Experimental burst dma transfer (0.333x max)
-		GPUOTCDMA_INT(size / 3);
-#endif
-		return;
+		mem++; *mem = SWAPu32(0xffffff);
 	}
-#ifdef PSXDMA_LOG
+#ifdef DEBUG_DMA
 	else {
 		// Unknown option
-		PSXDMA_LOG("*** DMA6 OT - unknown *** %x addr = %x size = %x\n", chcr, madr, bcr);
+		sprintf(txtbuffer,"*** DMA6 OT - unknown *** %08x addr = %08x size = %08x\n", chcr, madr, bcr);
+    DEBUG_print(txtbuffer, 13);
 	}
 #endif
 
-	HW_DMA6_CHCR &= SWAP32(~0x01000000);
+	HW_DMA6_CHCR &= SWAPu32(~0x01000000);
 	DMA_INTERRUPT(6);
 }
 
-void gpuotcInterrupt() {
-	HW_DMA6_CHCR &= SWAP32(~0x01000000);
-	DMA_INTERRUPT(6);
-}

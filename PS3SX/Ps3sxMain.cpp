@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "cell.h"
 #include <vector>
 #include "rom_list.h"
@@ -10,7 +9,6 @@
 #include "ini.h"
 #include <unistd.h> 
 #include <pthread.h>
-#include <sys/timer.h>
 #include <sysutil/sysutil_gamecontent.h>
 
 SYS_PROCESS_PARAM(1001, 0x10000);
@@ -50,16 +48,17 @@ extern "C"
 {
 
 #include "psxcommon.h"
-#include "sio.h"
+#include "Sio.h"
 #include "PlugCD.h"
 #include "plugins.h"
 #include "misc.h"
-#include "r3000a.h"
+#include "R3000a.h"
+
+void SysPrintf(char *fmt, ...);
 
 int NeedReset = 0;
 int Running =0;
 long LoadCdBios = 0;
-extern int wanna_leave;
 
 //Sound Function
 unsigned long SoundGetBytesBuffered(void)
@@ -333,11 +332,10 @@ void InitConfig()
 
 	Config.PsxAuto = 1; //Autodetect
 	Config.HLE	   = Settings.HLE; //Use HLE
-	Config.Xa      = 1; //enable xa decoding (audio)
+	Config.Xa      = 0; //disable xa decoding (audio)
 	Config.Sio     = 0; //disable sio interrupt ?
-	Config.Mdec    = 1; //movie decode
-	Config.Cdda    = 1; //enable cdda playback
-	Config.SlowBoot = 0;
+	Config.Mdec    = 0; //movie decode
+	Config.Cdda    = 0; //diable cdda playback
 	
 	Config.Cpu	   = Settings.CPU;// interpreter 1 :  dynarec 0
 
@@ -353,7 +351,7 @@ void InitConfig()
 	strcpy(Config.BiosDir, Iniconfig.biospath);
 	
 	//Set Bios
-	strcpy(Config.Bios, "scph1001.bin");
+	sprintf(Config.BiosDir, "%s/scph1001.bin",Iniconfig.biospath);
 
 	sprintf(Config.Mcd1, "%s/Mcd001.mcr",Iniconfig.savpath);
 	sprintf(Config.Mcd2, "%s/Mcd002.mcr",Iniconfig.savpath);
@@ -368,7 +366,7 @@ int SysInit()
     SysPrintf("start SysInit()\n");
 
     SysPrintf("psxInit()\n");
-	EmuInit();
+	psxInit();
 
     SysPrintf("LoadPlugins()\n");
 	LoadPlugins();
@@ -380,16 +378,16 @@ int SysInit()
 
 void SysReset() {
     SysPrintf("start SysReset()\n");
-	EmuReset();
+	psxReset();
 	SysPrintf("end SysReset()\n");
 }
 
-void SysPrintf(const char *fmt, ...) {
+void SysPrintf(char *fmt, ...) {
     va_list list;
     char msg[512];
 
     va_start(list, fmt);
-    vsnprintf(msg, 512, fmt, list);
+    vsprintf(msg, fmt, list);
     va_end(list);
 
 	dprintf_console(msg);
@@ -398,15 +396,15 @@ void SysPrintf(const char *fmt, ...) {
 		fputs(msg, emuLog);
 		fflush(emuLog);
 	}
-	printf("%s", msg);
+	printf(msg);
 }
 
-void SysMessage(const char *fmt, ...) {
+void SysMessage(char *fmt, ...) {
 	va_list list;
     char msg[512];
 
     va_start(list, fmt);
-    vsnprintf(msg, 512, fmt, list);
+    vsprintf(msg, fmt, list);
     va_end(list);
 
 	dprintf_console(msg);
@@ -416,24 +414,21 @@ void SysMessage(const char *fmt, ...) {
 		fflush(emuLog);
 		fclose(emuLog);
 	}
-	printf("%s", msg);
+	printf(msg);
 }
 
-void *SysLoadLibrary(const char *lib) {
-		return (void*)lib;
+void *SysLoadLibrary(char *lib) {
+		return lib;
 }
 
-void *SysLoadSym(void *lib, const char *sym) {
-	(void)sym;
+void *SysLoadSym(void *lib, char *sym) {
 	return lib; //smhzc
 }
 
 const char *SysLibError() {
-	return NULL;
 }
 
 void SysCloseLibrary(void *lib) {
-	(void)lib;
 }
 
 // Called periodically from the emu thread
@@ -449,7 +444,7 @@ void SysRunGui()
 
 // Close mem and plugins
 void SysClose() {
-	EmuShutdown();
+	psxShutdown();
 	ReleasePlugins();
 }
 
@@ -526,7 +521,6 @@ static int handler(void* user, const char* section, const char* name,const char*
     }else if (MATCH("psxbios", "biospath")) {
         pconfig->biospath = strdup(value);
     }
-	return 1;
 }
 
 void CreatFolder(char* folders)
@@ -647,13 +641,10 @@ int main()
 	switch(RomType){
 	 case 1: 
 		 RunEXE();
-		 break;
 	 case 2: 
 		 RunCD();
-		 break;
 	 default:
 		 RunBios();
-		 break;
 	}
 
 	SysPrintf("done \n");
@@ -666,95 +657,4 @@ int main()
 	 return(-1);
 }
 
-}
-
-// Mednafen compatibility functions
-extern "C" {
-	void* MDFNDC_AllocateExec(uint32_t aSize) {
-		return memalign(128, aSize);
-	}
-
-	void MDFNDC_FreeExec(void* aData, uint32_t aSize) {
-		(void)aSize;
-		free(aData);
-	}
-
-	uint32_t MDFNDC_GetTime() {
-		sys_time_sec_t sec;
-		sys_time_nsec_t nsec;
-		sys_time_get_current_time(&sec, &nsec);
-		return (uint32_t)((sec * 1000) + (nsec / 1000000));
-	}
-
-	void MDFND_Sleep(uint32_t ms) {
-		sys_timer_usleep(ms * 1000);
-	}
-
-	void MDFND_Message(const char *msg) {
-		SysPrintf("%s", msg);
-	}
-
-	void MDFN_printf(const char *fmt, ...) {
-		va_list list;
-		char msg[512];
-		va_start(list, fmt);
-		vsnprintf(msg, 512, fmt, list);
-		va_end(list);
-		SysPrintf("%s", msg);
-	}
-
-	void MDFND_PrintError(const char *fmt, ...) {
-		va_list list;
-		char msg[512];
-		va_start(list, fmt);
-		vsnprintf(msg, 512, fmt, list);
-		va_end(list);
-		SysPrintf("Error: %s", msg);
-	}
-
-	// Memory based file interface for savestates (Satisfying MDFNPS3 requirements)
-	// smFile is defined as void* in psxcommon.h
-
-	void* smopen(const char *path, const char *mode) {
-		return (void*)fopen(path, mode);
-	}
-
-	off_t smseek(void* file, off_t offset, int whence) {
-		return (off_t)fseek((FILE*)file, (long)offset, whence);
-	}
-
-	int smclose(void* file) {
-		return fclose((FILE*)file);
-	}
-
-	int smwrite(void* file, const void* buf, unsigned int len) {
-		return (int)fwrite(buf, 1, len, (FILE*)file);
-	}
-
-	int smread(void* file, void* buf, unsigned int len) {
-		return (int)fread(buf, 1, len, (FILE*)file);
-	}
-
-	//A Buffer holding the BIOS
-	static uint8_t BiosBuffer[1024 * 512];
-	static bool BiosLoaded = false;
-
-	//Get the bios buffer
-	void MDFNPCSXGetBios(uint8_t* aBuffer)
-	{
-		if (!BiosLoaded) {
-			char biosPath[256];
-			sprintf(biosPath, "%s/%s", Iniconfig.biospath, "scph1001.bin");
-			FILE* f = fopen(biosPath, "rb");
-			if (f) {
-				fread(BiosBuffer, 1, 512 * 1024, f);
-				fclose(f);
-				BiosLoaded = true;
-			} else {
-				SysPrintf("Error: Could not load BIOS from %s\n", biosPath);
-				memset(BiosBuffer, 0, 512 * 1024);
-			}
-		}
-		memcpy(aBuffer, BiosBuffer, 1024 * 512);
-	}
 }

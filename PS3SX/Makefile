@@ -15,22 +15,19 @@ MAKE_EBOOT = scetool --sce-type=SELF --compress-data=TRUE --skip-sections=FALSE 
 
 PPU_OPTIMIZE_LV = -O2
 
-PPU_SRCS		:= Ps3sxMain.cpp ./PS3/ps3audio.cpp ./PS3/ps3video.cpp ./PS3/rom_list.cpp \
-	./PS3/input/cellInput.cpp ./PS3/graphics/PSGLGraphics.cpp ./PS3/fileio/FileBrowser.cpp\
-	./PS3/buffer.c ./PS3/resampler.c ./PS3/Ini/ini.c ./PS3/Ini/IniFile.cpp \
-	./pcsxcore/PsxBios.c	\
-	./pcsxcore/psxcommon.c	\
-	./pcsxcore/cheat.c	\
-	./pcsxcore/ppf.c	\
-	./pcsxcore/psxgpu.c	\
-	./pcsxcore/CdRom.c	\
-	./pcsxcore/PsxCounters.c	\
-	./pcsxcore/PsxDma.c	\
-	./pcsxcore/DisR3000A.c	\
+PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.cpp \
+	./ps3/input/cellInput.cpp ./ps3/graphics/PSGLGraphics.cpp ./ps3/fileio/FileBrowser.cpp\
+	./ps3/buffer.c ./ps3/resampler.c ./ps3/ini/ini.c ./ps3/ini/iniFile.cpp \
+	./pcsxcore/psxbios.c	\
+	./pcsxcore/cdrom.c	\
+	./pcsxcore/psxcounters.c	\
+	./pcsxcore/psxdma.c	\
+	./pcsxcore/disr3000a.c	\
+	./pcsxcore/spu.c	\
 	./pcsxcore/sio.c	\
-	./pcsxcore/PsxHw.c	\
-	./pcsxcore/Mdec.c	\
-	./pcsxcore/PsxMem.c	\
+	./pcsxcore/psxhw.c	\
+	./pcsxcore/mdec.c	\
+	./pcsxcore/psxmem.c	\
 	./pcsxcore/misc.c	\
 	./pcsxcore/GPU_SOFT/cfg.c \
 	./pcsxcore/GPU_SOFT/Gudraw.c \
@@ -41,27 +38,24 @@ PPU_SRCS		:= Ps3sxMain.cpp ./PS3/ps3audio.cpp ./PS3/ps3video.cpp ./PS3/rom_list.
 	./pcsxcore/GPU_SOFT/soft.c \
 	./pcsxcore/GPU_SOFT/zn.c \
 	./pcsxcore/plugins.c	\
-	./pcsxcore/Plugin.c	\
-	./pcsxcore/Decode_XA.c	\
+	./pcsxcore/plugin.c	\
+	./pcsxcore/decode_xa.c	\
 	./pcsxcore/ppc/pasm.s	\
-	./pcsxcore/Spu.c	\
-	./pcsxcore/R3000A.c	\
-	./pcsxcore/PsxInterpreter.c	\
+	./pcsxcore/r3000a.c	\
+	./pcsxcore/psxinterpreter.c	\
 	./pcsxcore/gte.c	\
-	./pcsxcore/PsxHLE.c	\
+	./pcsxcore/psxhle.c	\
 	./pcsxcore/ppc/pR3000A.c	\
 	./pcsxcore/ppc/ppc.c	\
 	./pcsxcore/ppc/reguse.c \
 	./pcsxcore/PlugPAD.c \
 	./pcsxcore/PlugCD.c \
-	./pcsxcore/spu_mednafen/Channel.cpp \
-	./pcsxcore/spu_mednafen/DiscStreamer.cpp \
-	./pcsxcore/spu_mednafen/Envelope.cpp \
-	./pcsxcore/spu_mednafen/Interpolate.cpp \
-	./pcsxcore/spu_mednafen/NoiseGenerator.cpp \
-	./pcsxcore/spu_mednafen/Plugin.cpp \
-	./pcsxcore/spu_mednafen/SPU.cpp \
-	./pcsxcore/spu_mednafen/ps3snd.cpp \
+	./pcsxcore/dfsound/adsr.c \
+	./pcsxcore/dfsound/xa.c \
+	./pcsxcore/dfsound/spu.c \
+	./pcsxcore/dfsound/dma.c \
+	./pcsxcore/dfsound/registers.c \
+	./pcsxcore/dfsound/freeze.c \
 	./pcsxcore/zlib/adler32.c \
 	./pcsxcore/zlib/compress.c \
 	./pcsxcore/zlib/crc32.c \
@@ -79,14 +73,13 @@ PPU_SRCS		:= Ps3sxMain.cpp ./PS3/ps3audio.cpp ./PS3/ps3video.cpp ./PS3/rom_list.
 
 PPU_TARGET		=	ps3sx.elf
 
-PPU_CPPFLAGS	+= -D__BIGENDIAN__ -D__ppc__ -D_BIG_ENDIAN -DBIG_ENDIAN -D'PACKAGE_VERSION="0.3"' -DPS3_SDK_3_41 -DPSGL -DMDFNPS3 \
-		   -I. -I./PS3 -I./pcsxcore -I./pcsxcore/zlib -I./pcsxcore/ppc -I./PS3/threads -I./PS3/Audio -I./PS3/input -I./PS3/Ini -I./pcsxcore/spu_mednafen
+PPU_CPPFLAGS	+= -D__BIGENDIAN__ -D__ppc__ -D_BIG_ENDIAN -DBIG_ENDIAN -D'PACKAGE_VERSION="0.3"' -DPS3_SDK_3_41 -DPSGL
 
 PPU_ASFLAGS		+=
 
 PPU_LDFLAGS		= -Wl -finline-limit=5000
 
-PPU_CXXFLAGS		+=	
+PPU_CXXFLAGS		+=	-I. -I./ps3 -I./pcsxcore -I./pcsxcore/zlib -I./pcsxcore/ppc -I./ps3/threads -I./ps3/Audio -Ips3/input -Ips3/ini
 PPU_LIBS		    +=	$(CELL_TARGET_PATH)/ppu/lib/libgcm_cmd.a \
 					$(CELL_TARGET_PATH)/ppu/lib/libgcm_sys_stub.a $(CELL_TARGET_PATH)/ppu/lib/libfs_stub.a
 PPU_LDLIBS		+= 	-L$(CELL_SDK)/target/ppu/lib/PSGL/RSX/opt -lPSGL -lPSGLcgc -lcgc -lsysmodule_stub 

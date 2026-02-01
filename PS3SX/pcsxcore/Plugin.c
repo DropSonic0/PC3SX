@@ -22,13 +22,44 @@
 #include "plugins.h"
 #include "Spu.h"
 
+//extern GPUopen GPU_open;
+extern CBGPUopen GPU_open;
+
 unsigned long gpuDisp;
 
+extern CDRplay CDR_play;
+extern CDRstop CDR_stop;
+
+// extern SPUopen SPU_open;
+
+extern PADopen PAD1_open;
+extern PADreadPort1 PAD1_readPort1;
+extern PADopen PAD2_open;
+extern PADreadPort2 PAD2_readPort2;
+
 int StatesC = 0;
+extern char CdromLabel[33];
 extern int UseGui;
 int cdOpenCase = 0;
 
-int OpenPlugins(void) {
+
+long PAD1__open(void) {
+	SysPrintf("returning pad open ");
+	return PAD1_open(&gpuDisp);
+}
+
+long PAD2__open(void) {
+	return PAD2_open(&gpuDisp);
+}
+
+void SignalExit(int sig) {
+	ClosePlugins();
+//	OnFile_Exit();
+}
+
+void SPUirq(void);
+
+void OpenPlugins() {
 	int ret;
 
     SysPrintf("start OpenPlugins()\n");
@@ -41,7 +72,7 @@ int OpenPlugins(void) {
 	if (ret != 0) { SysMessage ("Error Opening SPU Plugin\n"); exit(1); }
 	SPU_registerCallback(SPUirq);
 	SysPrintf("GPU_open()\n");
-	ret = GPU_open(&gpuDisp, (char*)"PSX", NULL);
+	ret = GPU_open(&gpuDisp, "P©SX", NULL);
 	SysPrintf("after GPU_open()\n");
 	if (ret != 0) { SysMessage ("Error Opening GPU Plugin\n"); exit(1); }
 	SysPrintf("PAD1_open()\n");
@@ -51,10 +82,9 @@ int OpenPlugins(void) {
 	if (ret < 0) { SysPrintf("Error Opening PAD2 Plugin\n");  }
 	SysPrintf("end OpenPlugins()\n");
 
-	return 0;
 }
 
-void ClosePlugins(void) {
+void ClosePlugins() {
 	int ret;
 
 	ret = CDR_close();
@@ -67,4 +97,25 @@ void ClosePlugins(void) {
 	if (ret != 0) { SysMessage ("Error Closing PAD2 Plugin\n"); exit(1); }
 	ret = GPU_close();
 	if (ret != 0) { SysMessage ("Error Closing GPU Plugin\n"); exit(1); }
+}
+
+void ResetPlugins() {
+	int ret;
+
+	CDR_shutdown();
+	GPU_shutdown();
+	SPU_shutdown();
+	PAD1_shutdown();
+	PAD2_shutdown();
+
+	ret = CDR_init();
+	if (ret != 0) { SysMessage ("CDRinit error : %d\n",ret); exit(1); }
+	ret = GPU_init();
+	if (ret != 0) { SysMessage ("GPUinit error : %d\n",ret); exit(1); }
+	ret = SPU_init();
+	if (ret != 0) { SysMessage ("SPUinit error : %d\n",ret); exit(1); }
+	ret = PAD1_init(1);
+	if (ret != 0) { SysMessage ("PAD1init error : %d\n",ret); exit(1); }
+	ret = PAD2_init(2);
+	if (ret != 0) { SysMessage ("PAD2init error : %d\n",ret); exit(1); }
 }

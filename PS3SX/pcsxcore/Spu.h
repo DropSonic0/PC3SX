@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
+ *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -14,20 +15,18 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
 #ifndef __SPU_H__
 #define __SPU_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "psxcommon.h"
+#include "PsxCommon.h"
 #include "plugins.h"
-#include "r3000a.h"
-#include "psxmem.h"
+#include "R3000A.h"
+#include "PsxMem.h"
+
+#define CALLBACK  
 
 #define H_SPUirqAddr     0x0da4
 #define H_SPUaddr        0x0da6
@@ -41,7 +40,4 @@ extern "C" {
 
 void CALLBACK SPUirq(void);
 
-#ifdef __cplusplus
-}
-#endif
-#endif
+#endif /* __SPU_H__ */
