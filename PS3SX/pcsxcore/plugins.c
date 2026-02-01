@@ -43,6 +43,127 @@ extern int ReadPsxPad(int PadNbr);
 
 void *hGPUDriver;
 
+// GPU plugin function pointers
+CBGPUupdateLace    GPU_updateLace;
+CBGPUinit          GPU_init;
+CBGPUshutdown      GPU_shutdown;
+CBGPUconfigure     GPU_configure;
+CBGPUtest          GPU_test;
+CBGPUabout         GPU_about;
+CBGPUopen          GPU_open;
+CBGPUclose         GPU_close;
+CBGPUreadStatus    GPU_readStatus;
+CBGPUreadData      GPU_readData;
+CBGPUreadDataMem   GPU_readDataMem;
+CBGPUwriteStatus   GPU_writeStatus;
+CBGPUwriteData     GPU_writeData;
+CBGPUwriteDataMem  GPU_writeDataMem;
+CBGPUdmaChain      GPU_dmaChain;
+CBGPUkeypressed    GPU_keypressed;
+CBGPUdisplayText   GPU_displayText;
+CBGPUmakeSnapshot  GPU_makeSnapshot;
+CBGPUfreeze        GPU_freeze;
+CBGPUgetScreenPic  GPU_getScreenPic;
+CBGPUshowScreenPic GPU_showScreenPic;
+CBGPUclearDynarec  GPU_clearDynarec;
+
+// CDR plugin function pointers
+CDRinit               CDR_init;
+CDRshutdown           CDR_shutdown;
+CDRopen               CDR_open;
+CDRclose              CDR_close;
+CDRtest               CDR_test;
+CDRgetTN              CDR_getTN;
+CDRgetTD              CDR_getTD;
+CDRreadTrack          CDR_readTrack;
+CDRgetBuffer          CDR_getBuffer;
+CDRplay               CDR_play;
+CDRstop               CDR_stop;
+CDRgetStatus          CDR_getStatus;
+CDRsetfilename        CDR_setfilename;
+CDRgetDriveLetter     CDR_getDriveLetter;
+CDRgetBufferSub       CDR_getBufferSub;
+CDRconfigure          CDR_configure;
+CDRabout              CDR_about;
+CDRreadCDDA           CDR_readCDDA;
+
+// SPU plugin function pointers
+SPUconfigure        SPU_configure;
+SPUabout            SPU_about;
+SPUinit             SPU_init;
+SPUshutdown         SPU_shutdown;
+SPUtest             SPU_test;
+SPUopen             SPU_open;
+SPUclose            SPU_close;
+SPUplaySample       SPU_playSample;
+SPUstartChannels1   SPU_startChannels1;
+SPUstartChannels2   SPU_startChannels2;
+SPUstopChannels1    SPU_stopChannels1;
+SPUstopChannels2    SPU_stopChannels2;
+SPUputOne           SPU_putOne;
+SPUgetOne           SPU_getOne;
+SPUsetAddr          SPU_setAddr;
+SPUsetPitch         SPU_setPitch;
+SPUsetVolumeL       SPU_setVolumeL;
+SPUsetVolumeR       SPU_setVolumeR;
+SPUwriteRegister    SPU_writeRegister;
+SPUreadRegister     SPU_readRegister;
+SPUwriteDMA         SPU_writeDMA;
+SPUreadDMA          SPU_readDMA;
+SPUwriteDMAMem      SPU_writeDMAMem;
+SPUreadDMAMem       SPU_readDMAMem;
+SPUplayADPCMchannel SPU_playADPCMchannel;
+SPUplayCDDAchannel  SPU_playCDDAchannel;
+SPUfreeze           SPU_freeze;
+SPUregisterCallback SPU_registerCallback;
+SPUasync            SPU_async;
+
+// PAD plugin function pointers
+PADconfigure        PAD1_configure;
+PADabout            PAD1_about;
+PADinit             PAD1_init;
+PADshutdown         PAD1_shutdown;
+PADtest             PAD1_test;
+PADopen             PAD1_open;
+PADclose            PAD1_close;
+PADquery			PAD1_query;
+PADreadPort1		PAD1_readPort1;
+PADkeypressed		PAD1_keypressed;
+PADstartPoll        PAD1_startPoll;
+PADpoll             PAD1_poll;
+PADsetSensitive     PAD1_setSensitive;
+
+PADconfigure        PAD2_configure;
+PADabout            PAD2_about;
+PADinit             PAD2_init;
+PADshutdown         PAD2_shutdown;
+PADtest             PAD2_test;
+PADopen             PAD2_open;
+PADclose            PAD2_close;
+PADquery            PAD2_query;
+PADreadPort2		PAD2_readPort2;
+PADkeypressed		PAD2_keypressed;
+PADstartPoll        PAD2_startPoll;
+PADpoll             PAD2_poll;
+PADsetSensitive     PAD2_setSensitive;
+
+// NET plugin function pointers
+NETinit               NET_init;
+NETshutdown           NET_shutdown;
+NETclose              NET_close;
+NETtest               NET_test;
+NETconfigure          NET_configure;
+NETabout              NET_about;
+NETpause              NET_pause;
+NETresume             NET_resume;
+NETqueryPlayer        NET_queryPlayer;
+NETsendData           NET_sendData;
+NETrecvData           NET_recvData;
+NETsendPadData        NET_sendPadData;
+NETrecvPadData        NET_recvPadData;
+NETsetInfo            NET_setInfo;
+NETkeypressed         NET_keypressed;
+
 void ConfigurePlugins();
 
 void CALLBACK GPU__readDataMem(unsigned long *pMem, int iSize) {
@@ -562,7 +683,8 @@ void SPU_d_async(unsigned long v);
 void CALLBACK SPU_d_registerCallback(void (CALLBACK *callback)(void));
 long CALLBACK SPU_d_freeze(uint32_t ulFreezeMode,SPUFreeze_t * pF);
 void CALLBACK SPU_d_registerCDDAVolume(void (CALLBACK *CDDAVcallback)(unsigned short,unsigned short));
-void CALLBACK SPU_d_playCDDAchannel(short *pSound, long lBytes);
+
+void CALLBACK SPU__playCDDAchannel(short *pSound, int lBytes) { }
 
 #define LoadSpuSym1(dest, name) \
 	SPU_##dest = (SPU##dest) SPU_d_##dest;
@@ -583,7 +705,7 @@ int LoadSPUplugin(char *SPUdll) {
 	LoadSpuSym1(shutdown, "SPUshutdown");
 	LoadSpuSym1(open, "SPUopen");
 	LoadSpuSym1(close, "SPUclose");
-	LoadSpuSym1(playCDDAchannel, "SPUplayCDDAchannel");
+	SPU_playCDDAchannel = (SPUplayCDDAchannel) SPU__playCDDAchannel;
 	LoadSpuSym0(configure, "SPUconfigure");
 	LoadSpuSym0(about, "SPUabout");
 	LoadSpuSym0(test, "SPUtest");

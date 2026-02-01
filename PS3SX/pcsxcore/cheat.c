@@ -16,9 +16,10 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA
  */
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
 #include "R3000A.h"
 #include "PsxMem.h"
+#include <ctype.h>
 
 #include "cheat.h"
 
@@ -36,6 +37,16 @@ int NumSearchResults = 0;
 static int NumSearchResultsAllocated = 0;
 
 #define ALLOC_INCREMENT		100
+
+void trim(char *str) {
+	char *p = str;
+	int l = strlen(p);
+
+	while (l > 0 && isspace((unsigned char)p[l - 1])) p[--l] = 0;
+	while (*p && isspace((unsigned char)*p)) ++p, --l;
+
+	memmove(str, p, l + 1);
+}
 
 void ClearAllCheats() {
 	int i;

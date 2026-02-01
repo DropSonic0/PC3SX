@@ -19,7 +19,7 @@
 #include <winsock2.h>
 #endif
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
 #include "socket.h"
 
 #ifndef _WIN32
@@ -29,7 +29,6 @@
 #include <unistd.h>
 #include <sys/select.h>
 #include <errno.h>
-
 #ifndef SO_NBIO
 #define SO_NBIO 0x1100
 #endif
@@ -43,7 +42,7 @@ static int ptr = 0;
 
 #define PORT_NUMBER 12345
 
-int StartServer(void) {
+int StartServer() {
     struct in_addr localhostaddr;
     struct sockaddr_in localsocketaddr;
 
@@ -87,7 +86,7 @@ int StartServer(void) {
     return 0;
 }
 
-void StopServer(void) {
+void StopServer() {
 #ifdef _WIN32
     shutdown(server_socket, SD_BOTH);
     closesocket(server_socket);
@@ -98,7 +97,7 @@ void StopServer(void) {
 #endif
 }
 
-void GetClient(void) {
+void GetClient() {
     int new_socket;
     char hello[256];
 
@@ -122,12 +121,12 @@ void GetClient(void) {
     }
 #endif
 
-    sprintf(hello, "000 PCSXR Version %s - Debug console\r\n", PACKAGE_VERSION);
+    sprintf(hello, "000 PCSXR Version %s - Debug console\r\n", "1.9.92");
     WriteSocket(hello, strlen(hello));
     ptr = 0;
 }
 
-void CloseClient(void) {
+void CloseClient() {
     if (client_socket) {
 #ifdef _WIN32
         shutdown(client_socket, SD_BOTH);
@@ -140,14 +139,13 @@ void CloseClient(void) {
     }
 }
 
-int HasClient(void) {
+int HasClient() {
     return client_socket ? 1 : 0;
 }
 
 int ReadSocket(char * buffer, int len) {
     int r;
     char * endl;
-    (void)len;
 
     if (!client_socket)
         return -1;
@@ -237,17 +235,17 @@ void WriteSocket(char * buffer, int len) {
     send(client_socket, buffer, len, 0);
 }
 
-void SetsBlock(void) {
+void SetsBlock() {
 #ifdef _WIN32
     u_long b = 0;
     ioctlsocket(server_socket, FIONBIO, &b);
 #else
-    int on = 0;
-    setsockopt(server_socket, SOL_SOCKET, SO_NBIO, &on, sizeof(on));
+    int off = 0;
+    setsockopt(server_socket, SOL_SOCKET, SO_NBIO, &off, sizeof(off));
 #endif
 }
 
-void SetsNonblock(void) {
+void SetsNonblock() {
 #ifdef _WIN32
     u_long b = 1;
     ioctlsocket(server_socket, FIONBIO, &b);

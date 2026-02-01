@@ -1,4 +1,3 @@
-
 # CELL_GPU_TYPE (currently RSX is only one option)  
 CELL_GPU_TYPE = RSX    
 #CELL_PSGL_VERSION is debug, dpm or opt  
@@ -90,7 +89,7 @@ PPU_CXXFLAGS		+=	-I. -I./ps3 -I./pcsxcore -I./pcsxcore/zlib -I./pcsxcore/ppc -I.
 PPU_LIBS		    +=	$(CELL_TARGET_PATH)/ppu/lib/libgcm_cmd.a \
 					$(CELL_TARGET_PATH)/ppu/lib/libgcm_sys_stub.a $(CELL_TARGET_PATH)/ppu/lib/libfs_stub.a
 PPU_LDLIBS		+= 	-L$(CELL_SDK)/target/ppu/lib/PSGL/RSX/opt -lPSGL -lPSGLcgc -lcgc -lsysmodule_stub 
-PPU_LDLIBS		+=  -lresc_stub -lm -ldbgfont -lsysutil_stub -lio_stub -laudio_stub -lpthread -lsysutil_game_stub
+PPU_LDLIBS		+=  -lresc_stub -lm -ldbgfont -lsysutil_stub -lio_stub -laudio_stub -lpthread -lsysutil_game_stub -lnet_stub
 include $(CELL_MK_DIR)/sdk.target.mk
 
 $(VPSHADER_PPU_OBJS): $(OBJS_DIR)/%.ppu.o : %.vpo
@@ -107,4 +106,3 @@ pkg: $(PPU_TARGET)
 	$(MKFSELF_NPDRM) $(PPU_TARGET) release/NPDRM_RELEASE/USRDIR/EBOOT.BIN 
 	$(CELL_HOST_PATH)/bin/psn_package_npdrm$(EXE_SUFFIX) release/package.conf release/NPDRM_RELEASE
 	
-

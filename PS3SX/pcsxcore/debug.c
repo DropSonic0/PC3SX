@@ -15,7 +15,8 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses>.
  */
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
+#include <ctype.h>
 #include "R3000A.h"
 #include "debug.h"
 #include "socket.h"
@@ -229,7 +230,7 @@ static int debugger_active = 0, paused = 0, trace = 0, reset = 0, resetting = 0;
 static int mapping_e = 0, mapping_r8 = 0, mapping_r16 = 0, mapping_r32 = 0, mapping_w8 = 0, mapping_w16 = 0, mapping_w32 = 0;
 static int breakmp_e = 0, breakmp_r8 = 0, breakmp_r16 = 0, breakmp_r32 = 0, breakmp_w8 = 0, breakmp_w16 = 0, breakmp_w32 = 0;
 
-static void ProcessCommands(void);
+static void ProcessCommands();
 
 static u8 *MemoryMap = NULL;
 
@@ -308,7 +309,7 @@ breakpoint_t *find_breakpoint(int number) {
     return 0;
 }
 
-void StartDebugger(void) {
+void StartDebugger() {
     if (debugger_active)
         return;
 
@@ -327,7 +328,7 @@ void StartDebugger(void) {
     debugger_active = 1;
 }
 
-void StopDebugger(void) {
+void StopDebugger() {
     if (debugger_active) {
         StopServer();
         SysPrintf(_("Debugger stopped.\n"));
@@ -343,17 +344,17 @@ void StopDebugger(void) {
     debugger_active = 0;
 }
 
-void PauseDebugger(void) {
+void PauseDebugger() {
     trace = 0;
     paused = 1;
 }
 
-void ResumeDebugger(void) {
+void ResumeDebugger() {
     trace = 0;
     paused = 0;
 }
 
-void DebugVSync(void) {
+void DebugVSync() {
     if (!debugger_active || resetting)
         return;
 
@@ -380,7 +381,7 @@ int IsMapMarked(u32 address, int mask) {
     return (MemoryMap[address & 0x001fffff] & mask) != 0;
 }
 
-void ProcessDebug(void) {
+void ProcessDebug() {
     if (!debugger_active || reset || resetting)
         return;
     if (trace) {
@@ -408,7 +409,7 @@ void ProcessDebug(void) {
     }
 }
 
-static void ProcessCommands(void) {
+static void ProcessCommands() {
     int code, i, dumping;
     FILE *sfile;
     char cmd[257], *arguments, *p, reply[10240], *save, *dump;
@@ -445,7 +446,7 @@ static void ProcessCommands(void) {
             sprintf(reply, "200 %s\r\n", arguments == NULL ? "OK" : arguments);
             break;
         case 0x101:
-            sprintf(reply, "201 %s\r\n", PACKAGE_VERSION);
+            sprintf(reply, "201 %s\r\n", "1.9.92");
             break;
         case 0x102:
             sprintf(reply, "202 1.0\r\n");
