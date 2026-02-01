@@ -17,66 +17,56 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
-#include "psxcommon.h"
-#include "R3000A.h"
-#include "PsxBios.h"
+#ifndef __DEBUG_H__
+#define __DEBUG_H__
 
-#include "cheat.h"
-#include "ppf.h"
-#include "cdriso.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-PcsxConfig Config;
-boolean NetOpened = FALSE;
+enum breakpoint_types {
+	BE, BR1, BR2, BR4, BW1, BW2, BW4
+};
 
-int Log = 0;
-FILE *emuLog = NULL;
-boolean hleSoftCall = FALSE;
+void StartDebugger();
+void StopDebugger();
 
-int EmuInit(void) {
-	cdrIsoInit();
-	if (Config.Debug) StartDebugger();
-	return psxInit();
+void DebugVSync();
+void ProcessDebug();
+
+void DebugCheckBP(u32 address, enum breakpoint_types type);
+
+void PauseDebugger();
+void ResumeDebugger();
+
+extern char *disRNameCP0[];
+
+char* disR3000AF(u32 code, u32 pc);
+
+/*
+ * Specficies which logs should be activated.
+ */
+
+//#define LOG_STDOUT
+
+//#define PAD_LOG  __Log
+//#define GTE_LOG  __Log
+//#define CDR_LOG  __Log("%8.8lx %8.8lx: ", psxRegs.pc, psxRegs.cycle); __Log
+
+//#define PSXHW_LOG   __Log("%8.8lx %8.8lx: ", psxRegs.pc, psxRegs.cycle); __Log
+//#define PSXBIOS_LOG __Log("%8.8lx %8.8lx: ", psxRegs.pc, psxRegs.cycle); __Log
+//#define PSXDMA_LOG  __Log
+//#define PSXMEM_LOG  __Log("%8.8lx %8.8lx: ", psxRegs.pc, psxRegs.cycle); __Log
+//#define PSXCPU_LOG  __Log
+
+//#define CDRCMD_DEBUG
+
+#if defined (PSXCPU_LOG) || defined(PSXDMA_LOG) || defined(CDR_LOG) || defined(PSXHW_LOG) || \
+	defined(PSXBIOS_LOG) || defined(PSXMEM_LOG) || defined(GTE_LOG)    || defined(PAD_LOG)
+#define EMU_LOG __Log
+#endif
+
+#ifdef __cplusplus
 }
-
-void EmuReset(void) {
-	FreeCheatSearchResults();
-	FreeCheatSearchMem();
-
-	psxReset();
-}
-
-void EmuShutdown(void) {
-	StopDebugger();
-
-	ClearAllCheats();
-	FreeCheatSearchResults();
-	FreeCheatSearchMem();
-
-	FreePPFCache();
-
-	psxShutdown();
-}
-
-void EmuUpdate(void) {
-	// Do not allow hotkeys inside a softcall from HLE BIOS
-	if (!Config.HLE || !hleSoftCall)
-		SysUpdate();
-
-	ApplyCheats();
-}
-
-void __Log(char *fmt, ...) {
-	va_list list;
-	char tmp[1024];
-
-	va_start(list, fmt);
-	if (emuLog != NULL) {
-		va_list list2;
-		va_copy(list2, list);
-		vfprintf(emuLog, fmt, list2);
-		va_end(list2);
-	}
-	vsnprintf(tmp, sizeof(tmp), fmt, list);
-	SysPrintf("%s", tmp);
-	va_end(list);
-}
+#endif
+#endif

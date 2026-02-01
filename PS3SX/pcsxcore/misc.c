@@ -23,6 +23,7 @@
 */
 
 #include "misc.h"
+#include "ppf.h"
 
 /* PSX Executable types */
 #define PSX_EXE     1
@@ -320,6 +321,9 @@ int CheckCdrom(void) {
 	}
 	SysPrintf("CD-ROM Label: %.32s\n", CdromLabel);
 	SysPrintf("CD-ROM ID: %.9s\n", CdromId);
+
+	BuildPPFCache();
+	LoadSBI();
 
 	return 0;
 }

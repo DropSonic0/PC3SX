@@ -232,6 +232,7 @@ long CALLBACK CDR__getStatus(struct CdrStat *stat) {
 
 char* CALLBACK CDR__getDriveLetter(void) { return NULL; }
 unsigned char* CALLBACK CDR__getBufferSub(void) { return NULL; }
+long CALLBACK CDR__readCDDA(unsigned char m, unsigned char s, unsigned char f, unsigned char *buffer) { return -1; }
 long CALLBACK CDR__configure(void) { return 0; }
 long CALLBACK CDR__test(void) { return 0; }
 void CALLBACK CDR__about(void) {}
@@ -270,6 +271,7 @@ int LoadCDRplugin(char *CDRdll) {
 	LoadCdrSym0(configure, "CDRconfigure");
 	LoadCdrSym0(test, "CDRtest");
 	LoadCdrSym0(about, "CDRabout");
+	LoadCdrSym0(readCDDA, "CDRreadCDDA");
 
 	return 0;
 }
@@ -814,6 +816,10 @@ int LoadPlugins() {
 	if (ret != 0) { SysMessage ("PAD2init error : %d\n",ret); return -1; }
 
 	return 0;
+}
+
+const char *GetIsoFile(void) {
+	return Config.Cdr;
 }
 
 void ReleasePlugins() {

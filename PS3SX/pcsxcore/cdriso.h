@@ -1,5 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
+ *   Copyright (C) 2007 PCSX-df Team                                       *
+ *   Copyright (C) 2009 Wei Mingzhi                                        *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -17,66 +18,17 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
-#include "psxcommon.h"
-#include "R3000A.h"
-#include "PsxBios.h"
+#ifndef CDRISO_H
+#define CDRISO_H
 
-#include "cheat.h"
-#include "ppf.h"
-#include "cdriso.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-PcsxConfig Config;
-boolean NetOpened = FALSE;
+void cdrIsoInit(void);
+int cdrIsoActive(void);
 
-int Log = 0;
-FILE *emuLog = NULL;
-boolean hleSoftCall = FALSE;
-
-int EmuInit(void) {
-	cdrIsoInit();
-	if (Config.Debug) StartDebugger();
-	return psxInit();
+#ifdef __cplusplus
 }
-
-void EmuReset(void) {
-	FreeCheatSearchResults();
-	FreeCheatSearchMem();
-
-	psxReset();
-}
-
-void EmuShutdown(void) {
-	StopDebugger();
-
-	ClearAllCheats();
-	FreeCheatSearchResults();
-	FreeCheatSearchMem();
-
-	FreePPFCache();
-
-	psxShutdown();
-}
-
-void EmuUpdate(void) {
-	// Do not allow hotkeys inside a softcall from HLE BIOS
-	if (!Config.HLE || !hleSoftCall)
-		SysUpdate();
-
-	ApplyCheats();
-}
-
-void __Log(char *fmt, ...) {
-	va_list list;
-	char tmp[1024];
-
-	va_start(list, fmt);
-	if (emuLog != NULL) {
-		va_list list2;
-		va_copy(list2, list);
-		vfprintf(emuLog, fmt, list2);
-		va_end(list2);
-	}
-	vsnprintf(tmp, sizeof(tmp), fmt, list);
-	SysPrintf("%s", tmp);
-	va_end(list);
-}
+#endif
+#endif

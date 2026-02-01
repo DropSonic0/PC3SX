@@ -47,6 +47,11 @@ PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.
 	./pcsxcore/psxinterpreter.c	\
 	./pcsxcore/gte.c	\
 	./pcsxcore/psxhle.c	\
+	./pcsxcore/socket.c	\
+	./pcsxcore/ppf.c	\
+	./pcsxcore/debug.c	\
+	./pcsxcore/cheat.c	\
+	./pcsxcore/cdriso.c	\
 	./pcsxcore/ppc/pR3000A.c	\
 	./pcsxcore/ppc/ppc.c	\
 	./pcsxcore/ppc/reguse.c \

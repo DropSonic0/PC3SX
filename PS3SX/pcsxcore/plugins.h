@@ -110,6 +110,7 @@ typedef long (CALLBACK* CDRtest)(void);
 typedef void (CALLBACK* CDRabout)(void);
 typedef long (CALLBACK* CDRplay)(unsigned char *);
 typedef long (CALLBACK* CDRstop)(void);
+typedef long (CALLBACK* CDRreadCDDA)(unsigned char, unsigned char, unsigned char, unsigned char *);
 struct CdrStat {
 	unsigned long Type;
 	unsigned long Status;
@@ -146,6 +147,7 @@ CDRgetDriveLetter     CDR_getDriveLetter;
 CDRgetBufferSub       CDR_getBufferSub;
 CDRconfigure          CDR_configure;
 CDRabout              CDR_about;
+CDRreadCDDA           CDR_readCDDA;
 
 // spu plugin
 typedef long (CALLBACK* SPUopen)(void);
@@ -318,6 +320,7 @@ NETrecvPadData        NET_recvPadData;
 NETsetInfo            NET_setInfo;
 NETkeypressed         NET_keypressed;
 
+const char *GetIsoFile(void);
 int LoadCDRplugin(char *CDRdll);
 int LoadGPUplugin(char *GPUdll);
 int LoadSPUplugin(char *SPUdll);

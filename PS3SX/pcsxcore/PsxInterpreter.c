@@ -26,6 +26,7 @@
 #include "R3000A.h"
 #include "Gte.h"
 #include "PsxHLE.h"
+#include "debug.h"
 
 static int branch = 0;
 static int branch2 = 0;
@@ -801,6 +802,7 @@ inline void execI() {
 	psxRegs.pc+= 4; psxRegs.cycle++; 
 	psxBSC[psxRegs.code >> 26](); 
 
+	ProcessDebug();
 }
 
 /* debugger version */
