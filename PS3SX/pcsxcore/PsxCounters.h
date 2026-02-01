@@ -35,14 +35,14 @@ extern psxCounter psxCounters[5];
 
 u32 psxNextCounter, psxNextsCounter;
 
-void psxRcntInit();
-void psxRcntUpdate();
+void psxRcntInit(void);
+void psxRcntUpdate(void);
 void psxRcntWcount(u32 index, u32 value);
 void psxRcntWmode(u32 index, u32 value);
 void psxRcntWtarget(u32 index, u32 value);
 u32 psxRcntRcount(u32 index);
 int psxRcntFreeze(gzFile f, int Mode);
 
-void psxUpdateVSyncRate();
+void psxUpdateVSyncRate(void);
 
 #endif /* __PSXCOUNTERS_H__ */

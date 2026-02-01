@@ -286,7 +286,7 @@ void psxDma1(u32 adr, u32 bcr, u32 chcr) {
 	mdec.status|= MDEC_BUSY;
 }
 
-void mdec1Interrupt() {
+void mdec1Interrupt(void) {
 #ifdef CDR_LOG
 	CDR_LOG("mdec1Interrupt\n");
 #endif

@@ -116,10 +116,13 @@ typedef uint8_t boolean;
 #endif
 #endif
 
-extern FILE *emuLog;
 extern int Log;
 
 void __Log(char *fmt, ...);
+
+extern long LoadCdBios;
+extern int StatesC;
+extern int cdOpenCase;
 
 typedef struct {
 	char Gpu[MAXPATHLEN];
@@ -181,10 +184,10 @@ enum {
 	CPU_INTERPRETER
 }; // CPU Types
 
-int EmuInit();
-void EmuReset();
-void EmuShutdown();
-void EmuUpdate();
+int EmuInit(void);
+void EmuReset(void);
+void EmuShutdown(void);
+void EmuUpdate(void);
 
 #ifdef __cplusplus
 }

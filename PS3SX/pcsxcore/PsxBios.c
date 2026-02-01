@@ -1784,11 +1784,11 @@ static void *fileload(char *file,void *buf)
 	return buf;
 }
 
-void (*biosA0[256])();
-void (*biosB0[256])();
-void (*biosC0[256])();
+void (*biosA0[256])(void);
+void (*biosB0[256])(void);
+void (*biosC0[256])(void);
 
-int psxBiosSetupTables()
+int psxBiosSetupTables(void)
 {
 	u32 base, size;
 	int i;
@@ -2129,7 +2129,7 @@ int psxBiosSetupTables()
 	return 1;
 }
 
-void psxBiosInit() {
+void psxBiosInit(void) {
 	u32 *ptr; 
 	
 	if (!psxBiosSetupTables())
@@ -2177,7 +2177,7 @@ void psxBiosInit() {
 	psxMu32ref(0x0894) = SWAPu32((0x3b << 26) | 0);
 }
 
-void psxBiosShutdown() {
+void psxBiosShutdown(void) {
 }
 
 __inline void SaveRegs() {
@@ -2212,7 +2212,7 @@ __inline void LoadRegs() {
 
 void netError();
 
-void biosInterrupt() {
+void biosInterrupt(void) {
 	int i, bufcount;
 
 //	if (psxHu32(0x1070) & 0x1) { // Vsync
@@ -2307,7 +2307,7 @@ void biosInterrupt() {
 	}
 }
 
-void psxBiosException() {
+void psxBiosException(void) {
 	int i;
 
 	switch (psxRegs.CP0.n.Cause & 0x3c) {

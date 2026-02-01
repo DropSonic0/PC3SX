@@ -27,19 +27,19 @@ boolean NetOpened = FALSE;
 int Log = 0;
 FILE *emuLog = NULL;
 
-int EmuInit() {
+int EmuInit(void) {
 	return psxInit();
 }
 
-void EmuReset() {
+void EmuReset(void) {
 	psxReset();
 }
 
-void EmuShutdown() {
+void EmuShutdown(void) {
 	psxShutdown();
 }
 
-void EmuUpdate() {
+void EmuUpdate(void) {
 	SysUpdate();
 }
 

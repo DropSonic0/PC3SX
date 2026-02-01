@@ -53,17 +53,17 @@ typedef struct {
 char CdromId[10];
 char CdromLabel[33];
 
-int LoadCdrom();
+int LoadCdrom(void);
 int LoadCdromFile(char *filename, EXE_HEADER *head);
-int CheckCdrom();
+int CheckCdrom(void);
 int Load(char *ExePath);
 
 int SaveState(char *file);
 int LoadState(char *file);
 int CheckState(char *file);
 
-int SendPcsxInfo();
-int RecvPcsxInfo();
+int SendPcsxInfo(void);
+int RecvPcsxInfo(void);
 
 extern char *LabelAuthors;
 extern char *LabelGreets;

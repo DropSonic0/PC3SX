@@ -57,7 +57,7 @@ char Mcd1Data[MCD_SIZE], Mcd2Data[MCD_SIZE];
 	} \
 }
 
-unsigned char sioRead8() {
+unsigned char sioRead8(void) {
 	unsigned char ret = 0;
 
 	if ((StatReg & RX_RDY)/* && (CtrlReg & RX_PERM)*/) {
@@ -94,7 +94,7 @@ unsigned char sioRead8() {
 	return ret;
 }
 
-void netError() {
+void netError(void) {
 	ClosePlugins();
 	SysMessage(_("Connection closed!\n"));
 	SysRunGui();
@@ -300,7 +300,7 @@ void sioWriteCtrl16(unsigned short value) {
 	}
 }
 
-void sioInterrupt() {
+void sioInterrupt(void) {
 #ifdef PAD_LOG
 	PAD_LOG("Sio Interrupt (CP0.Status = %x)\n", psxRegs.CP0.n.Status);
 #endif

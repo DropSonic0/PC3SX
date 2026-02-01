@@ -29,11 +29,11 @@ typedef void* HWND;
 #include "Decode_XA.h"
 
 
-int  LoadPlugins();
-void ReleasePlugins();
-void  OpenPlugins();
-void ClosePlugins();
-void ResetPlugins();
+int  LoadPlugins(void);
+void ReleasePlugins(void);
+void  OpenPlugins(void);
+void ClosePlugins(void);
+void ResetPlugins(void);
 
 
 typedef unsigned long (CALLBACK* PSEgetLibType)(void);

@@ -65,7 +65,7 @@ extern "C" {
 	}
 
 
-void psxHwReset();
+void psxHwReset(void);
 u8   psxHwRead8 (u32 add);
 u16  psxHwRead16(u32 add);
 u32  psxHwRead32(u32 add);

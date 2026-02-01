@@ -129,7 +129,7 @@ static struct SubQ *subq;
 	cdr.ResultReady = 1; \
 }
 
-void ReadTrack() {
+void ReadTrack(void) {
 	cdr.Prev[0] = itob(cdr.SetSector[0]);
 	cdr.Prev[1] = itob(cdr.SetSector[1]);
 	cdr.Prev[2] = itob(cdr.SetSector[2]);
@@ -157,7 +157,7 @@ void AddIrqQueue(unsigned char irq, unsigned long ecycle) {
 	}
 }
 
-void cdrInterrupt() {
+void cdrInterrupt(void) {
 	int i;
 	unsigned char Irq = cdr.Irq;
 
@@ -560,7 +560,7 @@ void cdrInterrupt() {
 #endif
 }
 
-void cdrReadInterrupt() {
+void cdrReadInterrupt(void) {
 	u8 *buf;
 
 	if (!cdr.Reading) return;
@@ -1058,7 +1058,7 @@ void cdrDmaInterrupt(void) {
 	DMA_INTERRUPT(3);
 }
 
-void cdrReset() {
+void cdrReset(void) {
 	memset(&cdr, 0, sizeof(cdr));
 	cdr.CurTrack=1;
 	cdr.File=1; cdr.Channel=1;

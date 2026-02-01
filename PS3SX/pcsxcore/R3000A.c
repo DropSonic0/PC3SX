@@ -31,7 +31,7 @@
 R3000Acpu *psxCpu;
 psxRegisters psxRegs;
 
-int psxInit() {
+int psxInit(void) {
 
 	if(Config.Cpu) {
 	psxCpu = &psxInt;
@@ -46,7 +46,7 @@ int psxInit() {
 	return psxCpu->Init();
 }
 
-void psxReset() {
+void psxReset(void) {
 	SysPrintf("psxCpu->Reset()\n");
 	psxCpu->Reset();
 	
@@ -76,7 +76,7 @@ void psxReset() {
 	Log=0;
 }
 
-void psxShutdown() {
+void psxShutdown(void) {
 	psxMemShutdown();
 	psxBiosShutdown();
 
@@ -115,7 +115,7 @@ void psxException(u32 code, u32 bd) {
 	if (Config.HLE) psxBiosException();
 }
 
-void psxBranchTest() {
+void psxBranchTest(void) {
 	if (psxHu32(0x1070) & psxHu32(0x1074)) {
 		if ((psxRegs.CP0.n.Status & 0x401) == 0x401) {
 			psxException(0x400, 0);
@@ -183,7 +183,7 @@ void psxBranchTest() {
 	}
 }
 
-void psxTestHWInts() {
+void psxTestHWInts(void) {
 	if (psxHu32(0x1070) & psxHu32(0x1074)) {
 		if ((psxRegs.CP0.n.Status & 0x401) == 0x401) {
 #ifdef PSXCPU_LOG
@@ -195,7 +195,7 @@ void psxTestHWInts() {
 	}
 }
 
-void psxJumpTest() {
+void psxJumpTest(void) {
 	if (!Config.HLE && Config.PsxOut) {
 		u32 call = psxRegs.GPR.n.t1 & 0xff;
 		switch (psxRegs.pc & 0x1fffff) {
@@ -226,7 +226,7 @@ void psxJumpTest() {
 	}
 }
 
-void psxExecuteBios() {
+void psxExecuteBios(void) {
 	while (psxRegs.pc != 0x80030000)
 		psxCpu->ExecuteBlock();
 }

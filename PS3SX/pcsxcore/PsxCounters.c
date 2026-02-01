@@ -75,7 +75,7 @@ static void psxRcntSet() {
 	}
 }
 
-void psxRcntInit() {
+void psxRcntInit(void) {
 
 	memset(psxCounters, 0, sizeof(psxCounters));
 
@@ -100,7 +100,7 @@ void psxRcntInit() {
 	psxRcntSet();
 }
 
-void psxUpdateVSyncRate() {
+void psxUpdateVSyncRate(void) {
 	if (Config.PsxType) // ntsc - 0 | pal - 1
 	     psxCounters[3].rate = (PSXCLK / 50);// / BIAS;
 	else psxCounters[3].rate = (PSXCLK / 60);// / BIAS;
@@ -108,7 +108,7 @@ void psxUpdateVSyncRate() {
 	if (Config.VSyncWA) psxCounters[3].rate/= 2;
 }
 
-void psxUpdateVSyncRateEnd() {
+void psxUpdateVSyncRateEnd(void) {
 	if (Config.PsxType) // ntsc - 0 | pal - 1
 	     psxCounters[3].rate = (PSXCLK / 50);// / BIAS;
 	else psxCounters[3].rate = (PSXCLK / 60);// / BIAS;
@@ -116,7 +116,7 @@ void psxUpdateVSyncRateEnd() {
 	if (Config.VSyncWA) psxCounters[3].rate/= 2;
 }
 
-void psxRcntUpdate() {
+void psxRcntUpdate(void) {
 	if ((psxRegs.cycle - psxCounters[3].sCycle) >= psxCounters[3].Cycle) {
 		if (psxCounters[3].mode & 0x10000) { // VSync End (22 hsyncs)
 			psxCounters[3].mode&=~0x10000;
