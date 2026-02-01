@@ -15,7 +15,7 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses>.
  */
 
-#include "psxcommon.h"
+#include "PsxCommon.h"
 #include "R3000A.h"
 #include "debug.h"
 #include "socket.h"

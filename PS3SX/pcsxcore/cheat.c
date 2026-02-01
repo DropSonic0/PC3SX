@@ -16,7 +16,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA
  */
 
-#include "psxcommon.h"
+#include "PsxCommon.h"
 #include "R3000A.h"
 #include "PsxMem.h"
 

@@ -48,12 +48,12 @@ typedef struct {
 
 	unsigned char StatP;
 
-	unsigned char Transfer[2352];
-	unsigned char *pTransfer;
+	unsigned char Transfer[CD_FRAMESIZE_RAW];
+	unsigned int  transferIndex;
 
 	unsigned char Prev[4];
 	unsigned char Param[8];
-	unsigned char Result[8];
+	unsigned char Result[16];
 
 	unsigned char ParamC;
 	unsigned char ParamP;
@@ -62,16 +62,17 @@ typedef struct {
 	unsigned char ResultReady;
 	unsigned char Cmd;
 	unsigned char Readed;
-	unsigned long Reading;
+	u32 Reading;
 
 	unsigned char ResultTN[6];
 	unsigned char ResultTD[4];
 	unsigned char SetSector[4];
 	unsigned char SetSectorSeek[4];
+	unsigned char SetSectorPlay[4];
 	unsigned char Track;
-	int Play;
+	boolean Play, Muted;
 	int CurTrack;
-	int Mode, File, Channel, Muted;
+	int Mode, File, Channel;
 	int Reset;
 	int RErr;
 	int FirstSector;
@@ -81,11 +82,15 @@ typedef struct {
 	int Init;
 
 	unsigned char Irq;
-	unsigned long eCycle;
+	u32 eCycle;
 
-	int Seeked;
+	boolean Seeked;
 
-	char Unused[4083];
+	u8 LidCheck;
+	u8 FastForward;
+	u8 FastBackward;
+
+	u8 AttenuatorLeft[2], AttenuatorRight[2];
 } cdrStruct;
 
 cdrStruct cdr;

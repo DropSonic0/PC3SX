@@ -232,6 +232,7 @@ long CALLBACK CDR__getStatus(struct CdrStat *stat) {
 
 char* CALLBACK CDR__getDriveLetter(void) { return NULL; }
 unsigned char* CALLBACK CDR__getBufferSub(void) { return NULL; }
+long CALLBACK CDR__setfilename(char *filename) { return 0; }
 long CALLBACK CDR__readCDDA(unsigned char m, unsigned char s, unsigned char f, unsigned char *buffer) { return -1; }
 long CALLBACK CDR__configure(void) { return 0; }
 long CALLBACK CDR__test(void) { return 0; }
@@ -272,6 +273,7 @@ int LoadCDRplugin(char *CDRdll) {
 	LoadCdrSym0(test, "CDRtest");
 	LoadCdrSym0(about, "CDRabout");
 	LoadCdrSym0(readCDDA, "CDRreadCDDA");
+	LoadCdrSym0(setfilename, "CDRsetfilename");
 
 	return 0;
 }
@@ -560,6 +562,7 @@ void SPU_d_async(unsigned long v);
 void CALLBACK SPU_d_registerCallback(void (CALLBACK *callback)(void));
 long CALLBACK SPU_d_freeze(uint32_t ulFreezeMode,SPUFreeze_t * pF);
 void CALLBACK SPU_d_registerCDDAVolume(void (CALLBACK *CDDAVcallback)(unsigned short,unsigned short));
+void CALLBACK SPU_d_playCDDAchannel(short *pSound, long lBytes);
 
 #define LoadSpuSym1(dest, name) \
 	SPU_##dest = (SPU##dest) SPU_d_##dest;
@@ -580,6 +583,7 @@ int LoadSPUplugin(char *SPUdll) {
 	LoadSpuSym1(shutdown, "SPUshutdown");
 	LoadSpuSym1(open, "SPUopen");
 	LoadSpuSym1(close, "SPUclose");
+	LoadSpuSym1(playCDDAchannel, "SPUplayCDDAchannel");
 	LoadSpuSym0(configure, "SPUconfigure");
 	LoadSpuSym0(about, "SPUabout");
 	LoadSpuSym0(test, "SPUtest");
