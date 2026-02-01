@@ -91,14 +91,14 @@ static struct CdrStat stat;
 static struct SubQ *subq;
 
 #define CDR_INT(eCycle) { \
-	psxRegs.interrupt|= 0x4; \
-	psxRegs.intCycle[2+1] = eCycle; \
-	psxRegs.intCycle[2] = psxRegs.cycle; }
+	psxRegs.interrupt|= (1 << PSXINT_CDR); \
+	psxRegs.intCycle[PSXINT_CDR].cycle = eCycle; \
+	psxRegs.intCycle[PSXINT_CDR].sCycle = psxRegs.cycle; }
 
 #define CDREAD_INT(eCycle) { \
-	psxRegs.interrupt|= 0x40000; \
-	psxRegs.intCycle[2+16+1] = eCycle; \
-	psxRegs.intCycle[2+16] = psxRegs.cycle; }
+	psxRegs.interrupt|= (1 << PSXINT_CDREAD); \
+	psxRegs.intCycle[PSXINT_CDREAD].cycle = eCycle; \
+	psxRegs.intCycle[PSXINT_CDREAD].sCycle = psxRegs.cycle; }
 
 #define StartReading(type) { \
    	cdr.Reading = type; \
@@ -110,7 +110,7 @@ static struct SubQ *subq;
 #define StopReading() { \
 	if (cdr.Reading) { \
 		cdr.Reading = 0; \
-		psxRegs.interrupt&=~0x40000; \
+		psxRegs.interrupt&=~(1 << PSXINT_CDREAD); \
 	} \
 }
 
@@ -552,7 +552,6 @@ void cdrInterrupt() {
 
 	if (cdr.Stat != NoIntr && cdr.Reg2 != 0x18) {
 		psxHu32ref(0x1070)|= SWAP32((u32)0x4);
-		psxRegs.interrupt|= 0x80000000;
 	}
 
 #ifdef CDR_LOG
@@ -640,7 +639,6 @@ void cdrReadInterrupt() {
 		CDREAD_INT((cdr.Mode & 0x80) ? (cdReadTime / 2) : cdReadTime);
 	}
 	psxHu32ref(0x1070)|= SWAP32((u32)0x4);
-	psxRegs.interrupt|= 0x80000000;
 }
 
 /*
@@ -931,7 +929,6 @@ void cdrWrite1(unsigned char rt) {
     }
 	if (cdr.Stat != NoIntr) {
 		psxHu32ref(0x1070)|= SWAP32((u32)0x4);
-		psxRegs.interrupt|= 0x80000000;
 	}
 }
 
@@ -1041,7 +1038,9 @@ void psxDma3(u32 madr, u32 bcr, u32 chcr) {
 			psxCpu->Clear(madr, cdsize/4);
 			cdr.pTransfer+= cdsize;
 
-			break;
+			CDRDMA_INT(cdsize / 4);
+			return;
+
 		default:
 #ifdef CDR_LOG
 			CDR_LOG("psxDma3() Log: Unknown cddma %lx\n", chcr);
@@ -1049,6 +1048,11 @@ void psxDma3(u32 madr, u32 bcr, u32 chcr) {
 			break;
 	}
 
+	HW_DMA3_CHCR &= SWAP32(~0x01000000);
+	DMA_INTERRUPT(3);
+}
+
+void cdrDmaInterrupt() {
 	HW_DMA3_CHCR &= SWAP32(~0x01000000);
 	DMA_INTERRUPT(3);
 }
