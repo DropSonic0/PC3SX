@@ -743,6 +743,7 @@ static void Return(void)
 	// returnPC is a function pointer (descriptor on PS3)
 	// We jump directly to the code address (first word of descriptor)
 	uptr code_addr = *(uptr*)returnPC;
+	// SysPrintf("Return: code_addr=%p\n", (void*)code_addr);
 	LIP(0, code_addr);
 	MTCTR(0);
 	BCTR();
@@ -1174,6 +1175,9 @@ __inline static void execute(void) {
 	if (*(uptr*)recFunc == 0) {
 		recRecompile();
 	}
+	if (execCount < 100 || execCount % 10000 == 0) {
+		SysPrintf("execute: calling recRun for PC=%08x, target=%p\n", psxRegs.pc, (void*)*(uptr*)recFunc);
+	}
 	recRun(*(uptr*)recFunc, (uptr)&psxRegs, (uptr)&psxM);
 	if (execCount < 100 || execCount % 10000 == 0) {
 		SysPrintf("execute: returned from recRun, PC=%08x\n", psxRegs.pc);
@@ -1187,8 +1191,14 @@ static void recExecute(void) {
 #else
 extern int wanna_leave;
 static void recExecute(void) {
+	u32 loopCount = 0;
 	wanna_leave = 0;
-	while(!wanna_leave) execute();
+	while(!wanna_leave) {
+		execute();
+		if (++loopCount % 1000 == 0) {
+			SysPrintf("recExecute: heartbeat, loops=%d\n", loopCount);
+		}
+	}
 }
 #endif
 

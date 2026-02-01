@@ -35,25 +35,25 @@ C(.recRun):
 #ifdef MDFNPS3
 	std		0, 16(1)	/* Save LR in caller frame */
 	std		2, 40(1)	/* Save original TOC in caller frame */
-	stdu	1, -256(1)	/* Create frame */
-	std		31, 248(1)	/* Save non-volatiles in our frame */
-	std		30, 240(1)
-	std		29, 232(1)
-	std		28, 224(1)
-	std		27, 216(1)
-	std		26, 208(1)
-	std		25, 200(1)
-	std		24, 192(1)
-	std		23, 184(1)
-	std		22, 176(1)
-	std		21, 168(1)
-	std		20, 160(1)
-	std		19, 152(1)
-	std		18, 144(1)
-	std		17, 136(1)
-	std		16, 128(1)
-	std		15, 120(1)
-	std		14, 112(1)
+	stdu	1, -1024(1)	/* Create frame */
+	std		31, 1016(1)	/* Save non-volatiles in our frame */
+	std		30, 1008(1)
+	std		29, 1000(1)
+	std		28, 992(1)
+	std		27, 984(1)
+	std		26, 976(1)
+	std		25, 968(1)
+	std		24, 960(1)
+	std		23, 952(1)
+	std		22, 944(1)
+	std		21, 936(1)
+	std		20, 928(1)
+	std		19, 920(1)
+	std		18, 912(1)
+	std		17, 904(1)
+	std		16, 896(1)
+	std		15, 888(1)
+	std		14, 880(1)
 #else
 	stmw	13, -(32-13)*4(1)
 	stw		0, 4(1)
@@ -80,24 +80,24 @@ C(.returnPC):
 #endif
 	// end code
 #ifdef MDFNPS3
-	ld		31, 248(1)	/* Restore non-volatiles */
-	ld		30, 240(1)
-	ld		29, 232(1)
-	ld		28, 224(1)
-	ld		27, 216(1)
-	ld		26, 208(1)
-	ld		25, 200(1)
-	ld		24, 192(1)
-	ld		23, 184(1)
-	ld		22, 176(1)
-	ld		21, 168(1)
-	ld		20, 160(1)
-	ld		19, 152(1)
-	ld		18, 144(1)
-	ld		17, 136(1)
-	ld		16, 128(1)
-	ld		15, 120(1)
-	ld		14, 112(1)
+	ld		31, 1016(1)	/* Restore non-volatiles */
+	ld		30, 1008(1)
+	ld		29, 1000(1)
+	ld		28, 992(1)
+	ld		27, 984(1)
+	ld		26, 976(1)
+	ld		25, 968(1)
+	ld		24, 960(1)
+	ld		23, 952(1)
+	ld		22, 944(1)
+	ld		21, 936(1)
+	ld		20, 928(1)
+	ld		19, 920(1)
+	ld		18, 912(1)
+	ld		17, 904(1)
+	ld		16, 896(1)
+	ld		15, 888(1)
+	ld		14, 880(1)
 	ld		1, 0(1)		/* Restore SP */
 	ld		0, 16(1)	/* Restore LR */
 	mtlr	0

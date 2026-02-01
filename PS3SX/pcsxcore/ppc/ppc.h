@@ -15,7 +15,7 @@ extern "C" {
 #include "../psxcommon.h"
 #include "ppc_mnemonics.h"
 
-#define NUM_HW_REGISTERS 26
+#define NUM_HW_REGISTERS 28
 
 /* general defines */
 #define write8(val)  *(u8 *)ppcPtr = val; ppcPtr++;
@@ -26,11 +26,11 @@ extern "C" {
 #ifdef MDFNPS3
 #define LIP(REG, IMM) \
 { \
-    uptr _lip_imm = (uptr)(IMM); \
+    uptr _lip_v = (uptr)(IMM); \
     if (sizeof(uptr) == 8) { \
-        LID(REG, _lip_imm); \
+        LID(REG, _lip_v); \
     } else { \
-        LIW(REG, (u32)_lip_imm); \
+        LIW(REG, (u32)_lip_v); \
     } \
 }
 #define CALLFunc(FUNC) \
@@ -53,7 +53,7 @@ extern "C" {
         MTCTR(0); \
         BCTRL(); \
     } \
-    LD(2, 296, 1); \
+    LD(2, 1024 + 40, 1); \
 }
 #else
 #define CALLFunc(FUNC) \

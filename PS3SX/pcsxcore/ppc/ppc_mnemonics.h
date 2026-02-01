@@ -460,12 +460,13 @@
 
 #define LID(REG, IMM) \
 { \
-    uint64_t _lid_imm = (uint64_t)(IMM); \
-    LIS(REG, ((_lid_imm >> 48) & 0xffff)); \
-    ORI(REG, REG, ((_lid_imm >> 32) & 0xffff)); \
+    uint64_t _lid_v = (uint64_t)(IMM); \
+    LI(REG, 0); \
+    if ((_lid_v >> 48) & 0xffff) ORIS(REG, REG, (_lid_v >> 48) & 0xffff); \
+    if ((_lid_v >> 32) & 0xffff) ORI(REG, REG, (_lid_v >> 32) & 0xffff); \
     SLDI(REG, REG, 32); \
-    ORIS(REG, REG, ((_lid_imm >> 16) & 0xffff)); \
-    ORI(REG, REG, (_lid_imm & 0xffff)); \
+    if ((_lid_v >> 16) & 0xffff) ORIS(REG, REG, (_lid_v >> 16) & 0xffff); \
+    if (_lid_v & 0xffff) ORI(REG, REG, _lid_v & 0xffff); \
 }
 
 /* floating point ops */
@@ -509,51 +510,10 @@
 
 
 /* extra combined opcodes */
-#if 1
-#define LIW(REG, IMM) /* Load Immidiate Word */ \
+#define LIW(REG, IMM) /* Load Immediate Word */ \
 { \
-	int _liw_reg = (REG); u32 _liw_imm = (u32)(IMM); \
-	if ((s32)_liw_imm == (s32)((s16)_liw_imm)) \
-	{ \
-		LI(_liw_reg, (s32)((s16)_liw_imm)); \
-	} else if (_liw_reg == 0) { \
-		LIS(_liw_reg, (((u32)_liw_imm)>>16)); \
-		if ((((u32)_liw_imm) & 0xffff) != 0) \
-		{ \
-			ORI(_liw_reg, _liw_reg, _liw_imm); \
-		} \
-	} else { \
-		if ((((u32)_liw_imm) & 0xffff) == 0) { \
-			LIS(_liw_reg, (((u32)_liw_imm)>>16)); \
-		} else { \
-			LI(_liw_reg, _liw_imm); \
-			if ((_liw_imm & 0x8000) == 0) { \
-				ADDIS(_liw_reg, _liw_reg, ((u32)_liw_imm)>>16); \
-			} else { \
-				ADDIS(_liw_reg, _liw_reg, ((((u32)_liw_imm)>>16) & 0xffff) + 1); \
-			} \
-		} \
-		/*if ((((u32)_liw_imm) & 0xffff) != 0) \
-		{ \
-			ORI(_liw_reg, _liw_reg, _liw_imm); \
-		}*/ \
-	} \
+    u32 _liw_v = (u32)(IMM); \
+    LI(REG, 0); \
+    if ((_liw_v >> 16) & 0xffff) ORIS(REG, REG, (_liw_v >> 16) & 0xffff); \
+    if (_liw_v & 0xffff) ORI(REG, REG, _liw_v & 0xffff); \
 }
-#else
-#define LIW(REG, IMM) /* Load Immidiate Word */ \
-{ \
-        int __reg = (REG); u32 __imm = (u32)(IMM); \
-	if ((s32)__imm == (s32)((s16)__imm)) \
-	{ \
-		LI(__reg, (s32)((s16)__imm)); \
-	} \
-	else \
-	{ \
-		LIS(__reg, (((u32)__imm)>>16)); \
-		if ((((u32)__imm) & 0xffff) != 0) \
-		{ \
-			ORI(__reg, __reg, __imm); \
-		} \
-	} \
-}
-#endif
