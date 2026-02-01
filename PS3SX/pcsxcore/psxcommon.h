@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -29,8 +28,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-//#include "config.h"
 
 // System includes
 #include <stdio.h>
@@ -116,6 +113,7 @@ typedef uint8_t boolean;
 #endif
 #endif
 
+extern FILE *emuLog;
 extern int Log;
 
 void __Log(char *fmt, ...);
@@ -123,6 +121,7 @@ void __Log(char *fmt, ...);
 extern long LoadCdBios;
 extern int StatesC;
 extern int cdOpenCase;
+extern boolean hleSoftCall;
 
 typedef struct {
 	char Gpu[MAXPATHLEN];
