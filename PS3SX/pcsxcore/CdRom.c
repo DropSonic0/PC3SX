@@ -23,6 +23,7 @@
 */
 
 #include "CdRom.h"
+#include "PsxDma.h"
 
 /* CD-ROM magic numbers */
 #define CdlSync         0
