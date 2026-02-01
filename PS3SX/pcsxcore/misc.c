@@ -24,8 +24,6 @@
 
 #include "misc.h"
 
-int Log = 0;
-
 /* PSX Executable types */
 #define PSX_EXE     1
 #define CPE_EXE     2
@@ -583,19 +581,4 @@ int RecvPcsxInfo() {
 }
 
 
-void __Log(char *fmt, ...) {
-	va_list list;
-#ifdef LOG_STDOUT
-	char tmp[1024];
-#endif
-
-	va_start(list, fmt);
-#ifndef LOG_STDOUT
-	vfprintf(emuLog, fmt, list);
-#else
-	vsprintf(tmp, fmt, list);
-	SysPrintf(tmp);
-#endif
-	va_end(list);
-}
 

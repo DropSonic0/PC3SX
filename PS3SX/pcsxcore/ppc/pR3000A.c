@@ -661,7 +661,7 @@ static void Return()
 
 static void iRet() {
     /* store cycle */
-    count = idlecyclecount + (pc - pcold)/4;
+    count = (idlecyclecount + (pc - pcold) / 4);
     ADDI(PutHWRegSpecial(CYCLECOUNT), GetHWRegSpecial(CYCLECOUNT), count);
     Return();
 }
@@ -2660,11 +2660,11 @@ static void recMTC0() {
 		LIW(PutHWRegSpecial(PSXPC), (u32)pc);
 		FlushAllHWReg();
 		CALLFunc((u32)psxTestSWInts);
-/*		if(_Rd_ == 12) {
+		if(_Rd_ == 12) {
 		  LWZ(0, OFFSET(&psxRegs, &psxRegs.interrupt), GetHWRegSpecial(PSXREGS));
 		  ORIS(0, 0, 0x8000);
 		  STW(0, OFFSET(&psxRegs, &psxRegs.interrupt), GetHWRegSpecial(PSXREGS));
-		}*/
+		}
 		branch = 2;
 		iRet();
 	}
@@ -2718,7 +2718,7 @@ static void recHLE() {
 		CALLFunc((u32)psxHLEt[0]); // call dummy function
 	}
 	
-	count = idlecyclecount + (pc - pcold)/4 + 20;
+	count = (idlecyclecount + (pc - pcold) / 4 + 20);
 	ADDI(PutHWRegSpecial(CYCLECOUNT), GetHWRegSpecial(CYCLECOUNT), count);
 	FlushAllHWReg();
 	CALLFunc((u32)psxBranchTest);
