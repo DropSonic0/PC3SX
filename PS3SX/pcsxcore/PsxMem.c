@@ -15,91 +15,103 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307, USA.          *
  ***************************************************************************/
 
-/*  Playstation Memory Map (from Playstation doc by Joshua Walker)
-0x0000_0000-0x0000_ffff		Kernel (64K)	
-0x0001_0000-0x001f_ffff		User Memory (1.9 Meg)	
-		
-0x1f00_0000-0x1f00_ffff		Parallel Port (64K)	
-		
-0x1f80_0000-0x1f80_03ff		Scratch Pad (1024 bytes)	
-		
-0x1f80_1000-0x1f80_2fff		Hardware Registers (8K)	
-		
-0x8000_0000-0x801f_ffff		Kernel and User Memory Mirror (2 Meg) Cached	
-		
-0xa000_0000-0xa01f_ffff		Kernel and User Memory Mirror (2 Meg) Uncached	
-		
-0xbfc0_0000-0xbfc7_ffff		BIOS (512K)
-*/
- 
 /*
 * PSX memory functions.
 */
 
-/* Ryan TODO: I'd rather not use GLib in here */
-
 #include <stdlib.h>
+#include <string.h>
 #include "PsxMem.h"
 #include "R3000A.h"
 #include "PsxHw.h"
+#include "debug.h"
 
-extern void SysMessage(const char *fmt, ...);
+s8 *psxM = NULL; // Kernel & User Memory (2 Meg)
+s8 *psxP = NULL; // Parallel Port (64K)
+s8 *psxR = NULL; // BIOS ROM (512K)
+s8 *psxH = NULL; // Scratch Pad (1K) & Hardware Registers (8K)
 
-s8 psxM[0x00220000] __attribute__((aligned(32)));
-s8 psxR[0x00080000] __attribute__((aligned(32)));
-u8* psxMemWLUT[0x10000] __attribute__((aligned(32)));
-u8* psxMemRLUT[0x10000] __attribute__((aligned(32)));
+u8 **psxMemWLUT = NULL;
+u8 **psxMemRLUT = NULL;
+
+/*  Playstation Memory Map (from Playstation doc by Joshua Walker)
+0x0000_0000-0x0000_ffff		Kernel (64K)
+0x0001_0000-0x001f_ffff		User Memory (1.9 Meg)
+
+0x1f00_0000-0x1f00_ffff		Parallel Port (64K)
+
+0x1f80_0000-0x1f80_03ff		Scratch Pad (1024 bytes)
+
+0x1f80_1000-0x1f80_2fff		Hardware Registers (8K)
+
+0x1fc0_0000-0x1fc7_ffff		BIOS (512K)
+
+0x8000_0000-0x801f_ffff		Kernel and User Memory Mirror (2 Meg) Cached
+0x9fc0_0000-0x9fc7_ffff		BIOS Mirror (512K) Cached
+
+0xa000_0000-0xa01f_ffff		Kernel and User Memory Mirror (2 Meg) Uncached
+0xbfc0_0000-0xbfc7_ffff		BIOS Mirror (512K) Uncached
+*/
 
 int psxMemInit(void) {
 	int i;
 
-	//psxMemRLUT = (u8**)memalign(32,0x10000 * sizeof(void*));
-	//psxMemWLUT = (u8**)memalign(32,0x10000 * sizeof(void*));
-	memset(psxMemRLUT, 0, 0x10000 * sizeof(void*));
-	memset(psxMemWLUT, 0, 0x10000 * sizeof(void*));
-	//psxM = memalign(32,0x00220000);
+	psxMemRLUT = (u8 **)malloc(0x10000 * sizeof(void *));
+	psxMemWLUT = (u8 **)malloc(0x10000 * sizeof(void *));
+	memset(psxMemRLUT, 0, 0x10000 * sizeof(void *));
+	memset(psxMemWLUT, 0, 0x10000 * sizeof(void *));
+
+	psxM = malloc(0x00220000);
+
 	psxP = &psxM[0x200000];
 	psxH = &psxM[0x210000];
-	//psxR = (s8*)memalign(32,0x00080000);
-	/*if (psxMemRLUT == NULL || psxMemWLUT == NULL || 
+
+	psxR = (s8 *)malloc(0x00080000);
+
+	if (psxMemRLUT == NULL || psxMemWLUT == NULL || 
 		psxM == NULL || psxP == NULL || psxH == NULL) {
-		SysMessage(_("Error allocating memory!")); return -1;
-	}*/
+		SysMessage(_("Error allocating memory!"));
+		return -1;
+	}
 
 // MemR
-	for (i=0; i<0x80; i++) psxMemRLUT[i + 0x0000] = (u8*)&psxM[(i & 0x1f) << 16];
-	
-	memcpy(psxMemRLUT + 0x8000, psxMemRLUT, 0x80 * sizeof(void*));
-	memcpy(psxMemRLUT + 0xa000, psxMemRLUT, 0x80 * sizeof(void*));
+	for (i = 0; i < 0x80; i++) psxMemRLUT[i + 0x0000] = (u8 *)&psxM[(i & 0x1f) << 16];
 
-	for (i=0; i<0x01; i++) psxMemRLUT[i + 0x1f00] = (u8*)&psxP[i << 16];
+	memcpy(psxMemRLUT + 0x8000, psxMemRLUT, 0x80 * sizeof(void *));
+	memcpy(psxMemRLUT + 0xa000, psxMemRLUT, 0x80 * sizeof(void *));
 
-	for (i=0; i<0x01; i++) psxMemRLUT[i + 0x1f80] = (u8*)&psxH[i << 16];
+	psxMemRLUT[0x1f00] = (u8 *)psxP;
+	psxMemRLUT[0x1f80] = (u8 *)psxH;
 
-	for (i=0; i<0x08; i++) psxMemRLUT[i + 0xbfc0] = (u8*)&psxR[i << 16];
+	for (i = 0; i < 0x08; i++) psxMemRLUT[i + 0x1fc0] = (u8 *)&psxR[i << 16];
+
+	memcpy(psxMemRLUT + 0x9fc0, psxMemRLUT + 0x1fc0, 0x08 * sizeof(void *));
+	memcpy(psxMemRLUT + 0xbfc0, psxMemRLUT + 0x1fc0, 0x08 * sizeof(void *));
 
 // MemW
-	for (i=0; i<0x80; i++) psxMemWLUT[i + 0x0000] = (u8*)&psxM[(i & 0x1f) << 16];
-	memcpy(psxMemWLUT + 0x8000, psxMemWLUT, 0x80 * sizeof(void*));
-	memcpy(psxMemWLUT + 0xa000, psxMemWLUT, 0x80 * sizeof(void*));
+	for (i = 0; i < 0x80; i++) psxMemWLUT[i + 0x0000] = (u8 *)&psxM[(i & 0x1f) << 16];
 
-	for (i=0; i<0x01; i++) psxMemWLUT[i + 0x1f00] = (u8*)&psxP[i << 16];
+	memcpy(psxMemWLUT + 0x8000, psxMemWLUT, 0x80 * sizeof(void *));
+	memcpy(psxMemWLUT + 0xa000, psxMemWLUT, 0x80 * sizeof(void *));
 
-	for (i=0; i<0x01; i++) psxMemWLUT[i + 0x1f80] = (u8*)&psxH[i << 16];
+	psxMemWLUT[0x1f00] = (u8 *)psxP;
+	psxMemWLUT[0x1f80] = (u8 *)psxH;
 
 	return 0;
 }
 
 void psxMemReset(void) {
 	FILE *f = NULL;
+	char bios[1024];
+
 	memset(psxM, 0, 0x00200000);
 	memset(psxP, 0, 0x00010000);
 	memset(psxR, 0, 0x80000);
 
-	if (strcmp(Config.Bios, "HLE")) {
+	if (strcmp(Config.Bios, "HLE") != 0) {
 		f = fopen(Config.BiosDir, "rb");
 
 		if (f == NULL) {
@@ -116,13 +128,13 @@ void psxMemReset(void) {
 }
 
 void psxMemShutdown(void) {
-/*	free(psxM);
+	free(psxM);
 	free(psxR);
 	free(psxMemRLUT);
-	free(psxMemWLUT);*/
+	free(psxMemWLUT);
 }
 
-static int writeok=1;
+static int writeok = 1;
 
 u8 psxMemRead8(u32 mem) {
 	char *p;
@@ -137,6 +149,8 @@ u8 psxMemRead8(u32 mem) {
 	} else {
 		p = (char *)(psxMemRLUT[t]);
 		if (p != NULL) {
+			if (Config.Debug)
+				DebugCheckBP((mem & 0xffffff) | 0x80000000, BR1);
 			return *(u8 *)(p + (mem & 0xffff));
 		} else {
 #ifdef PSXMEM_LOG
@@ -151,6 +165,8 @@ u16 psxMemRead16(u32 mem) {
 	char *p;
 	u32 t;
 
+	psxRegs.cycle += 1;
+	
 	t = mem >> 16;
 	if (t == 0x1f80) {
 		if (mem < 0x1f801000)
@@ -160,6 +176,8 @@ u16 psxMemRead16(u32 mem) {
 	} else {
 		p = (char *)(psxMemRLUT[t]);
 		if (p != NULL) {
+			if (Config.Debug)
+				DebugCheckBP((mem & 0xffffff) | 0x80000000, BR2);
 			return SWAPu16(*(u16 *)(p + (mem & 0xffff)));
 		} else {
 #ifdef PSXMEM_LOG
@@ -174,6 +192,8 @@ u32 psxMemRead32(u32 mem) {
 	char *p;
 	u32 t;
 
+	psxRegs.cycle += 1;
+	
 	t = mem >> 16;
 	if (t == 0x1f80) {
 		if (mem < 0x1f801000)
@@ -182,8 +202,9 @@ u32 psxMemRead32(u32 mem) {
 			return psxHwRead32(mem);
 	} else {
 		p = (char *)(psxMemRLUT[t]);
-		if (p != NULL)
-		{			
+		if (p != NULL) {
+			if (Config.Debug)
+				DebugCheckBP((mem & 0xffffff) | 0x80000000, BR4);
 			return SWAPu32(*(u32 *)(p + (mem & 0xffff)));
 		} else {
 #ifdef PSXMEM_LOG
@@ -198,6 +219,8 @@ void psxMemWrite8(u32 mem, u8 value) {
 	char *p;
 	u32 t;
 
+	psxRegs.cycle += 1;
+	
 	t = mem >> 16;
 	if (t == 0x1f80) {
 		if (mem < 0x1f801000)
@@ -207,10 +230,11 @@ void psxMemWrite8(u32 mem, u8 value) {
 	} else {
 		p = (char *)(psxMemWLUT[t]);
 		if (p != NULL) {
-			*(u8  *)(p + (mem & 0xffff)) = value;
+			if (Config.Debug)
+				DebugCheckBP((mem & 0xffffff) | 0x80000000, BW1);
+			*(u8 *)(p + (mem & 0xffff)) = value;
 #ifdef PSXREC
-			//printf("cleanup MEM8\n");
-			psxCpu->Clear((mem&(~3)), 1);
+			psxCpu->Clear((mem & (~3)), 1);
 #endif
 		} else {
 #ifdef PSXMEM_LOG
@@ -224,6 +248,8 @@ void psxMemWrite16(u32 mem, u16 value) {
 	char *p;
 	u32 t;
 
+	psxRegs.cycle += 1;
+
 	t = mem >> 16;
 	if (t == 0x1f80) {
 		if (mem < 0x1f801000)
@@ -233,10 +259,11 @@ void psxMemWrite16(u32 mem, u16 value) {
 	} else {
 		p = (char *)(psxMemWLUT[t]);
 		if (p != NULL) {
+			if (Config.Debug)
+				DebugCheckBP((mem & 0xffffff) | 0x80000000, BW2);
 			*(u16 *)(p + (mem & 0xffff)) = SWAPu16(value);
 #ifdef PSXREC
-			//printf("cleanup MEM16\n");
-			psxCpu->Clear((mem&(~1)), 1);
+			psxCpu->Clear((mem & (~3)), 1);
 #endif
 		} else {
 #ifdef PSXMEM_LOG
@@ -250,7 +277,8 @@ void psxMemWrite32(u32 mem, u32 value) {
 	char *p;
 	u32 t;
 
-//	if ((mem&0x1fffff) == 0x71E18 || value == 0x48088800) SysPrintf("t2fix!!\n");
+	psxRegs.cycle += 1;
+
 	t = mem >> 16;
 	if (t == 0x1f80) {
 		if (mem < 0x1f801000)
@@ -260,16 +288,16 @@ void psxMemWrite32(u32 mem, u32 value) {
 	} else {
 		p = (char *)(psxMemWLUT[t]);
 		if (p != NULL) {
+			if (Config.Debug)
+				DebugCheckBP((mem & 0xffffff) | 0x80000000, BW4);
 			*(u32 *)(p + (mem & 0xffff)) = SWAPu32(value);
 #ifdef PSXREC
-			//printf("cleanup MEM32  1\n");
 			psxCpu->Clear(mem, 1);
 #endif
 		} else {
 			if (mem != 0xfffe0130) {
 #ifdef PSXREC
 				if (!writeok)
-					//printf("cleanup MEM32  2\n");
 					psxCpu->Clear(mem, 1);
 #endif
 
@@ -283,16 +311,16 @@ void psxMemWrite32(u32 mem, u32 value) {
 					case 0x800: case 0x804:
 						if (writeok == 0) break;
 						writeok = 0;
-						memset(psxMemWLUT + 0x0000, 0, 0x80 * sizeof(void*));
-						memset(psxMemWLUT + 0x8000, 0, 0x80 * sizeof(void*));
-						memset(psxMemWLUT + 0xa000, 0, 0x80 * sizeof(void*));
+						memset(psxMemWLUT + 0x0000, 0, 0x80 * sizeof(void *));
+						memset(psxMemWLUT + 0x8000, 0, 0x80 * sizeof(void *));
+						memset(psxMemWLUT + 0xa000, 0, 0x80 * sizeof(void *));
 						break;
-					case 0x1e988:
+					case 0x00: case 0x1e988:
 						if (writeok == 1) break;
 						writeok = 1;
-						for (i=0; i<0x80; i++) psxMemWLUT[i + 0x0000] = (void*)&psxM[(i & 0x1f) << 16];
-						memcpy(psxMemWLUT + 0x8000, psxMemWLUT, 0x80 * sizeof(void*));
-						memcpy(psxMemWLUT + 0xa000, psxMemWLUT, 0x80 * sizeof(void*));
+						for (i = 0; i < 0x80; i++) psxMemWLUT[i + 0x0000] = (void *)&psxM[(i & 0x1f) << 16];
+						memcpy(psxMemWLUT + 0x8000, psxMemWLUT, 0x80 * sizeof(void *));
+						memcpy(psxMemWLUT + 0xa000, psxMemWLUT, 0x80 * sizeof(void *));
 						break;
 					default:
 #ifdef PSXMEM_LOG
