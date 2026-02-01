@@ -744,8 +744,8 @@ static void Return(void)
 	// We jump directly to the code address (first word of descriptor)
 	uptr code_addr = *(uptr*)returnPC;
 	LIP(0, code_addr);
-	MTLR(0);
-	BLR();
+	MTCTR(0);
+	BCTR();
 }
 
 static void iRet(void) {
@@ -3444,6 +3444,9 @@ static void (*recCP2BSC[32])(void) = {
 };
 
 static void recRecompile(void) {
+	if (execCount < 100 || execCount % 10000 == 0) {
+		SysPrintf("recompile: PC=%08x\n", psxRegs.pc);
+	}
 	//static int recCount = 0;
 	char *p;
 	u32 *ptr;

@@ -665,6 +665,7 @@ int main(void)
 		strcpy(usrdirPath, "/dev_hdd0/game/PCSX00001/USRDIR");
 	}
 	printf("Final usrdirPath: %s\n", usrdirPath);
+	cellFsChmod(usrdirPath, 0777);
 
 	char initialLogPath[512];
 	sprintf(initialLogPath, "%s/log.txt", usrdirPath);

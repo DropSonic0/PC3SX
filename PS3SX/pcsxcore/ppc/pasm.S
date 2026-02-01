@@ -55,9 +55,9 @@ C(.recRun):
 	std		15, 120(1)
 	std		14, 112(1)
 #else
-	stmw	13, -76(1)
+	stmw	13, -(32-13)*4(1)
 	stw		0, 4(1)
-	stwu	1, -96(1)
+	stwu	1, -((32-13)*4+8)(1)
 #endif
 	
 	/* execute code */
@@ -103,10 +103,10 @@ C(.returnPC):
 	mtlr	0
 	ld		2, 40(1)	/* Restore TOC */
 #else
-	lwz		0, 96+4(1)
-	addi	1, 1, 96
+	lwz		0, (32-13)*4+8+4(1)
+	addi	1, 1, (32-13)*4+8
 	mtlr	0
-	lmw		13, -76(1)
+	lmw		13, -(32-13)*4(1)
 #endif
 	blr
 //}*/

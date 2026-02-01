@@ -53,7 +53,7 @@ extern "C" {
         MTCTR(0); \
         BCTRL(); \
     } \
-    LD(2, 40, 1); \
+    LD(2, 296, 1); \
 }
 #else
 #define CALLFunc(FUNC) \
