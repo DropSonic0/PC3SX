@@ -174,9 +174,11 @@ int ReadSocket(char * buffer, int len) {
 
     if (endl) {
         r = endl - tbuf;
-        strncpy(buffer, tbuf, r);
+        if (r >= len) r = len - 1;
+        memcpy(buffer, tbuf, r);
+        buffer[r] = 0;
 
-        r += 2;
+        r = endl - tbuf + 2;
         memmove(tbuf, tbuf + r, 512 - r);
         ptr -= r;
         memset(tbuf + r, 0, 512 - r);

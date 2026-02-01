@@ -24,6 +24,7 @@
 #include "cheat.h"
 #include "ppf.h"
 #include "cdriso.h"
+#include "debug.h"
 
 PcsxConfig Config;
 boolean NetOpened = FALSE;

@@ -29,6 +29,8 @@
 #else
 #include <pthread.h>
 #include <sys/time.h>
+#include <sys/sys_time.h>
+#include <sys/timer.h>
 #endif
 
 static FILE *cdHandle = NULL;
@@ -125,16 +127,7 @@ static void tok2msf(char *time, char *msf) {
 
 #ifndef _WIN32
 static long GetTickCount(void) {
-	static time_t		initial_time = 0;
-	struct timeval		now;
-
-	gettimeofday(&now, NULL);
-
-	if (initial_time == 0) {
-		initial_time = now.tv_sec;
-	}
-
-	return (now.tv_sec - initial_time) * 1000L + now.tv_usec / 1000L;
+	return (long)(sys_time_get_system_time() / 1000);
 }
 #endif
 
@@ -170,7 +163,7 @@ static void *playthread(void *param)
 #ifdef _WIN32
 		Sleep(d);
 #else
-		usleep(d * 1000);
+		sys_timer_usleep(d * 1000);
 #endif
 
 		t = GetTickCount() + CDDA_FRAMETIME;

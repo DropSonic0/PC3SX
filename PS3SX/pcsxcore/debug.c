@@ -467,7 +467,7 @@ static void ProcessCommands() {
             if (!arguments) {
                 reply[0] = 0;
                 for (i = 0; i < 32; i++) {
-                    sprintf(reply, "%s211 %02X=%08X\r\n", reply, i, psxRegs.GPR.r[i]);
+                    sprintf(reply + strlen(reply), "211 %02X=%08X\r\n", i, psxRegs.GPR.r[i]);
                 }
             } else {
                 if ((code >= 0) && (code < 32)) {
@@ -490,7 +490,7 @@ static void ProcessCommands() {
             if (!arguments) {
                 reply[0] = 0;
                 for (i = 0; i < 32; i++) {
-                    sprintf(reply, "%s213 %02X=%08X\r\n", reply, i, psxRegs.CP0.r[i]);
+                    sprintf(reply + strlen(reply), "213 %02X=%08X\r\n", i, psxRegs.CP0.r[i]);
                 }
             } else {
                 if ((code >= 0) && (code < 32)) {
@@ -510,7 +510,7 @@ static void ProcessCommands() {
             if (!arguments) {
                 reply[0] = 0;
                 for (i = 0; i < 32; i++) {
-                    sprintf(reply, "%s214 %02X=%08X\r\n", reply, i, psxRegs.CP2C.r[i]);
+                    sprintf(reply + strlen(reply), "214 %02X=%08X\r\n", i, psxRegs.CP2C.r[i]);
                 }
             } else {
                 if ((code >= 0) && (code < 32)) {
@@ -530,7 +530,7 @@ static void ProcessCommands() {
             if (!arguments) {
                 reply[0] = 0;
                 for (i = 0; i < 32; i++) {
-                    sprintf(reply, "%s215 %02X=%08X\r\n", reply, i, psxRegs.CP2D.r[i]);
+                    sprintf(reply + strlen(reply), "215 %02X=%08X\r\n", i, psxRegs.CP2D.r[i]);
                 }
             } else {
                 if ((code >= 0) && (code < 32)) {
@@ -913,7 +913,7 @@ static void ProcessCommands() {
                 if (first) {
                     reply[0] = 0;
                     for (bp = first; bp; bp = next_breakpoint(bp)) {
-                        sprintf(reply, "%s400 %X@%08X-%s\r\n", reply, bp->number, bp->address, breakpoint_type_names[bp->type]);
+                        sprintf(reply + strlen(reply), "400 %X@%08X-%s\r\n", bp->number, bp->address, breakpoint_type_names[bp->type]);
                     }
                 } else {
                     sprintf(reply, "530 No breakpoint\r\n");

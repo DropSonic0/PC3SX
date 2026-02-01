@@ -22,6 +22,7 @@
 * Miscellaneous functions, including savesates and CD-ROM loading.
 */
 
+#include <ctype.h>
 #include "misc.h"
 #include "ppf.h"
 
@@ -401,7 +402,7 @@ int Load(char *ExePath) {
 
 // STATES
 
-const char PcsxHeader[32] = "STv3 PCSX v" PACKAGE_VERSION;
+const char PcsxHeader[32] = "STv3 PCSX v" "1.9.92";
 
 int SaveState(char *file) {
 	gzFile f;
