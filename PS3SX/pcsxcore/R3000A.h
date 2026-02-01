@@ -21,6 +21,10 @@
 #ifndef __R3000A_H__
 #define __R3000A_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "PsxCommon.h"
 #include "PsxMem.h"
 #include "PsxCounters.h"
@@ -126,6 +130,27 @@ typedef union {
 } psxCP2Ctrl;
 
 typedef struct {
+	u32 sCycle, cycle;
+} psxIntCycle;
+
+enum {
+	PSXINT_SIO = 0,
+	PSXINT_CDR,
+	PSXINT_CDREAD,
+	PSXINT_GPUDMA,
+	PSXINT_MDECOUTDMA,
+	PSXINT_SPUDMA,
+	PSXINT_GPUBUSY,
+	PSXINT_MDECINDMA,
+	PSXINT_GPUOTCDMA,
+	PSXINT_CDRDMA,
+	PSXINT_SPUASYNC,
+	PSXINT_CDRDBUF,
+	PSXINT_CDRLID,
+	PSXINT_CDRPLAY
+};
+
+typedef struct {
 	psxGPRRegs GPR;		/* General Purpose Registers */
 	psxCP0Regs CP0;		/* Coprocessor0 Registers */
 	psxCP2Data CP2D; 	/* Cop2 data registers */
@@ -134,7 +159,7 @@ typedef struct {
     u32 code;			/* The instruction */
 	u32 cycle;
 	u32 interrupt;
-	u32 intCycle[32];
+	psxIntCycle intCycle[32];
 } psxRegisters;
 
 extern psxRegisters psxRegs;
@@ -221,4 +246,7 @@ void psxTestSWInts();
 void psxTestHWInts();
 void psxJumpTest();
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* __R3000A_H__ */
