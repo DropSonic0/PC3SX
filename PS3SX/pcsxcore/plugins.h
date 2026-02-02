@@ -73,28 +73,28 @@ typedef void (CALLBACK* CBGPUclearDynarec)(void (CALLBACK *callback)(void));
 //plugin stuff From Shadow
 // *** walking in the valley of your darking soul i realize that i was alone
 //Gpu function pointers
-CBGPUupdateLace    GPU_updateLace;
-CBGPUinit          GPU_init;
-CBGPUshutdown      GPU_shutdown; 
-CBGPUconfigure     GPU_configure;
-CBGPUtest          GPU_test;
-CBGPUabout         GPU_about;
-CBGPUopen          GPU_open;
-CBGPUclose         GPU_close;
-CBGPUreadStatus    GPU_readStatus;
-CBGPUreadData      GPU_readData;
-CBGPUreadDataMem   GPU_readDataMem;
-CBGPUwriteStatus   GPU_writeStatus; 
-CBGPUwriteData     GPU_writeData;
-CBGPUwriteDataMem  GPU_writeDataMem;
-CBGPUdmaChain      GPU_dmaChain;
-CBGPUkeypressed    GPU_keypressed;
-CBGPUdisplayText   GPU_displayText;
-CBGPUmakeSnapshot  GPU_makeSnapshot;
-CBGPUfreeze        GPU_freeze;
-CBGPUgetScreenPic  GPU_getScreenPic;
-CBGPUshowScreenPic GPU_showScreenPic;
-CBGPUclearDynarec  GPU_clearDynarec;
+extern CBGPUupdateLace    GPU_updateLace;
+extern CBGPUinit          GPU_init;
+extern CBGPUshutdown      GPU_shutdown;
+extern CBGPUconfigure     GPU_configure;
+extern CBGPUtest          GPU_test;
+extern CBGPUabout         GPU_about;
+extern CBGPUopen          GPU_open;
+extern CBGPUclose         GPU_close;
+extern CBGPUreadStatus    GPU_readStatus;
+extern CBGPUreadData      GPU_readData;
+extern CBGPUreadDataMem   GPU_readDataMem;
+extern CBGPUwriteStatus   GPU_writeStatus;
+extern CBGPUwriteData     GPU_writeData;
+extern CBGPUwriteDataMem  GPU_writeDataMem;
+extern CBGPUdmaChain      GPU_dmaChain;
+extern CBGPUkeypressed    GPU_keypressed;
+extern CBGPUdisplayText   GPU_displayText;
+extern CBGPUmakeSnapshot  GPU_makeSnapshot;
+extern CBGPUfreeze        GPU_freeze;
+extern CBGPUgetScreenPic  GPU_getScreenPic;
+extern CBGPUshowScreenPic GPU_showScreenPic;
+extern CBGPUclearDynarec  GPU_clearDynarec;
 
 //cd rom plugin ;)
 typedef long (CALLBACK* CDRinit)(void);
