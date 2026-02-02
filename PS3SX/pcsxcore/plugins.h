@@ -239,6 +239,8 @@ typedef long (CALLBACK* PADkeypressed)(void);
 typedef unsigned char (CALLBACK* PADstartPoll)(int);
 typedef unsigned char (CALLBACK* PADpoll)(unsigned char);
 typedef void (CALLBACK* PADsetSensitive)(int);
+typedef void (CALLBACK* PADregisterVibration)(void (CALLBACK *callback)(unsigned long, unsigned long));
+typedef void (CALLBACK* PADregisterCursor)(void (CALLBACK *callback)(int, int, int));
 
 //PAD POINTERS
 extern PADconfigure        PAD1_configure;
@@ -254,6 +256,8 @@ extern PADkeypressed		PAD1_keypressed;
 extern PADstartPoll        PAD1_startPoll;
 extern PADpoll             PAD1_poll;
 extern PADsetSensitive     PAD1_setSensitive;
+extern PADregisterVibration PAD1_registerVibration;
+extern PADregisterCursor   PAD1_registerCursor;
 
 extern PADconfigure        PAD2_configure;
 extern PADabout            PAD2_about;
@@ -268,6 +272,8 @@ extern PADkeypressed		PAD2_keypressed;
 extern PADstartPoll        PAD2_startPoll;
 extern PADpoll             PAD2_poll;
 extern PADsetSensitive     PAD2_setSensitive;
+extern PADregisterVibration PAD2_registerVibration;
+extern PADregisterCursor   PAD2_registerCursor;
 
 // NET plugin
 

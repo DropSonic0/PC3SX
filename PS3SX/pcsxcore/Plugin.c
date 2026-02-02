@@ -43,15 +43,6 @@ extern int UseGui;
 int cdOpenCase = 0;
 
 
-long PAD1__open(void) {
-	SysPrintf("returning pad open ");
-	return PAD1_open(&gpuDisp);
-}
-
-long PAD2__open(void) {
-	return PAD2_open(&gpuDisp);
-}
-
 void SignalExit(int sig) {
 	ClosePlugins();
 //	OnFile_Exit();
