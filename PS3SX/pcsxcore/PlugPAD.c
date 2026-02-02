@@ -133,8 +133,12 @@ long CALLBACK PAD__init(long flags) {
     g.cfg.PadDef[1].Type = PSE_PAD_TYPE_STANDARD;
 	g.PadState[0].PadMode = 0;
 	g.PadState[0].PadID = 0x41;
+	g.PadState[0].KeyStatus = 0xffff;
+	g.PadState[0].JoyKeyStatus = 0xffff;
 	g.PadState[1].PadMode = 0;
 	g.PadState[1].PadID = 0x41;
+	g.PadState[1].KeyStatus = 0xffff;
+	g.PadState[1].JoyKeyStatus = 0xffff;
 
 	return PSE_PAD_ERR_SUCCESS;
 }
@@ -202,11 +206,14 @@ static uint8_t stdmodel[2][8] = {
 	 0x00}
 };
 
-static uint8_t CurPad = 0, CurByte = 0, CurCmd = 0, CmdLen = 0;
+static uint8_t CurPad = 0;
+static uint8_t CurByte[2] = {0, 0};
+static uint8_t CurCmd[2] = {0, 0};
+static uint8_t CmdLen[2] = {0, 0};
 
 unsigned char CALLBACK PAD__startPoll(int pad) {
 	CurPad = pad - 1;
-	CurByte = 0;
+	CurByte[CurPad] = 0;
 
     UpdatePadState(CurPad);
 
@@ -214,55 +221,55 @@ unsigned char CALLBACK PAD__startPoll(int pad) {
 }
 
 unsigned char CALLBACK PAD__poll(unsigned char value) {
-	static uint8_t		*buf = NULL;
+	static uint8_t		*buf[2] = {NULL, NULL};
 	uint16_t			n;
 
-	if (CurByte == 0) {
-		CurByte++;
+	if (CurByte[CurPad] == 0) {
+		CurByte[CurPad]++;
 
 		// Don't enable Analog/Vibration for a standard pad
 		if (g.cfg.PadDef[CurPad].Type != PSE_PAD_TYPE_ANALOGPAD) {
-			CurCmd = CMD_READ_DATA_AND_VIBRATE;
+			CurCmd[CurPad] = CMD_READ_DATA_AND_VIBRATE;
 		} else {
-			CurCmd = value;
+			CurCmd[CurPad] = value;
 		}
 
-		switch (CurCmd) {
+		switch (CurCmd[CurPad]) {
 			case CMD_CONFIG_MODE:
-				CmdLen = 8;
-				buf = stdcfg[CurPad];
+				CmdLen[CurPad] = 8;
+				buf[CurPad] = stdcfg[CurPad];
 				if (stdcfg[CurPad][3] == 0xFF) return 0xF3;
 				else return g.PadState[CurPad].PadID;
 
 			case CMD_SET_MODE_AND_LOCK:
-				CmdLen = 8;
-				buf = stdmode[CurPad];
+				CmdLen[CurPad] = 8;
+				buf[CurPad] = stdmode[CurPad];
 				return 0xF3;
 
 			case CMD_QUERY_MODEL_AND_MODE:
-				CmdLen = 8;
-				buf = stdmodel[CurPad];
-				buf[4] = g.PadState[CurPad].PadMode;
+				CmdLen[CurPad] = 8;
+				buf[CurPad] = stdmodel[CurPad];
+				buf[CurPad][4] = g.PadState[CurPad].PadMode;
 				return 0xF3;
 
 			case CMD_QUERY_ACT:
-				CmdLen = 8;
-				buf = unk46[CurPad];
+				CmdLen[CurPad] = 8;
+				buf[CurPad] = unk46[CurPad];
 				return 0xF3;
 
 			case CMD_QUERY_COMB:
-				CmdLen = 8;
-				buf = unk47[CurPad];
+				CmdLen[CurPad] = 8;
+				buf[CurPad] = unk47[CurPad];
 				return 0xF3;
 
 			case CMD_QUERY_MODE:
-				CmdLen = 8;
-				buf = unk4c[CurPad];
+				CmdLen[CurPad] = 8;
+				buf[CurPad] = unk4c[CurPad];
 				return 0xF3;
 
 			case CMD_VIBRATION_TOGGLE:
-				CmdLen = 8;
-				buf = unk4d[CurPad];
+				CmdLen[CurPad] = 8;
+				buf[CurPad] = unk4d[CurPad];
 				return 0xF3;
 
 			case CMD_READ_DATA_AND_VIBRATE:
@@ -274,88 +281,91 @@ unsigned char CALLBACK PAD__poll(unsigned char value) {
 				stdpar[CurPad][3] = n >> 8;
 
 				if (g.PadState[CurPad].PadMode == 1) {
-					CmdLen = 8;
+					CmdLen[CurPad] = 8;
 
 					stdpar[CurPad][4] = g.PadState[CurPad].AnalogStatus[ANALOG_RIGHT][0];
 					stdpar[CurPad][5] = g.PadState[CurPad].AnalogStatus[ANALOG_RIGHT][1];
 					stdpar[CurPad][6] = g.PadState[CurPad].AnalogStatus[ANALOG_LEFT][0];
 					stdpar[CurPad][7] = g.PadState[CurPad].AnalogStatus[ANALOG_LEFT][1];
 				} else {
-					CmdLen = 4;
+					CmdLen[CurPad] = 4;
 				}
 
-				buf = stdpar[CurPad];
+				buf[CurPad] = stdpar[CurPad];
 				return g.PadState[CurPad].PadID;
 		}
 	}
 
-	switch (CurCmd) {
+	switch (CurCmd[CurPad]) {
 		case CMD_CONFIG_MODE:
-			if (CurByte == 2) {
+			if (CurByte[CurPad] == 2) {
 				switch (value) {
 					case 0:
-						buf[2] = 0;
-						buf[3] = 0;
+						buf[CurPad][2] = 0;
+						buf[CurPad][3] = 0;
 						break;
 
 					case 1:
-						buf[2] = 0xFF;
-						buf[3] = 0xFF;
+						buf[CurPad][2] = 0xFF;
+						buf[CurPad][3] = 0xFF;
 						break;
 			}
 			}
 			break;
 
 		case CMD_SET_MODE_AND_LOCK:
-			if (CurByte == 2) {
+			if (CurByte[CurPad] == 2) {
 				g.PadState[CurPad].PadMode = value;
 				g.PadState[CurPad].PadID = value ? 0x73 : 0x41;
 			}
 			break;
 
 		case CMD_QUERY_ACT:
-			if (CurByte == 2) {
+			if (CurByte[CurPad] == 2) {
 				switch (value) {
 					case 0: // default
-						buf[5] = 0x02;
-						buf[6] = 0x00;
-						buf[7] = 0x0A;
+						buf[CurPad][5] = 0x02;
+						buf[CurPad][6] = 0x00;
+						buf[CurPad][7] = 0x0A;
 						break;
 
 					case 1: // Param std conf change
-						buf[5] = 0x01;
-						buf[6] = 0x01;
-						buf[7] = 0x14;
+						buf[CurPad][5] = 0x01;
+						buf[CurPad][6] = 0x01;
+						buf[CurPad][7] = 0x14;
 						break;
 				}
 			}
 			break;
 
 		case CMD_QUERY_MODE:
-			if (CurByte == 2) {
+			if (CurByte[CurPad] == 2) {
 				switch (value) {
 					case 0: // mode 0 - digital mode
-						buf[5] = PSE_PAD_TYPE_STANDARD;
+						buf[CurPad][5] = PSE_PAD_TYPE_STANDARD;
 						break;
 
 					case 1: // mode 1 - analog mode
-						buf[5] = PSE_PAD_TYPE_ANALOGPAD;
+						buf[CurPad][5] = PSE_PAD_TYPE_ANALOGPAD;
 						break;
 				}
 			}
 			break;
 	}
 
-	if (CurByte >= CmdLen) return 0;
-	return buf[CurByte++];
+	if (CurByte[CurPad] >= CmdLen[CurPad]) return 0;
+	return buf[CurPad][CurByte[CurPad]++];
 }
 
 long CALLBACK PAD__readPort(int num, PadDataS *pad) {
     UpdatePadState(num);
 	pad->buttonStatus = (g.PadState[num].KeyStatus & g.PadState[num].JoyKeyStatus);
 
-	switch (g.cfg.PadDef[num].Type) {
-		case PSE_PAD_TYPE_ANALOGPAD: // Analog Controller SCPH-1150
+	// ePSXe different from pcsx, swap bytes
+	pad->buttonStatus = (pad->buttonStatus >> 8) | (pad->buttonStatus << 8);
+
+	switch (g.PadState[num].PadMode) {
+		case 1: // Analog Mode
 			pad->controllerType = PSE_PAD_TYPE_ANALOGPAD;
 			pad->rightJoyX = g.PadState[num].AnalogStatus[ANALOG_RIGHT][0];
 			pad->rightJoyY = g.PadState[num].AnalogStatus[ANALOG_RIGHT][1];

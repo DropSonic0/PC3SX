@@ -96,7 +96,7 @@ void ps3sxSwapBuffer(unsigned char *pixels,int w,int h)
 //Start PAD
 long SysPAD_readPort1(PadDataS* pad)
 {
-		static unsigned short pad_status = 0xffff;
+		unsigned short pad_status = 0xffff;
 
 		PS3input->UpdateDevice(0);
   
@@ -134,10 +134,15 @@ long SysPAD_readPort1(PadDataS* pad)
 		else pad_status |= (1<<15);
 
 
-	pad->buttonStatus = pad_status;
-
 	CellPadUtilAxis leftStick = PS3input->GetNewAxisValue(0, CTRL_LSTICK);
 	CellPadUtilAxis rightStick = PS3input->GetNewAxisValue(0, CTRL_RSTICK);
+
+	if (leftStick.y < 55) pad_status &= ~(1<<4); // UP
+	if (leftStick.y > 200) pad_status &= ~(1<<6); // DOWN
+	if (leftStick.x < 55) pad_status &= ~(1<<7); // LEFT
+	if (leftStick.x > 200) pad_status &= ~(1<<5); // RIGHT
+
+	pad->buttonStatus = pad_status;
 
 	pad->leftJoyX = leftStick.x;
 	pad->leftJoyY = leftStick.y;
@@ -154,7 +159,7 @@ long SysPAD_readPort1(PadDataS* pad)
 
 long SysPAD_readPort2(PadDataS* pad)
 {	
-		static unsigned short pad_status = 0xffff;
+		unsigned short pad_status = 0xffff;
 
 		PS3input->UpdateDevice(1);
   
@@ -192,10 +197,15 @@ long SysPAD_readPort2(PadDataS* pad)
 		else pad_status |= (1<<15);
 
 
-	pad->buttonStatus = pad_status;
-
 	CellPadUtilAxis leftStick = PS3input->GetNewAxisValue(1, CTRL_LSTICK);
 	CellPadUtilAxis rightStick = PS3input->GetNewAxisValue(1, CTRL_RSTICK);
+
+	if (leftStick.y < 55) pad_status &= ~(1<<4); // UP
+	if (leftStick.y > 200) pad_status &= ~(1<<6); // DOWN
+	if (leftStick.x < 55) pad_status &= ~(1<<7); // LEFT
+	if (leftStick.x > 200) pad_status &= ~(1<<5); // RIGHT
+
+	pad->buttonStatus = pad_status;
 
 	pad->leftJoyX = leftStick.x;
 	pad->leftJoyY = leftStick.y;
