@@ -94,7 +94,7 @@ void ps3sxSwapBuffer(unsigned char *pixels,int w,int h)
 //end Video
 
 //Start PAD
-long PAD__readPort1(PadDataS* pad)
+long SysPAD_readPort1(PadDataS* pad)
 {
 		static unsigned short pad_status = 0xffff;
 
@@ -201,6 +201,14 @@ long PAD__readPort1(PadDataS* pad)
 
 	pad->buttonStatus = pad_status;
 
+	CellPadUtilAxis leftStick = PS3input->GetNewAxisValue(0, CTRL_LSTICK);
+	CellPadUtilAxis rightStick = PS3input->GetNewAxisValue(0, CTRL_RSTICK);
+
+	pad->leftJoyX = leftStick.x;
+	pad->leftJoyY = leftStick.y;
+	pad->rightJoyX = rightStick.x;
+	pad->rightJoyY = rightStick.y;
+
 	if(Settings.PAD)
 		pad->controllerType = PSE_PAD_TYPE_ANALOGPAD; 
 	else
@@ -209,7 +217,7 @@ long PAD__readPort1(PadDataS* pad)
 	return PSE_PAD_ERR_SUCCESS;
 }
 
-long PAD__readPort2(PadDataS* pad)
+long SysPAD_readPort2(PadDataS* pad)
 {	
 		static unsigned short pad_status = 0xffff;
 
@@ -315,6 +323,14 @@ long PAD__readPort2(PadDataS* pad)
 
 
 	pad->buttonStatus = pad_status;
+
+	CellPadUtilAxis leftStick = PS3input->GetNewAxisValue(1, CTRL_LSTICK);
+	CellPadUtilAxis rightStick = PS3input->GetNewAxisValue(1, CTRL_RSTICK);
+
+	pad->leftJoyX = leftStick.x;
+	pad->leftJoyY = leftStick.y;
+	pad->rightJoyX = rightStick.x;
+	pad->rightJoyY = rightStick.y;
 
 	if(Settings.PAD)
 		pad->controllerType = PSE_PAD_TYPE_ANALOGPAD; 

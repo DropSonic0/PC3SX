@@ -825,7 +825,7 @@ long CALLBACK PAD1__query(void) { return 3; }
 long CALLBACK PAD1__keypressed() { return 0; }
 
 #if defined(__ppc__)
-#define LoadPad1Sym0(dest, name) PAD1_##dest = (PAD##dest) PAD1__##dest;
+#define LoadPad1Sym0(dest, name) PAD1_##dest = (PAD##dest) PAD__##dest;
 #define LoadPad1Sym1(dest, name) PAD1_##dest = (PAD##dest) PAD__##dest;
 #else
 #define LoadPad1Sym1(dest, name) \
@@ -854,6 +854,9 @@ int LoadPAD1plugin(char *PAD1dll) {
 	LoadPad1Sym0(keypressed, "PADkeypressed");
 	LoadPad1Sym0(startPoll, "PADstartPoll");
 	LoadPad1Sym0(poll, "PADpoll");
+	LoadPad1Sym0(setSensitive, "PADsetSensitive");
+	LoadPad1Sym0(registerVibration, "PADregisterVibration");
+	LoadPad1Sym0(registerCursor, "PADregisterCursor");
 
 	return 0;
 }
@@ -877,7 +880,7 @@ long CALLBACK PAD2__query(void) { return 3; }
 long CALLBACK PAD2__keypressed() { return 0; }
 
 #if defined(__ppc__)
-#define LoadPad2Sym0(dest, name) PAD2_##dest = (PAD##dest) PAD2__##dest;
+#define LoadPad2Sym0(dest, name) PAD2_##dest = (PAD##dest) PAD__##dest;
 #define LoadPad2Sym1(dest, name) PAD2_##dest = (PAD##dest) PAD__##dest;
 #else
 #define LoadPad2Sym1(dest, name) \
@@ -906,6 +909,9 @@ int LoadPAD2plugin(char *PAD2dll) {
 	LoadPad2Sym0(keypressed, "PADkeypressed");
 	LoadPad2Sym0(startPoll, "PADstartPoll");
 	LoadPad2Sym0(poll, "PADpoll");
+	LoadPad2Sym0(setSensitive, "PADsetSensitive");
+	LoadPad2Sym0(registerVibration, "PADregisterVibration");
+	LoadPad2Sym0(registerCursor, "PADregisterCursor");
 
 	return 0;
 }

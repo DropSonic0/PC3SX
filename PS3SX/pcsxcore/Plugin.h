@@ -53,9 +53,19 @@ void GPU__updateLace(void);
 
 long PAD__init(long);
 long PAD__shutdown(void);	
-long PAD__open(void);
+long PAD__open(unsigned long *);
 long PAD__close(void);
+long PAD__query(void);
 long PAD__readPort1(PadDataS*);
 long PAD__readPort2(PadDataS*);
+long PAD__keypressed(void);
+unsigned char PAD__startPoll(int);
+unsigned char PAD__poll(unsigned char);
+long PAD__configure(void);
+void PAD__about(void);
+long PAD__test(void);
+void PAD__setSensitive(int);
+void PAD__registerVibration(void (CALLBACK *callback)(unsigned long, unsigned long));
+void PAD__registerCursor(void (CALLBACK *callback)(int, int, int));
 
 #endif
