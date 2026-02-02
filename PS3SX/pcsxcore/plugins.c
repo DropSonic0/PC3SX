@@ -668,59 +668,54 @@ int LoadSPUplugin(char *SPUdll) {
 
 void *hSPUDriver;
 
-long CALLBACK SPU__configure(void) { return 0; }
-void CALLBACK SPU__about(void) {}
-long CALLBACK SPU__test(void) { return 0; }
+extern long CALLBACK SPUconfigure(void);
+extern void CALLBACK SPUabout(void);
+extern long CALLBACK SPUtest(void);
+extern long CALLBACK SPUinit(void);
+extern long CALLBACK SPUshutdown(void);
+extern long CALLBACK SPUopen(void);
+extern long CALLBACK SPUclose(void);
+extern void CALLBACK SPUwriteRegister(unsigned long reg, unsigned short val);
+extern unsigned short CALLBACK SPUreadRegister(unsigned long reg);
+extern void CALLBACK SPUwriteDMA(unsigned short val);
+extern unsigned short CALLBACK SPUreadDMA(void);
+extern void CALLBACK SPUwriteDMAMem(unsigned short * pusPSXMem,int iSize);
+extern void CALLBACK SPUreadDMAMem(unsigned short * pusPSXMem,int iSize);
+extern void CALLBACK SPUplayADPCMchannel(xa_decode_t *xap);
+extern void CALLBACK SPUplayCDDAchannel(short *pcm, int nbytes);
+extern void CALLBACK SPUregisterCallback(void (CALLBACK *callback)(void));
+extern void CALLBACK SPUregisterCDDAVolume(void (CALLBACK *CDDAVcallback)(unsigned short,unsigned short));
+extern void CALLBACK SPUasync(unsigned long cycles);
+extern long CALLBACK SPUfreeze(unsigned long ulFreezeMode, SPUFreeze_t *pF);
 
-//external call
-void CALLBACK SPU__readDMAMem(unsigned short *pMem, int iSize) ;
-void CALLBACK SPU__writeDMAMem(unsigned short *pMem, int iSize);
-unsigned short CALLBACK SPU__readDMA(void);
-void CALLBACK SPU__writeDMA(unsigned short val);
-unsigned short CALLBACK SPU__readRegister(unsigned long add);
-void CALLBACK SPU__writeRegister(unsigned long add,unsigned short value);
-void SPU_d_async(unsigned long v);
-void CALLBACK SPU_d_registerCallback(void (CALLBACK *callback)(void));
-long CALLBACK SPU_d_freeze(uint32_t ulFreezeMode,SPUFreeze_t * pF);
-void CALLBACK SPU_d_registerCDDAVolume(void (CALLBACK *CDDAVcallback)(unsigned short,unsigned short));
-
-void CALLBACK SPU__playCDDAchannel(short *pSound, int lBytes) { }
-
-#define LoadSpuSym1(dest, name) \
-	SPU_##dest = (SPU##dest) SPU_d_##dest;
-
-#define LoadSpuSym0(dest, name) \
-	SPU_##dest = (SPU##dest) SPU__##dest;
+#define LoadSpuSym(dest) \
+	SPU_##dest = (SPU##dest) SPU##dest;
 
 int LoadSPUplugin(char *SPUdll) {
-	void *drv;
-
 	hSPUDriver = SysLoadLibrary(SPUdll);
 	if (hSPUDriver == NULL) {
 		SPU_configure = NULL;
 		SysPrintf ("Could not open SPU plugin %s\n", SPUdll); return -1;
 	}
-	drv = hSPUDriver;
-	LoadSpuSym1(init, "SPUinit");
-	LoadSpuSym1(shutdown, "SPUshutdown");
-	LoadSpuSym1(open, "SPUopen");
-	LoadSpuSym1(close, "SPUclose");
-	SPU_playCDDAchannel = (SPUplayCDDAchannel) SPU__playCDDAchannel;
-	LoadSpuSym0(configure, "SPUconfigure");
-	LoadSpuSym0(about, "SPUabout");
-	LoadSpuSym0(test, "SPUtest");
-	errval = 0;
-	LoadSpuSym0(writeRegister, "SPUwriteRegister");
-	LoadSpuSym0(readRegister, "SPUreadRegister");		
-	LoadSpuSym0(writeDMA, "SPUwriteDMA");
-	LoadSpuSym0(readDMA, "SPUreadDMA");
-	LoadSpuSym0(writeDMAMem, "SPUwriteDMAMem");
-	LoadSpuSym0(readDMAMem, "SPUreadDMAMem");
-	LoadSpuSym1(playADPCMchannel, "SPUplayADPCMchannel");
-	LoadSpuSym1(freeze, "SPUfreeze");
-	LoadSpuSym1(async, "SPUasync");
-	LoadSpuSym1(registerCallback, "SPUregisterCallback");
-//	LoadSpuSym1(registerCDDAVolume, "SPUregisterCDDAVolume");
+
+	LoadSpuSym(init);
+	LoadSpuSym(shutdown);
+	LoadSpuSym(open);
+	LoadSpuSym(close);
+	LoadSpuSym(configure);
+	LoadSpuSym(about);
+	LoadSpuSym(test);
+	LoadSpuSym(writeRegister);
+	LoadSpuSym(readRegister);
+	LoadSpuSym(writeDMA);
+	LoadSpuSym(readDMA);
+	LoadSpuSym(writeDMAMem);
+	LoadSpuSym(readDMAMem);
+	LoadSpuSym(playADPCMchannel);
+	LoadSpuSym(playCDDAchannel);
+	LoadSpuSym(freeze);
+	LoadSpuSym(async);
+	LoadSpuSym(registerCallback);
 
 	return 0;
 }
