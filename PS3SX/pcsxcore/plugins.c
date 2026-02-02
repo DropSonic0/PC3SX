@@ -6,11 +6,6 @@
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -166,6 +161,49 @@ NETkeypressed         NET_keypressed;
 
 void ConfigurePlugins(void);
 
+static void CALLBACK GPU__readDataMem(unsigned long *pMem, int iSize);
+static void CALLBACK GPU__writeDataMem(unsigned long *pMem, int iSize);
+static void CALLBACK GPU__displayText(char *pText);
+static long CALLBACK GPU__freeze(unsigned long ulGetFreezeData, GPUFreeze_t *pF);
+static long CALLBACK GPU__configure(void);
+static long CALLBACK GPU__test(void);
+static void CALLBACK GPU__about(void);
+static void CALLBACK GPU__makeSnapshot(void);
+static void CALLBACK GPU__keypressed(int key);
+static long CALLBACK GPU__getScreenPic(unsigned char *pMem);
+static long CALLBACK GPU__showScreenPic(unsigned char *pMem);
+static void CALLBACK GPU__clearDynarec(void (CALLBACK *callback)(void));
+
+long CALLBACK CDR__play(unsigned char *sector);
+long CALLBACK CDR__stop(void);
+long CALLBACK CDR__getStatus(struct CdrStat *stat);
+char* CALLBACK CDR__getDriveLetter(void);
+unsigned char* CALLBACK CDR__getBufferSub(void);
+long CALLBACK CDR__setfilename(char *filename);
+long CALLBACK CDR__readCDDA(unsigned char m, unsigned char s, unsigned char f, unsigned char *buffer);
+long CALLBACK CDR__configure(void);
+long CALLBACK CDR__test(void);
+void CALLBACK CDR__about(void);
+
+static unsigned char _PADstartPoll(PadDataS *pad);
+static unsigned char _PADpoll(unsigned char value);
+
+static unsigned char CALLBACK PAD1__startPoll(int pad);
+static unsigned char CALLBACK PAD1__poll(unsigned char value);
+static long CALLBACK PAD1__configure(void);
+static void CALLBACK PAD1__about(void);
+static long CALLBACK PAD1__test(void);
+static long CALLBACK PAD1__query(void);
+static long CALLBACK PAD1__keypressed(void);
+
+static unsigned char CALLBACK PAD2__startPoll(int pad);
+static unsigned char CALLBACK PAD2__poll(unsigned char value);
+static long CALLBACK PAD2__configure(void);
+static void CALLBACK PAD2__about(void);
+static long CALLBACK PAD2__test(void);
+static long CALLBACK PAD2__query(void);
+static long CALLBACK PAD2__keypressed(void);
+
 static void CALLBACK GPU__readDataMem(unsigned long *pMem, int iSize) {
 	while (iSize > 0) {
 		*pMem = GPU_readData();
@@ -190,7 +228,6 @@ void CALLBACK clearDynarec(void) {
 	psxCpu->Reset();
 }
 
-extern int StatesC;
 static long CALLBACK GPU__freeze(unsigned long ulGetFreezeData, GPUFreeze_t *pF) {
 	pF->ulFreezeVersion = 1;
 	if (ulGetFreezeData == 0) {
@@ -344,22 +381,22 @@ int LoadGPUplugin(char *GPUdll) {
 
 void *hCDRDriver;
 
-static long CALLBACK CDR__play(unsigned char *sector) { (void)sector; return 0; }
-static long CALLBACK CDR__stop(void) { return 0; }
+long CALLBACK CDR__play(unsigned char *sector) { (void)sector; return 0; }
+long CALLBACK CDR__stop(void) { return 0; }
 
-static long CALLBACK CDR__getStatus(struct CdrStat *stat) {
+long CALLBACK CDR__getStatus(struct CdrStat *stat) {
     if (cdOpenCase) stat->Status = 0x10;
     else stat->Status = 0;
     return 0;
 }
 
-static char* CALLBACK CDR__getDriveLetter(void) { return NULL; }
-static unsigned char* CALLBACK CDR__getBufferSub(void) { return NULL; }
-static long CALLBACK CDR__setfilename(char *filename) { (void)filename; return 0; }
-static long CALLBACK CDR__readCDDA(unsigned char m, unsigned char s, unsigned char f, unsigned char *buffer) { (void)m; (void)s; (void)f; (void)buffer; return -1; }
-static long CALLBACK CDR__configure(void) { return 0; }
-static long CALLBACK CDR__test(void) { return 0; }
-static void CALLBACK CDR__about(void) {}
+char* CALLBACK CDR__getDriveLetter(void) { return NULL; }
+unsigned char* CALLBACK CDR__getBufferSub(void) { return NULL; }
+long CALLBACK CDR__setfilename(char *filename) { (void)filename; return 0; }
+long CALLBACK CDR__readCDDA(unsigned char m, unsigned char s, unsigned char f, unsigned char *buffer) { (void)m; (void)s; (void)f; (void)buffer; return -1; }
+long CALLBACK CDR__configure(void) { return 0; }
+long CALLBACK CDR__test(void) { return 0; }
+void CALLBACK CDR__about(void) {}
 
 #if defined(__ppc__)
 #define LoadCdrSym0(dest, name) CDR_##dest = (CDR##dest) CDR__##dest;
@@ -431,7 +468,7 @@ int LoadSPUplugin(char *SPUdll) {
 	(void)SPUdll;
 	hSPUDriver = SysLoadLibrary(SPUdll);
 	if (hSPUDriver == NULL) {
-		SPU_configure = NULL;
+		SPU_configure = (SPUconfigure) pkSPUconfigure;
 		SysPrintf ("Could not open SPU plugin %s\n", SPUdll); return -1;
 	}
 
