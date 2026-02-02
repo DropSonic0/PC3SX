@@ -56,12 +56,13 @@ PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.
 	./pcsxcore/ppc/reguse.c \
 	./pcsxcore/PlugPAD.c \
 	./pcsxcore/PlugCD.c \
-	./pcsxcore/dfsound/adsr.c \
-	./pcsxcore/dfsound/xa.c \
-	./pcsxcore/dfsound/spu.c \
-	./pcsxcore/dfsound/dma.c \
-	./pcsxcore/dfsound/registers.c \
-	./pcsxcore/dfsound/freeze.c \
+	./pcsxcore/sound_plugin_new/Channel.cpp \
+	./pcsxcore/sound_plugin_new/DiscStreamer.cpp \
+	./pcsxcore/sound_plugin_new/Envelope.cpp \
+	./pcsxcore/sound_plugin_new/Interpolate.cpp \
+	./pcsxcore/sound_plugin_new/NoiseGenerator.cpp \
+	./pcsxcore/sound_plugin_new/Plugin.cpp \
+	./pcsxcore/sound_plugin_new/SPU.cpp \
 	./pcsxcore/zlib/adler32.c \
 	./pcsxcore/zlib/compress.c \
 	./pcsxcore/zlib/crc32.c \
