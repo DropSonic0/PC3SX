@@ -291,7 +291,7 @@ void ReadConfig(void)
   UseFrameLimit=0;
   UseFrameSkip=0;
   iFrameLimit=2;
-  fFrameRate=59.94f;
+  fFrameRate=60.0f;
   dwCfgFixes=0;
   iUseFixes=0;
   iUseNoStretchBlt=1;
@@ -313,7 +313,7 @@ void WriteConfig(void) {
   UseFrameLimit=0;
   UseFrameSkip=0;
   iFrameLimit=2;
-  fFrameRate=59.94f;
+  fFrameRate=60.0f;
   dwCfgFixes=0;
   iUseFixes=0;
   iUseNoStretchBlt=1;

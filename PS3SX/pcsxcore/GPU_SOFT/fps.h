@@ -30,7 +30,7 @@
 void FrameCap(void); 
 void FrameSkip(void); 
 void calcfps(void);
-void PCFrameCap (void);
+void PCFrameCap(void);
 void PCcalcfps(void);
 void SetAutoFrameCap(void);
 void SetFPSHandler(void);
