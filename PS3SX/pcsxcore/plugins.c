@@ -132,6 +132,8 @@ PADkeypressed		PAD1_keypressed;
 PADstartPoll        PAD1_startPoll;
 PADpoll             PAD1_poll;
 PADsetSensitive     PAD1_setSensitive;
+PADregisterVibration PAD1_registerVibration;
+PADregisterCursor   PAD1_registerCursor;
 
 PADconfigure        PAD2_configure;
 PADabout            PAD2_about;
@@ -146,6 +148,8 @@ PADkeypressed		PAD2_keypressed;
 PADstartPoll        PAD2_startPoll;
 PADpoll             PAD2_poll;
 PADsetSensitive     PAD2_setSensitive;
+PADregisterVibration PAD2_registerVibration;
+PADregisterCursor   PAD2_registerCursor;
 
 // NET plugin function pointers
 NETinit               NET_init;
