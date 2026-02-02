@@ -799,7 +799,7 @@ inline void execI() {
  
 	debugI();
  
-	psxRegs.pc+= 4; psxRegs.cycle++; 
+	psxRegs.pc+= 4; psxRegs.cycle += BIAS; 
 	psxBSC[psxRegs.code >> 26](); 
 
 	ProcessDebug();

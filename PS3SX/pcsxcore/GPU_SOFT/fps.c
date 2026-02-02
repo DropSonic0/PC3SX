@@ -98,13 +98,11 @@ void CheckFrameRate(void)
 // LINUX VERSION
 ////////////////////////////////////////////////////////////////////////
 
-#define TIMEBASE 100000
+#define TIMEBASE 1000000
 
-unsigned long timeGetTime()
+unsigned long timeGetTime(void)
 {
- struct timeval tv;
- sys_time_get_current_time((sys_time_sec_t*)&tv, 0);   // well, maybe there are better ways
- return tv.tv_sec * 100000 + tv.tv_usec/10;            // to do that, but at least it works
+ return (unsigned long)sys_time_get_system_time();
 }
 
 void FrameCap (void)
@@ -144,8 +142,8 @@ void FrameCap (void)
          TicksToWait = dwFrameRateTicks - overslept;
          return;
         }
-	if (tickstogo >= 200 && !(dwActFixes&16))
-		sys_timer_sleep(tickstogo*10 - 200);
+	if (tickstogo >= 2000 && !(dwActFixes&16))
+		sys_timer_usleep(tickstogo - 200);
       }
     }
   }
@@ -257,8 +255,8 @@ void FrameSkip(void)
        _ticks_since_last_update = curticks - lastticks;
 
 	tickstogo = dwWaitTime - _ticks_since_last_update;
-	if (tickstogo-overslept >= 200 && !(dwActFixes&16))
-		sys_timer_sleep(tickstogo*10 - 200);
+	if (tickstogo-overslept >= 2000 && !(dwActFixes&16))
+		sys_timer_usleep(tickstogo - 200);
       }
     }
    overslept = _ticks_since_last_update - dwWaitTime;
@@ -296,7 +294,7 @@ void calcfps(void)
 
    if(++fpsskip_cnt==2)
     {
-     fps_skip = (float)2000/(float)fpsskip_tck;
+     fps_skip = (float)20000/(float)fpsskip_tck;
      fps_skip +=6.0f;
      fpsskip_cnt = 0;
      fpsskip_tck = 1;
@@ -385,7 +383,7 @@ void SetAutoFrameCap(void)
   }
  else
   {
-   fFrameRateHz = PSXDisplay.PAL?50.0f:59.94f;
+   fFrameRateHz = PSXDisplay.PAL?50.0f:60.0f;
    dwFrameRateTicks=(TIMEBASE*100 / (unsigned long)(fFrameRateHz*100)); 
   }
 }
