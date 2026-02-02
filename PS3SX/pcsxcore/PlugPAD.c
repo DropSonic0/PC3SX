@@ -106,6 +106,7 @@ static void UpdatePadState(int pad) {
     if (pad == 0) SysPAD_readPort1(&p);
     else SysPAD_readPort2(&p);
 
+    g.cfg.PadDef[pad].Type = p.controllerType;
     g.PadState[pad].KeyStatus = p.buttonStatus;
     g.PadState[pad].JoyKeyStatus = 0xFFFF;
     g.PadState[pad].AnalogStatus[ANALOG_RIGHT][0] = p.rightJoyX;
@@ -352,9 +353,6 @@ unsigned char CALLBACK PAD__poll(unsigned char value) {
 long CALLBACK PAD__readPort(int num, PadDataS *pad) {
     UpdatePadState(num);
 	pad->buttonStatus = (g.PadState[num].KeyStatus & g.PadState[num].JoyKeyStatus);
-
-	// ePSXe different from pcsx, swap bytes
-	pad->buttonStatus = (pad->buttonStatus >> 8) | (pad->buttonStatus << 8);
 
 	switch (g.cfg.PadDef[num].Type) {
 		case PSE_PAD_TYPE_ANALOGPAD: // Analog Controller SCPH-1150

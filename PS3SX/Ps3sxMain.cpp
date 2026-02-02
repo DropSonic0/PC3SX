@@ -100,103 +100,38 @@ long SysPAD_readPort1(PadDataS* pad)
 
 		PS3input->UpdateDevice(0);
   
-		if (PS3input->IsButtonPressed(0,CTRL_CIRCLE))
-		{
-			pad_status &= ~(1<<13);
-		}else{
-			pad_status |=  (1<<13);
-		}
-
-		if (PS3input->IsButtonPressed(0,CTRL_CROSS))
-		{
-			pad_status &= ~(1<<14);
-		}else{
-			pad_status |=  (1<<14);
-		}
-
-		if (PS3input->IsButtonPressed(0,CTRL_SELECT))
-		{
-			pad_status &= ~(1<<2); 
-		}else{
-			pad_status |=  (1<<2);
-		}
-
-		if (PS3input->IsButtonPressed(0,CTRL_START))
-		{
-			pad_status &= ~(1<<3);
-		}else{
-			pad_status |=  (1<<3);
-		}
-
-		if (PS3input->IsButtonPressed(0,CTRL_DOWN))
-		{
-			pad_status &= ~(1<<6);
-		}else{
-			pad_status |=  (1<<6);
-		}
-
-		if (PS3input->IsButtonPressed(0,CTRL_UP))
-		{
-			pad_status &= ~(1<<4);
-		}else{
-			pad_status |=  (1<<4);
-		}
-
-		if (PS3input->IsButtonPressed(0,CTRL_RIGHT))
-		{
-			pad_status &= ~(1<<5);
-		}else{
-			pad_status |=  (1<<5);
-		}
-
-		if (PS3input->IsButtonPressed(0,CTRL_LEFT))
-		{
-			pad_status &= ~(1<<7);
-		}else{
-			pad_status |=  (1<<7);
-		}
-
-		if (PS3input->IsButtonPressed(0,CTRL_R1))
-		{
-			pad_status &= ~(1<<11);
-		}else{
-			pad_status |=  (1<<11);
-		}
-
-		if (PS3input->IsButtonPressed(0,CTRL_L1))
-		{
-			pad_status &= ~(1<<10);
-		}else{
-			pad_status |=  (1<<10);
-		}
-
-		if (PS3input->IsButtonPressed(0,CTRL_R2))
-		{
-			pad_status &= ~(1<<8);
-		}else{
-			pad_status |=  (1<<8);
-		}
-
-		if (PS3input->IsButtonPressed(0,CTRL_L2))
-		{
-			pad_status &= ~(1<<9);
-		}else{
-			pad_status |=  (1<<9);
-		}
-
-		if (PS3input->IsButtonPressed(0,CTRL_TRIANGLE))
-		{
-			pad_status &= ~(1<<12);
-		}else{
-			pad_status |=  (1<<12);
-		}
-
-		if (PS3input->IsButtonPressed(0,CTRL_SQUARE))
-		{
-			pad_status &= ~(1<<15);
-		}else{
-			pad_status |=  (1<<15);
-		}
+		if (PS3input->IsButtonPressed(0,CTRL_SELECT)) pad_status &= ~(1<<0);
+		else pad_status |= (1<<0);
+		if (PS3input->IsButtonPressed(0,CTRL_L3)) pad_status &= ~(1<<1);
+		else pad_status |= (1<<1);
+		if (PS3input->IsButtonPressed(0,CTRL_R3)) pad_status &= ~(1<<2);
+		else pad_status |= (1<<2);
+		if (PS3input->IsButtonPressed(0,CTRL_START)) pad_status &= ~(1<<3);
+		else pad_status |= (1<<3);
+		if (PS3input->IsButtonPressed(0,CTRL_UP)) pad_status &= ~(1<<4);
+		else pad_status |= (1<<4);
+		if (PS3input->IsButtonPressed(0,CTRL_RIGHT)) pad_status &= ~(1<<5);
+		else pad_status |= (1<<5);
+		if (PS3input->IsButtonPressed(0,CTRL_DOWN)) pad_status &= ~(1<<6);
+		else pad_status |= (1<<6);
+		if (PS3input->IsButtonPressed(0,CTRL_LEFT)) pad_status &= ~(1<<7);
+		else pad_status |= (1<<7);
+		if (PS3input->IsButtonPressed(0,CTRL_L2)) pad_status &= ~(1<<8);
+		else pad_status |= (1<<8);
+		if (PS3input->IsButtonPressed(0,CTRL_R2)) pad_status &= ~(1<<9);
+		else pad_status |= (1<<9);
+		if (PS3input->IsButtonPressed(0,CTRL_L1)) pad_status &= ~(1<<10);
+		else pad_status |= (1<<10);
+		if (PS3input->IsButtonPressed(0,CTRL_R1)) pad_status &= ~(1<<11);
+		else pad_status |= (1<<11);
+		if (PS3input->IsButtonPressed(0,CTRL_TRIANGLE)) pad_status &= ~(1<<12);
+		else pad_status |= (1<<12);
+		if (PS3input->IsButtonPressed(0,CTRL_CIRCLE)) pad_status &= ~(1<<13);
+		else pad_status |= (1<<13);
+		if (PS3input->IsButtonPressed(0,CTRL_CROSS)) pad_status &= ~(1<<14);
+		else pad_status |= (1<<14);
+		if (PS3input->IsButtonPressed(0,CTRL_SQUARE)) pad_status &= ~(1<<15);
+		else pad_status |= (1<<15);
 
 
 	pad->buttonStatus = pad_status;
@@ -223,103 +158,38 @@ long SysPAD_readPort2(PadDataS* pad)
 
 		PS3input->UpdateDevice(1);
   
-		if (PS3input->IsButtonPressed(1,CTRL_CIRCLE))
-		{
-			pad_status &= ~(1<<13);
-		}else{
-			pad_status |=  (1<<13);
-		}
-
-		if (PS3input->IsButtonPressed(1,CTRL_CROSS))
-		{
-			pad_status &= ~(1<<14);
-		}else{
-			pad_status |=  (1<<14);
-		}
-
-		if (PS3input->IsButtonPressed(1,CTRL_SELECT))
-		{
-			pad_status &= ~(1<<2); 
-		}else{
-			pad_status |=  (1<<2);
-		}
-
-		if (PS3input->IsButtonPressed(1,CTRL_START))
-		{
-			pad_status &= ~(1<<3);
-		}else{
-			pad_status |=  (1<<3);
-		}
-
-		if (PS3input->IsButtonPressed(1,CTRL_DOWN))
-		{
-			pad_status &= ~(1<<6);
-		}else{
-			pad_status |=  (1<<6);
-		}
-
-		if (PS3input->IsButtonPressed(1,CTRL_UP))
-		{
-			pad_status &= ~(1<<4);
-		}else{
-			pad_status |=  (1<<4);
-		}
-
-		if (PS3input->IsButtonPressed(1,CTRL_RIGHT))
-		{
-			pad_status &= ~(1<<5);
-		}else{
-			pad_status |=  (1<<5);
-		}
-
-		if (PS3input->IsButtonPressed(1,CTRL_LEFT))
-		{
-			pad_status &= ~(1<<7);
-		}else{
-			pad_status |=  (1<<7);
-		}
-
-		if (PS3input->IsButtonPressed(1,CTRL_R1))
-		{
-			pad_status &= ~(1<<11);
-		}else{
-			pad_status |=  (1<<11);
-		}
-
-		if (PS3input->IsButtonPressed(1,CTRL_L1))
-		{
-			pad_status &= ~(1<<10);
-		}else{
-			pad_status |=  (1<<10);
-		}
-
-		if (PS3input->IsButtonPressed(1,CTRL_R2))
-		{
-			pad_status &= ~(1<<8);
-		}else{
-			pad_status |=  (1<<8);
-		}
-
-		if (PS3input->IsButtonPressed(1,CTRL_L2))
-		{
-			pad_status &= ~(1<<9);
-		}else{
-			pad_status |=  (1<<9);
-		}
-
-		if (PS3input->IsButtonPressed(1,CTRL_TRIANGLE))
-		{
-			pad_status &= ~(1<<12);
-		}else{
-			pad_status |=  (1<<12);
-		}
-
-		if (PS3input->IsButtonPressed(1,CTRL_SQUARE))
-		{
-			pad_status &= ~(1<<15);
-		}else{
-			pad_status |=  (1<<15);
-		}
+		if (PS3input->IsButtonPressed(1,CTRL_SELECT)) pad_status &= ~(1<<0);
+		else pad_status |= (1<<0);
+		if (PS3input->IsButtonPressed(1,CTRL_L3)) pad_status &= ~(1<<1);
+		else pad_status |= (1<<1);
+		if (PS3input->IsButtonPressed(1,CTRL_R3)) pad_status &= ~(1<<2);
+		else pad_status |= (1<<2);
+		if (PS3input->IsButtonPressed(1,CTRL_START)) pad_status &= ~(1<<3);
+		else pad_status |= (1<<3);
+		if (PS3input->IsButtonPressed(1,CTRL_UP)) pad_status &= ~(1<<4);
+		else pad_status |= (1<<4);
+		if (PS3input->IsButtonPressed(1,CTRL_RIGHT)) pad_status &= ~(1<<5);
+		else pad_status |= (1<<5);
+		if (PS3input->IsButtonPressed(1,CTRL_DOWN)) pad_status &= ~(1<<6);
+		else pad_status |= (1<<6);
+		if (PS3input->IsButtonPressed(1,CTRL_LEFT)) pad_status &= ~(1<<7);
+		else pad_status |= (1<<7);
+		if (PS3input->IsButtonPressed(1,CTRL_L2)) pad_status &= ~(1<<8);
+		else pad_status |= (1<<8);
+		if (PS3input->IsButtonPressed(1,CTRL_R2)) pad_status &= ~(1<<9);
+		else pad_status |= (1<<9);
+		if (PS3input->IsButtonPressed(1,CTRL_L1)) pad_status &= ~(1<<10);
+		else pad_status |= (1<<10);
+		if (PS3input->IsButtonPressed(1,CTRL_R1)) pad_status &= ~(1<<11);
+		else pad_status |= (1<<11);
+		if (PS3input->IsButtonPressed(1,CTRL_TRIANGLE)) pad_status &= ~(1<<12);
+		else pad_status |= (1<<12);
+		if (PS3input->IsButtonPressed(1,CTRL_CIRCLE)) pad_status &= ~(1<<13);
+		else pad_status |= (1<<13);
+		if (PS3input->IsButtonPressed(1,CTRL_CROSS)) pad_status &= ~(1<<14);
+		else pad_status |= (1<<14);
+		if (PS3input->IsButtonPressed(1,CTRL_SQUARE)) pad_status &= ~(1<<15);
+		else pad_status |= (1<<15);
 
 
 	pad->buttonStatus = pad_status;
