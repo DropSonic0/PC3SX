@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,13 +14,17 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
 #ifndef __CDROM_H__
 #define __CDROM_H__
 
-#include "PsxCommon.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "psxcommon.h"
 #include "Decode_XA.h"
 #include "R3000A.h"
 #include "plugins.h"
@@ -93,11 +96,15 @@ typedef struct {
 	u8 AttenuatorLeft[2], AttenuatorRight[2];
 } cdrStruct;
 
-cdrStruct cdr;
+extern cdrStruct cdr;
 
-void cdrReset(void);
-void cdrInterrupt(void);
-void cdrReadInterrupt(void);
+void cdrDecodedBufferInterrupt();
+
+void cdrReset();
+void cdrInterrupt();
+void cdrReadInterrupt();
+void cdrLidSeekInterrupt();
+void cdrPlayInterrupt();
 unsigned char cdrRead0(void);
 unsigned char cdrRead1(void);
 unsigned char cdrRead2(void);
@@ -108,4 +115,7 @@ void cdrWrite2(unsigned char rt);
 void cdrWrite3(unsigned char rt);
 int cdrFreeze(gzFile f, int Mode);
 
-#endif /* __CDROM_H__ */
+#ifdef __cplusplus
+}
+#endif
+#endif
