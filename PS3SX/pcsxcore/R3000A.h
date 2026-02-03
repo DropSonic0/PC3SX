@@ -42,7 +42,7 @@ typedef struct {
 extern R3000Acpu *psxCpu;
 extern R3000Acpu psxInt;
 extern R3000Acpu psxIntDbg;
-#if defined(__x86_64__) || defined(__i386__) || defined(__sh__) || defined(__ppc__) || defined(__BIGENDIAN__)
+#if (defined(__x86_64__) || defined(__i386__) || defined(__sh__) || defined(__ppc__) || defined(__BIGENDIAN__)) && !defined(NOPSXREC)
 extern R3000Acpu psxRec;
 #define PSXREC
 #endif
@@ -172,14 +172,91 @@ typedef struct {
 	psxCP0Regs CP0;		/* Coprocessor0 Registers */
 	psxCP2Data CP2D; 	/* Cop2 data registers */
 	psxCP2Ctrl CP2C; 	/* Cop2 control registers */
-    u32 pc;				/* Program counter */
-    u32 code;			/* The instruction */
+	u32 pc;				/* Program counter */
+	u32 code;			/* The instruction */
 	u32 cycle;
 	u32 interrupt;
-	psxIntCycle intCycle[32];
+	struct { u32 sCycle, cycle; } intCycle[32];
+	u8 ICache_Addr[0x1000];
+	u8 ICache_Code[0x1000];
+	boolean ICache_valid;
 } psxRegisters;
 
 extern psxRegisters psxRegs;
+
+/*
+Formula One 2001
+- Use old CPU cache code when the RAM location is
+  updated with new code (affects in-game racing)
+
+TODO:
+- I-cache / D-cache swapping
+- Isolate D-cache from RAM
+*/
+
+static inline u32 *Read_ICache(u32 pc, boolean isolate) {
+	u32 pc_bank, pc_offset, pc_cache;
+	u8 *IAddr, *ICode;
+
+	pc_bank = pc >> 24;
+	pc_offset = pc & 0xffffff;
+	pc_cache = pc & 0xfff;
+
+	IAddr = psxRegs.ICache_Addr;
+	ICode = psxRegs.ICache_Code;
+
+	// clear I-cache
+	if (!psxRegs.ICache_valid) {
+		memset(psxRegs.ICache_Addr, 0xff, sizeof(psxRegs.ICache_Addr));
+		memset(psxRegs.ICache_Code, 0xff, sizeof(psxRegs.ICache_Code));
+
+		psxRegs.ICache_valid = TRUE;
+	}
+
+	// uncached
+	if (pc_bank >= 0xa0)
+		return (u32 *)PSXM(pc);
+
+	// cached - RAM
+	if (pc_bank == 0x80 || pc_bank == 0x00) {
+		if (SWAP32(*(u32 *)(IAddr + pc_cache)) == pc_offset) {
+			// Cache hit - return last opcode used
+			return (u32 *)(ICode + pc_cache);
+		} else {
+			// Cache miss - addresses don't match
+			// - default: 0xffffffff (not init)
+
+			if (!isolate) {
+				// cache line is 4 bytes wide
+				pc_offset &= ~0xf;
+				pc_cache &= ~0xf;
+
+				// address line
+				*(u32 *)(IAddr + pc_cache + 0x0) = SWAP32(pc_offset + 0x0);
+				*(u32 *)(IAddr + pc_cache + 0x4) = SWAP32(pc_offset + 0x4);
+				*(u32 *)(IAddr + pc_cache + 0x8) = SWAP32(pc_offset + 0x8);
+				*(u32 *)(IAddr + pc_cache + 0xc) = SWAP32(pc_offset + 0xc);
+
+				// opcode line
+				pc_offset = pc & ~0xf;
+				*(u32 *)(ICode + pc_cache + 0x0) = psxMu32ref(pc_offset + 0x0);
+				*(u32 *)(ICode + pc_cache + 0x4) = psxMu32ref(pc_offset + 0x4);
+				*(u32 *)(ICode + pc_cache + 0x8) = psxMu32ref(pc_offset + 0x8);
+				*(u32 *)(ICode + pc_cache + 0xc) = psxMu32ref(pc_offset + 0xc);
+			}
+
+			// normal code
+			return (u32 *)PSXM(pc);
+		}
+	}
+
+	/*
+	TODO: Probably should add cached BIOS
+	*/
+
+	// default
+	return (u32 *)PSXM(pc);
+}
 
 #if defined(__BIGENDIAN__)
 
