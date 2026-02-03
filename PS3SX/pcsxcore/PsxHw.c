@@ -24,7 +24,7 @@
 
 #include "PsxHw.h"
 #include "Mdec.h"
-#include "CdRom.h"
+#include "cdrom.h"
 
 void psxHwReset(void) {
     if (Config.Sio) psxHu32ref(0x1070) |= SWAP32(0x80);
