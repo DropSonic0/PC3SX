@@ -1172,7 +1172,9 @@ void psxBios_PAD_dr() { // 16
 	PSXBIOS_LOG("psxBios_%s\n", biosB0n[0x16]);
 #endif
 
-	v0 = -1; pc0 = ra;
+	if (pad_buf) v0 = SWAP32(*pad_buf);
+	else v0 = -1;
+	pc0 = ra;
 }
 
 void psxBios_ReturnFromException() { // 17
@@ -2227,32 +2229,37 @@ void biosInterrupt(void) {
 
 			if (!Config.UseNet) {
 				PAD1_startPoll(1);
-				if (PAD1_poll(0x42) == 0x23) {
+				u8 id1 = PAD1_poll(0x42);
+				u32 val1 = 0;
+				if (id1 == 0x23) {
 					PAD1_poll(0);
-					*buf = SWAP32(PAD1_poll(0) << 8);
-					*buf|= SWAP32(PAD1_poll(0));
+					val1 = PAD1_poll(0);
+					val1 |= PAD1_poll(0) << 8;
 					PAD1_poll(0);
-					*buf&= SWAP32(~((PAD1_poll(0)>0x20)?1<<6:0));
-					*buf&= SWAP32(~((PAD1_poll(0)>0x20)?1<<7:0));
+					if (PAD1_poll(0) > 0x20) val1 &= ~(1 << 6);
+					if (PAD1_poll(0) > 0x20) val1 &= ~(1 << 7);
 				} else {
 					PAD1_poll(0);
-					*buf = SWAP32(PAD1_poll(0) << 8);
-					*buf|= SWAP32(PAD1_poll(0));
+					val1 = PAD1_poll(0);
+					val1 |= PAD1_poll(0) << 8;
 				}
 
 				PAD2_startPoll(2);
-				if (PAD2_poll(0x42) == 0x23) {
+				u8 id2 = PAD2_poll(0x42);
+				u32 val2 = 0;
+				if (id2 == 0x23) {
 					PAD2_poll(0);
-					*buf|= SWAP32(PAD2_poll(0) << 24);
-					*buf|= SWAP32(PAD2_poll(0) << 16);
+					val2 = PAD2_poll(0);
+					val2 |= PAD2_poll(0) << 8;
 					PAD2_poll(0);
-					*buf&= SWAP32(~((PAD2_poll(0)>0x20)?1<<22:0));
-					*buf&= SWAP32(~((PAD2_poll(0)>0x20)?1<<23:0));
+					if (PAD2_poll(0) > 0x20) val2 &= ~(1 << 6);
+					if (PAD2_poll(0) > 0x20) val2 &= ~(1 << 7);
 				} else {
 					PAD2_poll(0);
-					*buf|= SWAP32(PAD2_poll(0) << 24);
-					*buf|= SWAP32(PAD2_poll(0) << 16);
+					val2 = PAD2_poll(0);
+					val2 |= PAD2_poll(0) << 8;
 				}
+				*buf = SWAP32(val1 | (val2 << 16));
 			} else {
 				u16 data;
 

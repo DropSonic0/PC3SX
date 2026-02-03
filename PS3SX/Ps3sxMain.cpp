@@ -137,10 +137,10 @@ long SysPAD_readPort1(PadDataS* pad)
 	CellPadUtilAxis leftStick = PS3input->GetNewAxisValue(0, CTRL_LSTICK);
 	CellPadUtilAxis rightStick = PS3input->GetNewAxisValue(0, CTRL_RSTICK);
 
-	if (leftStick.y < 55) pad_status &= ~(1<<4); // UP
-	if (leftStick.y > 200) pad_status &= ~(1<<6); // DOWN
-	if (leftStick.x < 55) pad_status &= ~(1<<7); // LEFT
-	if (leftStick.x > 200) pad_status &= ~(1<<5); // RIGHT
+	if (leftStick.y < 64) pad_status &= ~(1<<4); // UP
+	if (leftStick.y > 192) pad_status &= ~(1<<6); // DOWN
+	if (leftStick.x < 64) pad_status &= ~(1<<7); // LEFT
+	if (leftStick.x > 192) pad_status &= ~(1<<5); // RIGHT
 
 	pad->buttonStatus = pad_status;
 
@@ -200,10 +200,10 @@ long SysPAD_readPort2(PadDataS* pad)
 	CellPadUtilAxis leftStick = PS3input->GetNewAxisValue(1, CTRL_LSTICK);
 	CellPadUtilAxis rightStick = PS3input->GetNewAxisValue(1, CTRL_RSTICK);
 
-	if (leftStick.y < 55) pad_status &= ~(1<<4); // UP
-	if (leftStick.y > 200) pad_status &= ~(1<<6); // DOWN
-	if (leftStick.x < 55) pad_status &= ~(1<<7); // LEFT
-	if (leftStick.x > 200) pad_status &= ~(1<<5); // RIGHT
+	if (leftStick.y < 64) pad_status &= ~(1<<4); // UP
+	if (leftStick.y > 192) pad_status &= ~(1<<6); // DOWN
+	if (leftStick.x < 64) pad_status &= ~(1<<7); // LEFT
+	if (leftStick.x > 192) pad_status &= ~(1<<5); // RIGHT
 
 	pad->buttonStatus = pad_status;
 
@@ -236,7 +236,7 @@ void InitConfig()
 	Config.Cpu	   = Settings.CPU;// interpreter 1 :  dynarec 0
 
 	Config.SpuIrq  = 0;
-	Config.RCntFix = 0;//Parasite Eve 2, Vandal Hearts 1/2 Fix
+	Config.RCntFix = 1;//Parasite Eve 2, Vandal Hearts 1/2 Fix
 	Config.VSyncWA = 0; // interlaced /non ? something with the display timer
 	Config.PsxOut =  0; // on screen debug 
 	Config.UseNet = 0;
