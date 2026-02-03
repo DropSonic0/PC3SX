@@ -415,6 +415,9 @@ void CALLBACK clearDynarec(void);
 
 void CALLBACK GPUbusy( int ticks );
 
+unsigned char _PADstartPoll(PadDataS *pad);
+unsigned char _PADpoll(unsigned char value);
+
 // Internal plugin callbacks
 void CALLBACK GPU__readDataMem(uint32_t *pMem, int iSize);
 void CALLBACK GPU__writeDataMem(uint32_t *pMem, int iSize);
@@ -469,6 +472,19 @@ long CALLBACK PAD2__query(void);
 long CALLBACK PAD2__keypressed(void);
 void CALLBACK PAD2__registerVibration(void (CALLBACK *callback)(uint32_t, uint32_t));
 void CALLBACK PAD2__registerCursor(void (CALLBACK *callback)(int, int, int));
+
+void CALLBACK NET__setInfo(netInfo *info);
+void CALLBACK NET__keypressed(int key);
+long CALLBACK NET__configure(void);
+long CALLBACK NET__test(void);
+void CALLBACK NET__about(void);
+
+long PAD__init(long flags);
+long PAD__shutdown(void);
+long PAD__open(void);
+long PAD__close(void);
+long PAD__readPort1(PadDataS* pad);
+long PAD__readPort2(PadDataS* pad);
 
 void SetIsoFile(const char *filename);
 const char *GetIsoFile(void);

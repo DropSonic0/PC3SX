@@ -524,6 +524,7 @@ void CALLBACK PAD1__registerCursor(void (CALLBACK *callback)(int, int, int)) { (
 #if defined(__ppc__)
 #define LoadPad1Sym0(dest, name) PAD1_##dest = (PAD##dest) PAD1__##dest;
 #define LoadPad1Sym1(dest, name) PAD1_##dest = (PAD##dest) PAD__##dest;
+#define LoadPad1SymN(dest, name) PAD1_##dest = (PAD##dest) NULL;
 #else
 #define LoadPad1Sym1(dest, name) \
 	LoadSym(PAD1_##dest, PAD##dest, name, TRUE);
@@ -588,6 +589,7 @@ void CALLBACK PAD2__registerCursor(void (CALLBACK *callback)(int, int, int)) { (
 #if defined(__ppc__)
 #define LoadPad2Sym0(dest, name) PAD2_##dest = (PAD##dest) PAD2__##dest;
 #define LoadPad2Sym1(dest, name) PAD2_##dest = (PAD##dest) PAD__##dest;
+#define LoadPad2SymN(dest, name) PAD2_##dest = (PAD##dest) NULL;
 #else
 #define LoadPad2Sym1(dest, name) \
 	LoadSym(PAD2_##dest, PAD##dest, name, TRUE);
@@ -777,7 +779,7 @@ void CALLBACK clearDynarec(void) {
 	psxCpu->Reset();
 }
 
-int LoadPlugins() {
+int LoadPlugins(void) {
 	int ret;
 	char Plugin[MAXPATHLEN];
 
@@ -840,7 +842,7 @@ int LoadPlugins() {
 	return 0;
 }
 
-void ReleasePlugins() {
+void ReleasePlugins(void) {
 	if (Config.UseNet) {
 		int ret = NET_close();
 		if (ret < 0) Config.UseNet = FALSE;
@@ -890,6 +892,6 @@ boolean UsingIso(void) {
 	return (IsoFile[0] != '\0');
 }
 
-void SetCdOpenCaseTime(s64 time) {
-	cdOpenCaseTime = time;
+void SetCdOpenCaseTime(s64 t) {
+	cdOpenCaseTime = t;
 }
