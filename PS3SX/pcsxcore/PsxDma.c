@@ -25,7 +25,7 @@
 #include "plugins.h"
 
 // Dma0/1 in Mdec.c
-// Dma3 in CdRom.c
+// Dma3 in cdrom.c
 
 void spuInterrupt(void) {
 	HW_DMA4_CHCR &= SWAP32(~0x01000000);

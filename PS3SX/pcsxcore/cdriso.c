@@ -20,7 +20,7 @@
 
 #include "psxcommon.h"
 #include "plugins.h"
-#include "CdRom.h"
+#include "cdrom.h"
 #include "cdriso.h"
 
 #ifdef _WIN32
@@ -84,11 +84,11 @@ static int numtracks = 0;
 static struct trackinfo ti[MAXTRACKS];
 
 // get a sector from a msf-array
-unsigned int msf2sec(char *msf) {
+unsigned int msf2sec(u8 *msf) {
 	return ((msf[0] * 60 + msf[1]) * 75) + msf[2];
 }
 
-void sec2msf(unsigned int s, char *msf) {
+void sec2msf(unsigned int s, u8 *msf) {
 	msf[0] = s / 75 / 60;
 	s = s - msf[0] * 75 * 60;
 	msf[1] = s / 75;

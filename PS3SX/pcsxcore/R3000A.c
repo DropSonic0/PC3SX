@@ -25,7 +25,7 @@
 #include "R3000A.h"
 #include "PsxHw.h"
 #include "PsxDma.h"
-#include "CdRom.h"
+#include "cdrom.h"
 #include "Mdec.h"
 
 R3000Acpu *psxCpu;

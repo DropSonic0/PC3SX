@@ -86,6 +86,7 @@ CDRgetBufferSub       CDR_getBufferSub;
 CDRconfigure          CDR_configure;
 CDRabout              CDR_about;
 CDRreadCDDA           CDR_readCDDA;
+CDRgetTE              CDR_getTE;
 
 // SPU plugin function pointers
 SPUconfigure        SPU_configure;
@@ -132,6 +133,8 @@ PADkeypressed		PAD1_keypressed;
 PADstartPoll        PAD1_startPoll;
 PADpoll             PAD1_poll;
 PADsetSensitive     PAD1_setSensitive;
+PADregisterVibration PAD1_registerVibration;
+PADregisterCursor     PAD1_registerCursor;
 
 PADconfigure        PAD2_configure;
 PADabout            PAD2_about;
@@ -146,6 +149,8 @@ PADkeypressed		PAD2_keypressed;
 PADstartPoll        PAD2_startPoll;
 PADpoll             PAD2_poll;
 PADsetSensitive     PAD2_setSensitive;
+PADregisterVibration PAD2_registerVibration;
+PADregisterCursor     PAD2_registerCursor;
 
 // NET plugin function pointers
 NETinit               NET_init;
@@ -358,6 +363,7 @@ long CALLBACK CDR__readCDDA(unsigned char m, unsigned char s, unsigned char f, u
 long CALLBACK CDR__configure(void) { return 0; }
 long CALLBACK CDR__test(void) { return 0; }
 void CALLBACK CDR__about(void) {}
+long CALLBACK CDR__getTE(unsigned char track, unsigned char *m, unsigned char *s, unsigned char *f) { return -1; }
 
 #if defined(__ppc__)
 #define LoadCdrSym0(dest, name) CDR_##dest = (CDR##dest) CDR__##dest;
@@ -395,6 +401,7 @@ int LoadCDRplugin(char *CDRdll) {
 	LoadCdrSym0(about, "CDRabout");
 	LoadCdrSym0(readCDDA, "CDRreadCDDA");
 	LoadCdrSym0(setfilename, "CDRsetfilename");
+	LoadCdrSym0(getTE, "CDRgetTE");
 
 	return 0;
 }
@@ -823,6 +830,8 @@ void CALLBACK PAD1__about(void) {}
 long CALLBACK PAD1__test(void) { return 0; }
 long CALLBACK PAD1__query(void) { return 3; }
 long CALLBACK PAD1__keypressed() { return 0; }
+void CALLBACK PAD1__registerVibration(void (CALLBACK *callback)(unsigned long, unsigned long)) {}
+void CALLBACK PAD1__registerCursor(void (CALLBACK *callback)(int, int, int)) {}
 
 #if defined(__ppc__)
 #define LoadPad1Sym0(dest, name) PAD1_##dest = (PAD##dest) PAD1__##dest;
@@ -854,6 +863,8 @@ int LoadPAD1plugin(char *PAD1dll) {
 	LoadPad1Sym0(keypressed, "PADkeypressed");
 	LoadPad1Sym0(startPoll, "PADstartPoll");
 	LoadPad1Sym0(poll, "PADpoll");
+	LoadPad1Sym0(registerVibration, "PADregisterVibration");
+	LoadPad1Sym0(registerCursor, "PADregisterCursor");
 
 	return 0;
 }
@@ -875,6 +886,8 @@ void CALLBACK PAD2__about(void) {}
 long CALLBACK PAD2__test(void) { return 0; }
 long CALLBACK PAD2__query(void) { return 3; }
 long CALLBACK PAD2__keypressed() { return 0; }
+void CALLBACK PAD2__registerVibration(void (CALLBACK *callback)(unsigned long, unsigned long)) {}
+void CALLBACK PAD2__registerCursor(void (CALLBACK *callback)(int, int, int)) {}
 
 #if defined(__ppc__)
 #define LoadPad2Sym0(dest, name) PAD2_##dest = (PAD##dest) PAD2__##dest;
@@ -906,6 +919,8 @@ int LoadPAD2plugin(char *PAD2dll) {
 	LoadPad2Sym0(keypressed, "PADkeypressed");
 	LoadPad2Sym0(startPoll, "PADstartPoll");
 	LoadPad2Sym0(poll, "PADpoll");
+	LoadPad2Sym0(registerVibration, "PADregisterVibration");
+	LoadPad2Sym0(registerCursor, "PADregisterCursor");
 
 	return 0;
 }
