@@ -21,10 +21,6 @@
 * Handles all CD-ROM registers and functions.
 */
 
-#ifndef MDFNPS3
-#define MDFNPS3
-#endif
-
 #include "cdrom.h"
 #include "ppf.h"
 #include "psxdma.h"
@@ -134,26 +130,12 @@ static struct CdrStat stat;
 static struct SubQ *subq;
 
 //ROBO: Copy from cdriso.c
-#ifndef MDFNPS3 //Include functions unavailable due to exclusion of cdriso.c
 extern unsigned int msf2sec(u8 *msf);
 extern void sec2msf(unsigned int s, u8 *msf);
 
 extern u16 *iso_play_cdbuf;
 extern u16 iso_play_bufptr;
 extern long CALLBACK ISOinit(void);
-#else
-unsigned int msf2sec(u8 *msf) {
-	return ((msf[0] * 60 + msf[1]) * 75) + msf[2];
-}
-
-void sec2msf(unsigned int s, u8 *msf) {
-	msf[0] = s / 75 / 60;
-	s = s - msf[0] * 75 * 60;
-	msf[1] = s / 75;
-	s = s - msf[1] * 75;
-	msf[2] = s;
-}
-#endif
 
 extern void CALLBACK SPUirq(void);
 extern SPUregisterCallback SPU_registerCallback;

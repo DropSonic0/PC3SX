@@ -65,6 +65,8 @@ int CheckState(char *file);
 int SendPcsxInfo(void);
 int RecvPcsxInfo(void);
 
+u16 calcCrc(u8 *d, int len);
+
 extern char *LabelAuthors;
 extern char *LabelGreets;
 
