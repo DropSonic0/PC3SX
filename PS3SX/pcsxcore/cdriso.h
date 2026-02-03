@@ -28,6 +28,9 @@ extern "C" {
 void cdrIsoInit(void);
 int cdrIsoActive(void);
 
+unsigned int msf2sec(unsigned char *msf);
+void sec2msf(unsigned int s, unsigned char *msf);
+
 #ifdef __cplusplus
 }
 #endif

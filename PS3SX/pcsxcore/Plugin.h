@@ -12,6 +12,17 @@ long CDR__getTN(unsigned char *);
 long CDR__getTD(unsigned char , unsigned char *);
 long CDR__readTrack(unsigned char *);
 unsigned char *CDR__getBuffer(void);
+unsigned char *CDR__getBufferSub(void);
+long CDR__play(unsigned char *);
+long CDR__stop(void);
+struct CdrStat;
+long CDR__getStatus(struct CdrStat *);
+long CDR__getTE(unsigned char, unsigned char *, unsigned char *, unsigned char *);
+long CDR__setfilename(char *);
+long CDR__readCDDA(unsigned char, unsigned char, unsigned char, unsigned char *);
+long CDR__configure(void);
+long CDR__test(void);
+void CDR__about(void);
 
 long SPU_d_init(void);				
 long SPU_d_shutdown(void);	
