@@ -53,6 +53,8 @@ typedef struct {
 char CdromId[10];
 char CdromLabel[33];
 
+u16 calcCrc(u8 *d, int len);
+
 int LoadCdrom(void);
 int LoadCdromFile(char *filename, EXE_HEADER *head);
 int CheckCdrom(void);

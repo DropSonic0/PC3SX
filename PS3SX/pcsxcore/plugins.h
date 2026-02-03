@@ -120,13 +120,14 @@ typedef long (CALLBACK* CDRgetStatus)(struct CdrStat *);
 typedef long (CALLBACK* CDRsetfilename)(char *);
 typedef char* (CALLBACK* CDRgetDriveLetter)(void);
 struct SubQ {
-	char res0[11];
+	char res0[12];
 	unsigned char ControlAndADR;
 	unsigned char TrackNumber;
 	unsigned char IndexNumber;
 	unsigned char TrackRelativeAddress[3];
 	unsigned char Filler;
 	unsigned char AbsoluteAddress[3];
+	unsigned char subq_crc[2];
 	char res1[72];
 };
 typedef unsigned char* (CALLBACK* CDRgetBufferSub)(void);

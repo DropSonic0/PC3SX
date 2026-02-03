@@ -23,12 +23,12 @@
 extern "C" {
 #endif
 
-void BuildPPFCache();
-void FreePPFCache();
+void BuildPPFCache(void);
+void FreePPFCache(void);
 void CheckPPFCache(unsigned char *pB, unsigned char m, unsigned char s, unsigned char f);
 
-void LoadSBI();
-boolean CheckSBI(const u8 *time);
+void LoadSBI(void);
+boolean CheckSBI(const u8 *msf);
 
 #ifdef __cplusplus
 }

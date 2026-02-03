@@ -98,13 +98,13 @@ typedef struct {
 
 extern cdrStruct cdr;
 
-void cdrDecodedBufferInterrupt();
+void cdrDecodedBufferInterrupt(void);
 
-void cdrReset();
-void cdrInterrupt();
-void cdrReadInterrupt();
-void cdrLidSeekInterrupt();
-void cdrPlayInterrupt();
+void cdrReset(void);
+void cdrInterrupt(void);
+void cdrReadInterrupt(void);
+void cdrLidSeekInterrupt(void);
+void cdrPlayInterrupt(void);
 unsigned char cdrRead0(void);
 unsigned char cdrRead1(void);
 unsigned char cdrRead2(void);

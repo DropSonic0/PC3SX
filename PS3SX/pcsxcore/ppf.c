@@ -22,7 +22,7 @@
 
 #include "psxcommon.h"
 #include "ppf.h"
-#include "CdRom.h"
+#include "cdrom.h"
 
 typedef struct tagPPF_DATA {
 	s32					addr;
@@ -381,14 +381,14 @@ void LoadSBI() {
 	SysPrintf(_("Loaded SBI file: %s.\n"), sbifile);
 }
 
-boolean CheckSBI(const u8 *time) {
+boolean CheckSBI(const u8 *msf) {
 	int lcv;
 
 	// both BCD format
 	for (lcv = 0; lcv < sbicount; lcv++) {
-		if (time[0] == sbitime[lcv][0] && 
-				time[1] == sbitime[lcv][1] && 
-				time[2] == sbitime[lcv][2])
+		if (msf[0] == sbitime[lcv][0] &&
+				msf[1] == sbitime[lcv][1] &&
+				msf[2] == sbitime[lcv][2])
 			return TRUE;
 	}
 
