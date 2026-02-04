@@ -1,6 +1,7 @@
 /***************************************************************************
- *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
+ *   PCSX-Revolution - PlayStation Emulator for Nintendo Wii               *
+ *   Copyright (C) 2009-2010  PCSX-Revolution Dev Team                     *
+ *   <http://code.google.com/p/pcsx-revolution/>                           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,16 +16,50 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
-#ifndef __PSXHLE_H__
-#define __PSXHLE_H__
+#ifndef __GTE_H__
+#define __GTE_H__
 
-#include "PsxCommon.h"
-#include "R3000A.h"
-#include "plugins.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern void (*psxHLEt[256])();
+#include "psxcommon.h"
+#include "r3000a.h"
 
-#endif /* __PSXHLE_H__ */
+void gteMFC2(void);
+void gteCFC2(void);
+void gteMTC2(void);
+void gteCTC2(void);
+void gteLWC2(void);
+void gteSWC2(void);
+
+void gteRTPS(void);
+void gteOP(void);
+void gteNCLIP(void);
+void gteDPCS(void);
+void gteINTPL(void);
+void gteMVMVA(void);
+void gteNCDS(void);
+void gteNCDT(void);
+void gteCDP(void);
+void gteNCCS(void);
+void gteCC(void);
+void gteNCS(void);
+void gteNCT(void);
+void gteSQR(void);
+void gteDCPL(void);
+void gteDPCT(void);
+void gteAVSZ3(void);
+void gteAVSZ4(void);
+void gteRTPT(void);
+void gteGPF(void);
+void gteGPL(void);
+void gteNCCT(void);
+
+#ifdef __cplusplus
+}
+#endif
+#endif

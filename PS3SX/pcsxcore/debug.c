@@ -17,7 +17,7 @@
 
 #include "psxcommon.h"
 #include <ctype.h>
-#include "R3000A.h"
+#include "r3000a.h"
 #include "debug.h"
 #include "socket.h"
 

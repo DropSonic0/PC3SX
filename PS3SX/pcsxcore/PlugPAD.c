@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "PsxCommon.h"
+#include "psxcommon.h"
 #include "plugins.h"
 
 long  PadFlags = 0;

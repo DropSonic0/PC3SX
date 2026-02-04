@@ -21,10 +21,10 @@
 * R3000A CPU functions.
 */
 
-#include "R3000A.h"
-#include "PsxHw.h"
+#include "r3000a.h"
+#include "psxhw.h"
 #include "cdrom.h"
-#include "Mdec.h"
+#include "mdec.h"
 #include "gpu.h"
 #include "gte.h"
 

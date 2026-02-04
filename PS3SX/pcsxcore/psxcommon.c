@@ -18,8 +18,8 @@
  ***************************************************************************/
 
 #include "psxcommon.h"
-#include "R3000A.h"
-#include "PsxBios.h"
+#include "r3000a.h"
+#include "psxbios.h"
 
 #include "cheat.h"
 #include "ppf.h"

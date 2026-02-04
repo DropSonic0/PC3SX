@@ -17,9 +17,9 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA            *
  */
 
-#include "PsxHw.h"
+#include "psxhw.h"
 #include "gpu.h"
-#include "PsxDma.h"
+#include "psxdma.h"
 #include "plugins.h"
 
 #define GPUSTATUS_ODDLINES            0x80000000

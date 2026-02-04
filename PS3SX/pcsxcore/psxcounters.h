@@ -1,6 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
+ *   Copyright (C) 2010 by Blade_Arma                                      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,29 +14,48 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
-#ifndef __PSXBIOS_H__
-#define __PSXBIOS_H__
+#ifndef __PSXCOUNTERS_H__
+#define __PSXCOUNTERS_H__
 
-#include "PsxCommon.h"
-#include "R3000A.h"
-#include "PsxMem.h"
-#include "Misc.h"
-#include "Sio.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern char *biosA0n[256];
-extern char *biosB0n[256];
-extern char *biosC0n[256];
+#include "psxcommon.h"
+#include "r3000a.h"
+#include "psxmem.h"
+#include "plugins.h"
 
-void psxBiosInit(void);
-void psxBiosShutdown(void);
-void psxBiosException(void);
-void psxBiosFreeze(int Mode);
+typedef struct {
+    u32 mode, target;
+    u32 rate, irq, counterState, irqState;
+    u32 cycle, cycleStart;
+} psxCounter;
 
-extern void (*biosA0[256])(void);
-extern void (*biosB0[256])(void);
-extern void (*biosC0[256])(void);
+#define CounterQuantity ( 4 )
 
-#endif /* __PSXBIOS_H__ */
+extern psxCounter psxCounters[CounterQuantity];
+extern u32 psxNextCounter, psxNextsCounter;
+
+void psxRcntInit(void);
+void psxRcntUpdate(void);
+
+void psxRcntWcount(u32 index, u32 value);
+void psxRcntWmode(u32 index, u32 value);
+void psxRcntWtarget(u32 index, u32 value);
+
+u32 psxRcntRcount(u32 index);
+u32 psxRcntRmode(u32 index);
+u32 psxRcntRtarget(u32 index);
+
+s32 psxRcntFreeze(gzFile f, s32 Mode);
+
+void psxUpdateVSyncRate(void);
+
+#ifdef __cplusplus
+}
+#endif
+#endif

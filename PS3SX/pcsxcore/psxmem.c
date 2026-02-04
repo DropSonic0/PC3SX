@@ -24,9 +24,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "PsxMem.h"
-#include "R3000A.h"
-#include "PsxHw.h"
+#include "psxmem.h"
+#include "r3000a.h"
+#include "psxhw.h"
 #include "debug.h"
 
 s8 *psxM = NULL; // Kernel & User Memory (2 Meg)

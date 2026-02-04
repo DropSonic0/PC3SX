@@ -21,11 +21,11 @@
 * Functions for PSX hardware control.
 */
 
-#include "PsxHw.h"
-#include "Mdec.h"
+#include "psxhw.h"
+#include "mdec.h"
 #include "cdrom.h"
 #include "gpu.h"
-#include "PsxDma.h"
+#include "psxdma.h"
 
 void psxHwReset(void) {
 	if (Config.Sio) psxHu32ref(0x1070) |= SWAP32(0x80);

@@ -17,8 +17,8 @@
  */
 
 #include "psxcommon.h"
-#include "R3000A.h"
-#include "PsxMem.h"
+#include "r3000a.h"
+#include "psxmem.h"
 #include <ctype.h>
 
 #include "cheat.h"

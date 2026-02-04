@@ -18,80 +18,26 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-/*
-* Internal PSX HLE functions.
-*/
+#ifndef __PSXBIOS_H__
+#define __PSXBIOS_H__
 
-#include "PsxHLE.h"
+#include "psxcommon.h"
+#include "r3000a.h"
+#include "psxmem.h"
+#include "Misc.h"
+#include "sio.h"
 
-static void hleDummy() {
-	psxRegs.pc = psxRegs.GPR.n.ra;
+extern char *biosA0n[256];
+extern char *biosB0n[256];
+extern char *biosC0n[256];
 
-	psxBranchTest();
-}
+void psxBiosInit(void);
+void psxBiosShutdown(void);
+void psxBiosException(void);
+void psxBiosFreeze(int Mode);
 
-static void hleA0() {
-	u32 call = psxRegs.GPR.n.t1 & 0xff;
+extern void (*biosA0[256])(void);
+extern void (*biosB0[256])(void);
+extern void (*biosC0[256])(void);
 
-	if (biosA0[call]) biosA0[call]();
-
-	psxBranchTest();
-}
-
-static void hleB0() {
-	u32 call = psxRegs.GPR.n.t1 & 0xff;
-
-	if (biosB0[call]) biosB0[call]();
-
-	psxBranchTest();
-}
-
-static void hleC0() {
-	u32 call = psxRegs.GPR.n.t1 & 0xff;
-
-	if (biosC0[call]) biosC0[call]();
-
-	psxBranchTest();
-}
-
-static void hleBootstrap() { // 0xbfc00000
-	SysPrintf("hleBootstrap\n");
-	CheckCdrom();
-	LoadCdrom();
-	SysPrintf("CdromLabel: \"%s\": PC = %8.8lx (SP = %8.8lx)\n", CdromLabel, psxRegs.pc, psxRegs.GPR.n.sp);
-}
-
-typedef struct {                   
-	u32 _pc0;      
-	u32 gp0;      
-	u32 t_addr;   
-	u32 t_size;   
-	u32 d_addr;   
-	u32 d_size;   
-	u32 b_addr;   
-	u32 b_size;   
-	u32 S_addr;
-	u32 s_size;
-	u32 _sp,_fp,_gp,ret,base;
-} EXEC;
-
-static void hleExecRet() {
-	EXEC *header = (EXEC*)PSXM(psxRegs.GPR.n.s0);
-
-	SysPrintf("ExecRet %x: %x\n", psxRegs.GPR.n.s0, header->ret);
-
-	psxRegs.GPR.n.ra = header->ret;
-	psxRegs.GPR.n.sp = header->_sp;
-	psxRegs.GPR.n.s8 = header->_fp;
-	psxRegs.GPR.n.gp = header->_gp;
-	psxRegs.GPR.n.s0 = header->base;
-
-	psxRegs.GPR.n.v0 = 1;
-	psxRegs.pc = psxRegs.GPR.n.ra;
-}
-
-void (*psxHLEt[256])() = {
-	hleDummy, hleA0, hleB0, hleC0,
-	hleBootstrap, hleExecRet,
-	hleDummy, hleDummy
-};
+#endif /* __PSXBIOS_H__ */

@@ -21,8 +21,8 @@
 #include <string.h>
 #include "Plugins.h"
 #include "spu.h"
-#include "PsxCommon.h"
-#include "Plugin.h"
+#include "psxcommon.h"
+#include "plugin.h"
 
 #ifdef __WIN32__
 #pragma warning(disable:4244)
@@ -66,6 +66,7 @@ CBGPUfreeze        GPU_freeze;
 CBGPUgetScreenPic  GPU_getScreenPic;
 CBGPUshowScreenPic GPU_showScreenPic;
 CBGPUclearDynarec  GPU_clearDynarec;
+CBGPUidle          GPU_idle;
 
 // CDR plugin function pointers
 CDRinit               CDR_init;
@@ -268,6 +269,7 @@ void CALLBACK GPU__keypressed(int key) {}
 long CALLBACK GPU__getScreenPic(unsigned char *pMem) { return -1; }
 long CALLBACK GPU__showScreenPic(unsigned char *pMem) { return -1; }
 void CALLBACK GPU__clearDynarec(void (CALLBACK *callback)(void)) { }
+void CALLBACK GPU__idle(void) { }
 
 #if defined(__ppc__)
 #define PS3LoadGpuSym(dest) \
@@ -339,6 +341,7 @@ int LoadGPUplugin(char *GPUdll) {
 	PS3LoadGpuSym1(about);
 	PS3LoadGpuSym1(makeSnapshot);
 	PS3LoadGpuSym1(keypressed);
+	PS3LoadGpuSym1(idle);
 	
 	SysPrintf("end of PS3LoadGpuSym\n");
 	

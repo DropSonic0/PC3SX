@@ -24,10 +24,10 @@
 extern "C" {
 #endif
 
-#include "PsxCommon.h"
-#include "R3000A.h"
-#include "PsxHw.h"
-#include "PsxMem.h"
+#include "psxcommon.h"
+#include "r3000a.h"
+#include "psxhw.h"
+#include "psxmem.h"
 
 #define GPUDMA_INT(eCycle) { \
 	psxRegs.interrupt |= (1 << PSXINT_GPUDMA); \

@@ -25,9 +25,9 @@ extern "C" {
 #endif
 
 #include "psxcommon.h"
-#include "PsxMem.h"
-#include "PsxCounters.h"
-#include "PsxBios.h"
+#include "psxmem.h"
+#include "psxcounters.h"
+#include "psxbios.h"
 
 typedef struct {
 	int  (*Init)(void);

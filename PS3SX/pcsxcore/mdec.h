@@ -1,7 +1,5 @@
 /***************************************************************************
- *   PCSX-Revolution - PlayStation Emulator for Nintendo Wii               *
- *   Copyright (C) 2009-2010  PCSX-Revolution Dev Team                     *
- *   <http://code.google.com/p/pcsx-revolution/>                           *
+ *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,47 +17,30 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
-#ifndef __GTE_H__
-#define __GTE_H__
+#ifndef __MDEC_H__
+#define __MDEC_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "psxcommon.h"
-#include "R3000A.h"
+#include "r3000a.h"
+#include "psxhw.h"
+#include "psxdma.h"
 
-void gteMFC2(void);
-void gteCFC2(void);
-void gteMTC2(void);
-void gteCTC2(void);
-void gteLWC2(void);
-void gteSWC2(void);
-
-void gteRTPS(void);
-void gteOP(void);
-void gteNCLIP(void);
-void gteDPCS(void);
-void gteINTPL(void);
-void gteMVMVA(void);
-void gteNCDS(void);
-void gteNCDT(void);
-void gteCDP(void);
-void gteNCCS(void);
-void gteCC(void);
-void gteNCS(void);
-void gteNCT(void);
-void gteSQR(void);
-void gteDCPL(void);
-void gteDPCT(void);
-void gteAVSZ3(void);
-void gteAVSZ4(void);
-void gteRTPT(void);
-void gteGPF(void);
-void gteGPL(void);
-void gteNCCT(void);
+void mdecInit(void);
+void mdecWrite0(u32 data);
+void mdecWrite1(u32 data);
+u32  mdecRead0(void);
+u32  mdecRead1(void);
+void psxDma0(u32 madr, u32 bcr, u32 chcr);
+void psxDma1(u32 madr, u32 bcr, u32 chcr);
+void mdec0Interrupt(void);
+void mdec1Interrupt(void);
+int  mdecFreeze(gzFile f, int Mode);
 
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif /* __MDEC_H__ */

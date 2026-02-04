@@ -1,7 +1,7 @@
 #ifndef __PLUGIN_H__
 #define __PLUGIN_H__
 
-#include "Decode_XA.h"
+#include "decode_xa.h"
 #include "PSEmu_Plugin_Defs.h"
 
 long CDR__init(void);
@@ -61,6 +61,7 @@ unsigned long GPU__readStatus(void);
 unsigned long GPU__readData(void);
 long GPU__dmaChain(unsigned long *,unsigned long);
 void GPU__updateLace(void);
+void GPU__idle(void);
 
 long PAD__init(long);
 long PAD__shutdown(void);	
