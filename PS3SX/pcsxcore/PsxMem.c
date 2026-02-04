@@ -27,7 +27,6 @@
 #include "psxmem.h"
 #include "r3000a.h"
 #include "psxhw.h"
-#include "debug.h"
 
 s8 *psxM = NULL; // Kernel & User Memory (2 Meg)
 s8 *psxP = NULL; // Parallel Port (64K)
@@ -105,26 +104,25 @@ int psxMemInit(void) {
 
 void psxMemReset(void) {
 	FILE *f = NULL;
-	char bios[1024];
 
 	memset(psxM, 0, 0x00200000);
 	memset(psxP, 0, 0x00010000);
 	memset(psxR, 0, 0x80000);
 
+	// Load BIOS
 	if (strcmp(Config.Bios, "HLE") != 0) {
 		f = fopen(Config.BiosDir, "rb");
 
 		if (f == NULL) {
-			SysPrintf("Could not open BIOS: %s.\n Enabling HLE Bios!\n", Config.BiosDir);
+			SysMessage(_("Could not open BIOS:\"%s\". Enabling HLE Bios!\n"), Config.BiosDir);
 			memset(psxR, 0, 0x80000);
-			Config.HLE = 1;
-		}
-		else {
+			Config.HLE = TRUE;
+		} else {
 			fread(psxR, 1, 0x80000, f);
 			fclose(f);
-			Config.HLE = 0;
+			Config.HLE = FALSE;
 		}
-	} else Config.HLE = 1;
+	} else Config.HLE = TRUE;
 }
 
 void psxMemShutdown(void) {
@@ -307,6 +305,7 @@ void psxMemWrite32(u32 mem, u32 value) {
 			} else {
 				int i;
 
+				// a0-44: used for cache flushing
 				switch (value) {
 					case 0x800: case 0x804:
 						if (writeok == 0) break;
@@ -314,6 +313,8 @@ void psxMemWrite32(u32 mem, u32 value) {
 						memset(psxMemWLUT + 0x0000, 0, 0x80 * sizeof(void *));
 						memset(psxMemWLUT + 0x8000, 0, 0x80 * sizeof(void *));
 						memset(psxMemWLUT + 0xa000, 0, 0x80 * sizeof(void *));
+
+						psxRegs.ICache_valid = 0;
 						break;
 					case 0x00: case 0x1e988:
 						if (writeok == 1) break;
