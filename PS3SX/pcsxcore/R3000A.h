@@ -176,7 +176,7 @@ typedef struct {
 	u32 code;			/* The instruction */
 	u32 cycle;
 	u32 interrupt;
-	struct { u32 sCycle, cycle; } intCycle[32];
+	psxIntCycle intCycle[32];
 	u8 ICache_Addr[0x1000];
 	u8 ICache_Code[0x1000];
 	boolean ICache_valid;

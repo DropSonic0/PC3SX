@@ -1017,6 +1017,8 @@ static void recReset() {
 	memset(recRAM, 0, 0x200000);
 	memset(recROM, 0, 0x080000);
 
+	psxRegs.ICache_valid = FALSE;
+
 	ppcInit();
 	ppcSetPtr((u32 *)recMem);
 
@@ -2843,9 +2845,9 @@ static void recRecompile() {
 	
 	//where did 500 come from?
 	for (count=0; count<500;) {
-		p = (char *)PSXM(pc);
-		if (p == NULL) recError();
-		psxRegs.code = SWAP32(*(u32 *)p);
+		u32 *code_ptr = Read_ICache(pc, FALSE);
+		if (code_ptr == NULL) recError();
+		psxRegs.code = SWAP32(*code_ptr);
 
 		pc+=4; count++;
 //		iFlushRegs(0); // test
