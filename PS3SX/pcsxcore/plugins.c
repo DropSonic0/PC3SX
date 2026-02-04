@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Plugins.h"
+#include "plugins.h"
 #include "spu.h"
 #include "psxcommon.h"
 #include "plugin.h"

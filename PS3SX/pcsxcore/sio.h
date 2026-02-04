@@ -15,7 +15,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
 
@@ -30,45 +30,19 @@ extern "C" {
 #include "r3000a.h"
 #include "psxmem.h"
 #include "plugins.h"
-#include "PSEmu_Plugin_Defs.h"
+#include "psemu_plugin_defs.h"
 
 #define MCD_SIZE	(1024 * 8 * 16)
 
-// Status Flags
-#define TX_RDY		0x0001
-#define RX_RDY		0x0002
-#define TX_EMPTY	0x0004
-#define PARITY_ERR	0x0008
-#define RX_OVERRUN	0x0010
-#define FRAMING_ERR	0x0020
-#define SYNC_DETECT	0x0040
-#define DSR			0x0080
-#define CTS			0x0100
-#define IRQ			0x0200
-
-// Control Flags
-#define TX_PERM		0x0001
-#define DTR			0x0002
-#define RX_PERM		0x0004
-#define BREAK		0x0008
-#define RESET_ERR	0x0010
-#define RTS			0x0020
-#define SIO_RESET	0x0040
-
-extern unsigned short StatReg;
-extern unsigned short ModeReg;
-extern unsigned short CtrlReg;
-extern unsigned short BaudReg;
-
 extern char Mcd1Data[MCD_SIZE], Mcd2Data[MCD_SIZE];
 
-unsigned char sioRead8(void);
 void sioWrite8(unsigned char value);
 void sioWriteStat16(unsigned short value);
 void sioWriteMode16(unsigned short value);
 void sioWriteCtrl16(unsigned short value);
 void sioWriteBaud16(unsigned short value);
 
+unsigned char sioRead8(void);
 unsigned short sioReadStat16(void);
 unsigned short sioReadMode16(void);
 unsigned short sioReadCtrl16(void);
@@ -86,12 +60,12 @@ void CreateMcd(char *mcd);
 void ConvertMcd(char *mcd, char *data);
 
 typedef struct {
-	char Title[48 + 1];
-	short sTitle[48 * 2 + 1];
-	char ID[14];
-	char Name[16];
+	char Title[48 + 1]; // Title in ASCII
+	char sTitle[48 * 2 + 1]; // Title in Shift-JIS
+	char ID[12 + 1];
+	char Name[16 + 1];
 	int IconCount;
-	short Icon[16*16*3];
+	short Icon[16 * 16 * 3];
 	unsigned char Flags;
 } McdBlock;
 
@@ -100,4 +74,4 @@ void GetMcdBlockInfo(int mcd, int block, McdBlock *info);
 #ifdef __cplusplus
 }
 #endif
-#endif /* _SIO_H_ */
+#endif

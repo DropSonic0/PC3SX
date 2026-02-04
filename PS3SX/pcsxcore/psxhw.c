@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
+ *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -14,7 +15,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307 USA.           *
  ***************************************************************************/
 
 /*
@@ -26,6 +27,7 @@
 #include "cdrom.h"
 #include "gpu.h"
 #include "psxdma.h"
+#include "sio.h"
 
 void psxHwReset(void) {
 	if (Config.Sio) psxHu32ref(0x1070) |= SWAP32(0x80);
@@ -204,9 +206,9 @@ u32 psxHwRead32(u32 add) {
 	switch (add) {
 		case 0x1f801040:
 			hard = sioRead8();
-			hard |= sioRead8() << 8;
-			hard |= sioRead8() << 16;
-			hard |= sioRead8() << 24;
+			hard |= (u32)sioRead8() << 8;
+			hard |= (u32)sioRead8() << 16;
+			hard |= (u32)sioRead8() << 24;
 #ifdef PAD_LOG
 			PAD_LOG("sio read32 ;ret = %x\n", hard);
 #endif
@@ -237,7 +239,7 @@ u32 psxHwRead32(u32 add) {
 #endif
 			return hard;
 		case 0x1f801814:
-			hard = gpuReadStatus();
+			hard = (u32)gpuReadStatus();
 #ifdef PSXHW_LOG
 			PSXHW_LOG("GPU STATUS 32bit read %x\n", hard);
 #endif
@@ -728,13 +730,13 @@ void psxHwWrite32(u32 add, u32 value) {
 		default:
 			// Dukes of Hazard 2 - car engine noise
 			if (add>=0x1f801c00 && add<0x1f801e00) {
-        SPU_writeRegister(add, value&0xffff);
+        SPU_writeRegister(add, (u16)(value&0xffff));
 
 				add += 2;
 				value >>= 16;
 
 				if (add>=0x1f801c00 && add<0x1f801e00)
-					SPU_writeRegister(add, value&0xffff);
+					SPU_writeRegister(add, (u16)(value&0xffff));
 				return;
 			}
 
@@ -752,5 +754,9 @@ void psxHwWrite32(u32 add, u32 value) {
 }
 
 int psxHwFreeze(gzFile f, int Mode) {
+	char Unused[4096];
+
+	gzfreezel(Unused);
+
 	return 0;
 }

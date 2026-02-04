@@ -27,6 +27,7 @@
 #include "mdec.h"
 #include "gpu.h"
 #include "gte.h"
+#include "plugins.h"
 
 R3000Acpu *psxCpu = NULL;
 psxRegisters psxRegs;
