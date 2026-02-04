@@ -158,11 +158,9 @@ int psxTestLoadDelay(int reg, u32 tmp) {
 				case 0x10: case 0x11: // BLTZ/BGEZ...
 					// Xenogears - lbu v0 / beq v0
 					// - no load delay (fixes battle loading)
-					break;
-
-					if (_tRs_ == reg) return 2;
-					break;
+					return 0;
 			}
+			if (_tRs_ == reg) return 2;
 			break;
 
 		// J would be just a break;
@@ -173,18 +171,12 @@ int psxTestLoadDelay(int reg, u32 tmp) {
 		case 0x04: case 0x05: // BEQ/BNE
 			// Xenogears - lbu v0 / beq v0
 			// - no load delay (fixes battle loading)
-			break;
-
-			if (_tRs_ == reg || _tRt_ == reg) return 2;
-			break;
+			return 0;
 
 		case 0x06: case 0x07: // BLEZ/BGTZ
 			// Xenogears - lbu v0 / beq v0
 			// - no load delay (fixes battle loading)
-			break;
-
-			if (_tRs_ == reg) return 2;
-			break;
+			return 0;
 
 		case 0x08: case 0x09: case 0x0a: case 0x0b:
 		case 0x0c: case 0x0d: case 0x0e: // ADDI/ADDIU...
@@ -990,9 +982,6 @@ void psxCOP0() {
 }
 
 void psxCOP2() {
-	if ((psxRegs.CP0.n.Status & 0x40000000) == 0 )
-		return;
-
 	psxCP2[_Funct_]();
 }
 

@@ -2609,7 +2609,7 @@ static void recBGEZ() {
 }
 #endif
 
-#if 1
+#if 0
 REC_FUNC(MFC0);
 REC_SYS(MTC0);
 REC_FUNC(CFC0);
