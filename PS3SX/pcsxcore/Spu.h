@@ -26,8 +26,8 @@ extern "C" {
 
 #include "psxcommon.h"
 #include "plugins.h"
-#include "R3000A.h"
-#include "PsxMem.h"
+#include "r3000a.h"
+#include "psxmem.h"
 
 #define H_SPUirqAddr     0x0da4
 #define H_SPUaddr        0x0da6

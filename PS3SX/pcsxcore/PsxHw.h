@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
 #ifndef __PSXHW_H__
@@ -25,11 +24,11 @@
 extern "C" {
 #endif
 
-#include "PsxCommon.h"
-#include "R3000A.h"
-#include "PsxMem.h"
-#include "Sio.h"
-#include "PsxCounters.h"
+#include "psxcommon.h"
+#include "r3000a.h"
+#include "psxmem.h"
+#include "sio.h"
+#include "psxcounters.h"
 
 #define HW_DMA0_MADR (psxHu32ref(0x1080)) // MDEC in DMA
 #define HW_DMA0_BCR  (psxHu32ref(0x1084))
@@ -59,17 +58,16 @@ extern "C" {
 #define HW_DMA_ICR   (psxHu32ref(0x10f4))
 
 #define	DMA_INTERRUPT(n) \
-	if (SWAPu32(HW_DMA_ICR) & (1 << (16 + n))) { \
-		HW_DMA_ICR|= SWAP32(1 << (24 + n)); \
-		psxHu32ref(0x1070) |= SWAP32(8);                \
+	if (SWAPu32(HW_DMA_ICR) & (1 << (16 + n))) {    \
+		HW_DMA_ICR |= SWAP32(1 << (24 + n));        \
+		psxHu32ref(0x1070) |= SWAP32(8);            \
 	}
 
-
 void psxHwReset(void);
-u8   psxHwRead8 (u32 add);
-u16  psxHwRead16(u32 add);
-u32  psxHwRead32(u32 add);
-void psxHwWrite8 (u32 add, u8  value);
+u8 psxHwRead8(u32 add);
+u16 psxHwRead16(u32 add);
+u32 psxHwRead32(u32 add);
+void psxHwWrite8(u32 add, u8  value);
 void psxHwWrite16(u32 add, u16 value);
 void psxHwWrite32(u32 add, u32 value);
 int psxHwFreeze(gzFile f, int Mode);
@@ -77,4 +75,4 @@ int psxHwFreeze(gzFile f, int Mode);
 #ifdef __cplusplus
 }
 #endif
-#endif /* __PSXHW_H__ */
+#endif

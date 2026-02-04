@@ -22,11 +22,15 @@
 #ifndef _SIO_H_
 #define _SIO_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "psxcommon.h"
 #include "r3000a.h"
 #include "psxmem.h"
 #include "plugins.h"
-#include "psemu_plugin_defs.h"
+#include "PSEmu_Plugin_Defs.h"
 
 #define MCD_SIZE	(1024 * 8 * 16)
 
@@ -60,7 +64,18 @@ extern char Mcd1Data[MCD_SIZE], Mcd2Data[MCD_SIZE];
 
 unsigned char sioRead8(void);
 void sioWrite8(unsigned char value);
+void sioWriteStat16(unsigned short value);
+void sioWriteMode16(unsigned short value);
 void sioWriteCtrl16(unsigned short value);
+void sioWriteBaud16(unsigned short value);
+
+unsigned short sioReadStat16(void);
+unsigned short sioReadMode16(void);
+unsigned short sioReadCtrl16(void);
+unsigned short sioReadBaud16(void);
+
+void netError(void);
+
 void sioInterrupt(void);
 int sioFreeze(gzFile f, int Mode);
 
@@ -71,8 +86,8 @@ void CreateMcd(char *mcd);
 void ConvertMcd(char *mcd, char *data);
 
 typedef struct {
-	char Title[48];
-	short sTitle[48];
+	char Title[48 + 1];
+	short sTitle[48 * 2 + 1];
 	char ID[14];
 	char Name[16];
 	int IconCount;
@@ -82,4 +97,7 @@ typedef struct {
 
 void GetMcdBlockInfo(int mcd, int block, McdBlock *info);
 
+#ifdef __cplusplus
+}
 #endif
+#endif /* _SIO_H_ */

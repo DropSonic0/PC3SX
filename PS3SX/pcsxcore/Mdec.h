@@ -25,9 +25,9 @@ extern "C" {
 #endif
 
 #include "psxcommon.h"
-#include "R3000A.h"
-#include "PsxHw.h"
-#include "PsxDma.h"
+#include "r3000a.h"
+#include "psxhw.h"
+#include "psxdma.h"
 
 void mdecInit(void);
 void mdecWrite0(u32 data);

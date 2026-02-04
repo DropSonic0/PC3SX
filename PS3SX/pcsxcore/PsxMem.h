@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-#include "PsxCommon.h"
+#include "psxcommon.h"
 
 #if defined(__BIGENDIAN__) || defined(HW_RVL) || defined(HW_DOL) || defined(BIG_ENDIAN)
 

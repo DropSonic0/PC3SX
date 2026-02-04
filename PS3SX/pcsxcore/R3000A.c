@@ -1,6 +1,5 @@
 /***************************************************************************
  *   Copyright (C) 2007 Ryan Schultz, PCSX-df Team, PCSX team              *
- *   schultz.ryan@gmail.com, http://rschultz.ath.cx/code.php               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -15,31 +14,35 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
 /*
 * R3000A CPU functions.
 */
 
-#include "R3000A.h"
-#include "PsxHw.h"
-#include "PsxDma.h"
+#include "r3000a.h"
+#include "psxhw.h"
 #include "cdrom.h"
-#include "Mdec.h"
+#include "mdec.h"
+#include "gpu.h"
+#include "gte.h"
 
-R3000Acpu *psxCpu;
+R3000Acpu *psxCpu = NULL;
 psxRegisters psxRegs;
 
 int psxInit(void) {
+	SysPrintf("Running PS3SX Version %s (%s).\n", "1.9.92", __DATE__);
 
-	if(Config.Cpu) {
+#ifdef PSXREC
+	if (Config.Cpu == CPU_INTERPRETER) {
+		psxCpu = &psxInt;
+	} else psxCpu = &psxRec;
+#else
 	psxCpu = &psxInt;
-	}
-#if defined(__x86_64__) || defined(__i386__) || defined(__sh__) || defined(__ppc__) || defined(__BIGENDIAN__)
-	if (!Config.Cpu) psxCpu = &psxRec;
 #endif
-	Log=0;
+
+	Log = 0;
 
 	if (psxMemInit() == -1) return -1;
 
@@ -47,10 +50,8 @@ int psxInit(void) {
 }
 
 void psxReset(void) {
-	SysPrintf("psxCpu->Reset()\n");
 	psxCpu->Reset();
-	
-	SysPrintf("psxMemReset()\n");
+
 	psxMemReset();
 
 	memset(&psxRegs, 0, sizeof(psxRegs));
@@ -60,20 +61,16 @@ void psxReset(void) {
 	psxRegs.CP0.r[12] = 0x10900000; // COP0 enabled | BEV = 1 | TS = 1
 	psxRegs.CP0.r[15] = 0x00000002; // PRevID = Revision ID, same as R3000A
 
-	SysPrintf("psxHwReset()\n");
 	psxHwReset();
-	SysPrintf("psxBiosInit()\n");
 	psxBiosInit();
-	
-	if(!Config.HLE) {
-		SysPrintf("psxExecuteBios()\n");
+
+	if (!Config.HLE)
 		psxExecuteBios();
-	}
 
 #ifdef EMU_LOG
 	EMU_LOG("*BIOS END*\n");
 #endif
-	Log=0;
+	Log = 0;
 }
 
 void psxShutdown(void) {
@@ -93,7 +90,7 @@ void psxException(u32 code, u32 bd) {
 		PSXCPU_LOG("bd set!!!\n");
 #endif
 		SysPrintf("bd set!!!\n");
-		psxRegs.CP0.n.Cause|= 0x80000000;
+		psxRegs.CP0.n.Cause |= 0x80000000;
 		psxRegs.CP0.n.EPC = (psxRegs.pc - 4);
 	} else
 		psxRegs.CP0.n.EPC = (psxRegs.pc);
@@ -107,20 +104,48 @@ void psxException(u32 code, u32 bd) {
 	psxRegs.CP0.n.Status = (psxRegs.CP0.n.Status &~0x3f) |
 						  ((psxRegs.CP0.n.Status & 0xf) << 2);
 
-	if (!Config.HLE && (((PSXMu32(psxRegs.CP0.n.EPC) >> 24) & 0xfe) == 0x4a)) {
-		// "hokuto no ken" / "Crash Bandicot 2" ... fix
-		PSXMu32ref(psxRegs.CP0.n.EPC)&= SWAPu32(~0x02000000);
-	}
-
 	if (Config.HLE) psxBiosException();
 }
 
 void psxBranchTest(void) {
+	// GameShark Sampler: Give VSync pin some delay before exception eats it
 	if (psxHu32(0x1070) & psxHu32(0x1074)) {
 		if ((psxRegs.CP0.n.Status & 0x401) == 0x401) {
-			psxException(0x400, 0);
+			u32 opcode;
+
+			// Crash Bandicoot 2: Don't run exceptions when GTE in pipeline
+			opcode = SWAP32(*Read_ICache(psxRegs.pc, TRUE));
+			if( ((opcode >> 24) & 0xfe) != 0x4a ) {
+#ifdef PSXCPU_LOG
+				PSXCPU_LOG("Interrupt: %x %x\n", psxHu32(0x1070), psxHu32(0x1074));
+#endif
+				psxException(0x400, 0);
+			}
 		}
 	}
+
+#if 0
+	if( SPU_async )
+	{
+		static int init;
+		int elapsed;
+
+		if( init == 0 ) {
+			// 10 apu cycles
+			// - Final Fantasy Tactics (distorted - dropped sound effects)
+			psxRegs.intCycle[PSXINT_SPUASYNC].cycle = PSXCLK / 44100 * 10;
+
+			init = 1;
+		}
+
+		elapsed = psxRegs.cycle - psxRegs.intCycle[PSXINT_SPUASYNC].sCycle;
+		if (elapsed >= psxRegs.intCycle[PSXINT_SPUASYNC].cycle) {
+			SPU_async( elapsed );
+
+			psxRegs.intCycle[PSXINT_SPUASYNC].sCycle = psxRegs.cycle;
+		}
+	}
+#endif
 
 	if ((psxRegs.cycle - psxNextsCounter) >= psxNextCounter)
 		psxRcntUpdate();
@@ -162,35 +187,53 @@ void psxBranchTest(void) {
 				spuInterrupt();
 			}
 		}
+		if (psxRegs.interrupt & (1 << PSXINT_GPUBUSY)) { // gpu busy
+			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_GPUBUSY].sCycle) >= psxRegs.intCycle[PSXINT_GPUBUSY].cycle) {
+				psxRegs.interrupt &= ~(1 << PSXINT_GPUBUSY);
+				GPU_idle();
+			}
+		}
+
 		if (psxRegs.interrupt & (1 << PSXINT_MDECINDMA)) { // mdec in
 			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_MDECINDMA].sCycle) >= psxRegs.intCycle[PSXINT_MDECINDMA].cycle) {
 				psxRegs.interrupt &= ~(1 << PSXINT_MDECINDMA);
 				mdec0Interrupt();
 			}
 		}
+
 		if (psxRegs.interrupt & (1 << PSXINT_GPUOTCDMA)) { // gpu otc
 			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_GPUOTCDMA].sCycle) >= psxRegs.intCycle[PSXINT_GPUOTCDMA].cycle) {
 				psxRegs.interrupt &= ~(1 << PSXINT_GPUOTCDMA);
 				gpuotcInterrupt();
 			}
 		}
+
 		if (psxRegs.interrupt & (1 << PSXINT_CDRDMA)) { // cdrom
 			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_CDRDMA].sCycle) >= psxRegs.intCycle[PSXINT_CDRDMA].cycle) {
 				psxRegs.interrupt &= ~(1 << PSXINT_CDRDMA);
 				cdrDmaInterrupt();
 			}
 		}
-	}
-}
 
-void psxTestHWInts(void) {
-	if (psxHu32(0x1070) & psxHu32(0x1074)) {
-		if ((psxRegs.CP0.n.Status & 0x401) == 0x401) {
-#ifdef PSXCPU_LOG
-			PSXCPU_LOG("Interrupt: %x %x\n", psxHu32(0x1070), psxHu32(0x1074));
-#endif
-//			SysPrintf("Interrupt (%x): %x %x\n", psxRegs.cycle, psxHu32(0x1070), psxHu32(0x1074));
-			psxException(0x400, 0);
+		if (psxRegs.interrupt & (1 << PSXINT_CDRPLAY)) { // cdr play timing
+			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_CDRPLAY].sCycle) >= psxRegs.intCycle[PSXINT_CDRPLAY].cycle) {
+				psxRegs.interrupt &= ~(1 << PSXINT_CDRPLAY);
+				cdrPlayInterrupt();
+			}
+		}
+
+		if (psxRegs.interrupt & (1 << PSXINT_CDRDBUF)) { // cdr decoded buffer
+			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_CDRDBUF].sCycle) >= psxRegs.intCycle[PSXINT_CDRDBUF].cycle) {
+				psxRegs.interrupt &= ~(1 << PSXINT_CDRDBUF);
+				cdrDecodedBufferInterrupt();
+			}
+		}
+
+		if (psxRegs.interrupt & (1 << PSXINT_CDRLID)) { // cdr lid states
+			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_CDRLID].sCycle) >= psxRegs.intCycle[PSXINT_CDRLID].cycle) {
+				psxRegs.interrupt &= ~(1 << PSXINT_CDRLID);
+				cdrLidSeekInterrupt();
+			}
 		}
 	}
 }
@@ -230,4 +273,3 @@ void psxExecuteBios(void) {
 	while (psxRegs.pc != 0x80030000)
 		psxCpu->ExecuteBlock();
 }
-

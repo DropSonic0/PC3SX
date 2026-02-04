@@ -21,10 +21,10 @@
  * PSX assembly interpreter.
  */
 
-#include "PsxCommon.h"
-#include "R3000A.h"
-#include "Gte.h"
-#include "PsxHLE.h"
+#include "psxcommon.h"
+#include "r3000a.h"
+#include "gte.h"
+#include "psxhle.h"
 #include "debug.h"
 
 static int branch = 0;

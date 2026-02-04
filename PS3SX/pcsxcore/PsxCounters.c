@@ -21,7 +21,7 @@
  * Internal PSX counters.
  */
 
-#include "PsxCounters.h"
+#include "psxcounters.h"
 #include "debug.h"
 
 /******************************************************************************/
