@@ -30,7 +30,7 @@ extern "C" {
 #include "plugins.h"
 
 typedef struct {
-    u32 mode, target;
+    u16 mode, target;
     u32 rate, irq, counterState, irqState;
     u32 cycle, cycleStart;
 } psxCounter;

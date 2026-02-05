@@ -61,6 +61,7 @@ unsigned long GPU__readStatus(void);
 unsigned long GPU__readData(void);
 long GPU__dmaChain(unsigned long *,unsigned long);
 void GPU__updateLace(void);
+void GPU__vBlank(int);
 void GPU__idle(void);
 
 long PAD__init(long);
