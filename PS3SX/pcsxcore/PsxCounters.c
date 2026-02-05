@@ -21,8 +21,7 @@
  * Internal PSX counters.
  */
 
-#include "psxcounters.h"
-#include "debug.h"
+#include "PsxCounters.h"
 
 /******************************************************************************/
 
@@ -278,7 +277,7 @@ void psxRcntUpdate(void)
         // VSync irq.
         if( hSyncCount == VBlankStart[Config.PsxType] )
         {
-            //GPU_vBlank( 1 );
+            GPU_vBlank( 1 );
 
             // For the best times. :D
             //setIrq( 0x01 );
@@ -289,7 +288,7 @@ void psxRcntUpdate(void)
         {
             hSyncCount = 0;
 
-            //GPU_vBlank( 0 );
+            GPU_vBlank( 0 );
             setIrq( 0x01 );
 
             GPU_updateLace();
