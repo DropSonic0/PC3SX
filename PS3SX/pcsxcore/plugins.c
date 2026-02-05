@@ -59,6 +59,7 @@ CBGPUwriteStatus   GPU_writeStatus;
 CBGPUwriteData     GPU_writeData;
 CBGPUwriteDataMem  GPU_writeDataMem;
 CBGPUdmaChain      GPU_dmaChain;
+CBGPUvBlank        GPU_vBlank = GPU__vBlank;
 CBGPUkeypressed    GPU_keypressed;
 CBGPUdisplayText   GPU_displayText;
 CBGPUmakeSnapshot  GPU_makeSnapshot;
@@ -266,6 +267,7 @@ long CALLBACK GPU__test(void) { return 0; }
 void CALLBACK GPU__about(void) {}
 void CALLBACK GPU__makeSnapshot(void) {}
 void CALLBACK GPU__keypressed(int key) {}
+void CALLBACK GPU__vBlank(int val) {}
 long CALLBACK GPU__getScreenPic(unsigned char *pMem) { return -1; }
 long CALLBACK GPU__showScreenPic(unsigned char *pMem) { return -1; }
 void CALLBACK GPU__clearDynarec(void (CALLBACK *callback)(void)) { }
@@ -331,6 +333,7 @@ int LoadGPUplugin(char *GPUdll) {
 	PS3LoadGpuSym(dmaChain);
 	PS3LoadGpuSym(updateLace);	
 
+	PS3LoadGpuSym1(vBlank);
 	PS3LoadGpuSym1(displayText);	
 	PS3LoadGpuSym1(freeze);
 	PS3LoadGpuSym1(getScreenPic);
