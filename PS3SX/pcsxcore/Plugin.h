@@ -62,6 +62,9 @@ unsigned long GPU__readData(void);
 long GPU__dmaChain(unsigned long *,unsigned long);
 void GPU__updateLace(void);
 void GPU__idle(void);
+void GPU__visualVibration(u32, u32);
+void GPU__cursor(int, int, int);
+void GPU__addVertex(short, short, s64, s64, s64);
 
 long PAD__init(long);
 long PAD__shutdown(void);	

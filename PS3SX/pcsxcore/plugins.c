@@ -67,6 +67,9 @@ CBGPUgetScreenPic  GPU_getScreenPic;
 CBGPUshowScreenPic GPU_showScreenPic;
 CBGPUclearDynarec  GPU_clearDynarec;
 CBGPUidle          GPU_idle;
+CBGPUvisualVibration GPU_visualVibration;
+CBGPUcursor        GPU_cursor;
+CBGPUaddVertex     GPU_addVertex;
 
 // CDR plugin function pointers
 CDRinit               CDR_init;
@@ -270,6 +273,9 @@ long CALLBACK GPU__getScreenPic(unsigned char *pMem) { return -1; }
 long CALLBACK GPU__showScreenPic(unsigned char *pMem) { return -1; }
 void CALLBACK GPU__clearDynarec(void (CALLBACK *callback)(void)) { }
 void CALLBACK GPU__idle(void) { }
+void CALLBACK GPU__visualVibration(u32 a, u32 b) {}
+void CALLBACK GPU__cursor(int a, int b, int c) {}
+void CALLBACK GPU__addVertex(short x, short y, s64 z, s64 u, s64 v) {}
 
 #if defined(__ppc__)
 #define PS3LoadGpuSym(dest) \
@@ -342,6 +348,9 @@ int LoadGPUplugin(char *GPUdll) {
 	PS3LoadGpuSym1(makeSnapshot);
 	PS3LoadGpuSym1(keypressed);
 	PS3LoadGpuSym1(idle);
+	PS3LoadGpuSym1(visualVibration);
+	PS3LoadGpuSym1(cursor);
+	PS3LoadGpuSym1(addVertex);
 	
 	SysPrintf("end of PS3LoadGpuSym\n");
 	
