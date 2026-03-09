@@ -62,6 +62,9 @@ typedef void (CALLBACK* CBGPUabout)(void);
 typedef void (CALLBACK* CBGPUmakeSnapshot)(void);
 typedef void (CALLBACK* CBGPUkeypressed)(int);
 typedef void (CALLBACK* CBGPUdisplayText)(char *);
+typedef void (CALLBACK* CBGPUvisualVibration)(u32, u32);
+typedef void (CALLBACK* CBGPUcursor)(int, int, int);
+typedef void (CALLBACK* CBGPUaddVertex)(short, short, s64, s64, s64);
 typedef struct {
 	unsigned long ulFreezeVersion;
 	unsigned long ulStatus;
@@ -101,6 +104,9 @@ extern CBGPUgetScreenPic  GPU_getScreenPic;
 extern CBGPUshowScreenPic GPU_showScreenPic;
 extern CBGPUclearDynarec  GPU_clearDynarec;
 extern CBGPUidle          GPU_idle;
+extern CBGPUvisualVibration GPU_visualVibration;
+extern CBGPUcursor        GPU_cursor;
+extern CBGPUaddVertex     GPU_addVertex;
 
 //cd rom plugin ;)
 typedef long (CALLBACK* CDRinit)(void);

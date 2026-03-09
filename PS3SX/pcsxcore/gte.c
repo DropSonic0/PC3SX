@@ -25,6 +25,7 @@
 
 #include "gte.h"
 #include "psxmem.h"
+#include "plugins.h"
 
 #define VX(n) (n < 3 ? psxRegs.CP2D.p[n << 1].sw.l : psxRegs.CP2D.p[9].sw.l)
 #define VY(n) (n < 3 ? psxRegs.CP2D.p[n << 1].sw.h : psxRegs.CP2D.p[10].sw.l)
@@ -382,6 +383,8 @@ void gteSWC2() {
 
 void gteRTPS() {
 	int quotient;
+    float fquotient;
+
 #ifdef GTE_LOG
 	GTE_LOG("GTE RTPS\n");
 #endif
@@ -403,12 +406,20 @@ void gteRTPS() {
 	gteSX2 = limG1(F((s64)gteOFX + ((s64)gteIR1 * quotient)) >> 16);
 	gteSY2 = limG2(F((s64)gteOFY + ((s64)gteIR2 * quotient)) >> 16);
 
+    fquotient = flimE((float)(gteH << 16) / (float)gteSZ3);
+    GPU_addVertex(gteSX2,
+                  gteSY2,
+                  limG1_ia((s64)gteOFX + (s64)(gteIR1 * fquotient)), // TODO: MAC1 calc instead of IR1.
+                  limG2_ia((s64)gteOFY + (s64)(gteIR2 * fquotient)), // TODO: MAC2 calc instead of IR2.
+				  ((s64)gteSZ3));                                    // TODO: MAC3 calc instead of SZ3.
+
 	gteMAC0 = F((s64)(gteDQB + ((s64)gteDQA * quotient)) >> 12);
 	gteIR0 = limH(gteMAC0);
 }
 
 void gteRTPT() {
 	int quotient;
+    float fquotient;
 	int v;
 	s32 vx, vy, vz;
 
@@ -432,6 +443,13 @@ void gteRTPT() {
 		quotient = limE(DIVIDE(gteH, fSZ(v)));
 		fSX(v) = limG1(F((s64)gteOFX + ((s64)gteIR1 * quotient)) >> 16);
 		fSY(v) = limG2(F((s64)gteOFY + ((s64)gteIR2 * quotient)) >> 16);
+
+        fquotient = flimE((float)(gteH << 16) / (float)fSZ(v));
+		GPU_addVertex(fSX(v),
+                      fSY(v),
+                      limG1_ia((s64)gteOFX + (s64)(gteIR1 * fquotient)), // TODO: MAC1 calc instead of IR1.
+                      limG2_ia((s64)gteOFY + (s64)(gteIR2 * fquotient)), // TODO: MAC2 calc instead of IR2.
+					  ((s64)fSZ(v)));                                    // TODO: MAC3 calc instead of fSZ(v).
 	}
 	gteMAC0 = F((s64)(gteDQB + ((s64)gteDQA * quotient)) >> 12);
 	gteIR0 = limH(gteMAC0);
