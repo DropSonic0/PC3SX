@@ -35,140 +35,140 @@ int iZincEmu=0;
 //-------------------------------------------------------------------------// 
 // not used by ZINC
 
-void CALLBACK SPUasync(unsigned long cycle);
+void CALLBACK SPU_d_async(unsigned long cycle);
 
 void CALLBACK ZN_SPUupdate(void) 
 {
- SPUasync(0);
+ SPU_d_async(0);
 }
 
 //-------------------------------------------------------------------------// 
 
-void CALLBACK SPUwriteRegister(unsigned long reg, unsigned short val);
+void CALLBACK SPU__writeRegister(unsigned long reg, unsigned short val);
 
 void CALLBACK ZN_SPUwriteRegister(unsigned long reg, unsigned short val)
 { 
- SPUwriteRegister(reg,val);
+ SPU__writeRegister(reg,val);
 }
 
 //-------------------------------------------------------------------------// 
 
-unsigned short CALLBACK SPUreadRegister(unsigned long reg);
+unsigned short CALLBACK SPU__readRegister(unsigned long reg);
 
 unsigned short CALLBACK ZN_SPUreadRegister(unsigned long reg)
 {
- return SPUreadRegister(reg);
+ return SPU__readRegister(reg);
 }
 
 //-------------------------------------------------------------------------// 
 // not used by ZINC
 
-unsigned short CALLBACK SPUreadDMA(void);
+unsigned short CALLBACK SPU__readDMA(void);
 
 unsigned short CALLBACK ZN_SPUreadDMA(void)
 {
- return SPUreadDMA();
+ return SPU__readDMA();
 }
 
 //-------------------------------------------------------------------------// 
 // not used by ZINC
 
-void CALLBACK SPUwriteDMA(unsigned short val);
+void CALLBACK SPU__writeDMA(unsigned short val);
 
 void CALLBACK ZN_SPUwriteDMA(unsigned short val)
 {
- SPUwriteDMA(val);
+ SPU__writeDMA(val);
 }
 
 //-------------------------------------------------------------------------// 
 // not used by ZINC
 
-void CALLBACK SPUwriteDMAMem(unsigned short * pusPSXMem,int iSize);
+void CALLBACK SPU__writeDMAMem(unsigned short * pusPSXMem,int iSize);
 
 void CALLBACK ZN_SPUwriteDMAMem(unsigned short * pusPSXMem,int iSize)
 {
- SPUwriteDMAMem(pusPSXMem,iSize);
+ SPU__writeDMAMem(pusPSXMem,iSize);
 }
 
 //-------------------------------------------------------------------------// 
 // not used by ZINC
 
-void CALLBACK SPUreadDMAMem(unsigned short * pusPSXMem,int iSize);
+void CALLBACK SPU__readDMAMem(unsigned short * pusPSXMem,int iSize);
 
 void CALLBACK ZN_SPUreadDMAMem(unsigned short * pusPSXMem,int iSize)
 {
- SPUreadDMAMem(pusPSXMem,iSize);
+ SPU__readDMAMem(pusPSXMem,iSize);
 }
 
 //-------------------------------------------------------------------------// 
 // not used by ZINC
 
-void CALLBACK SPUplayADPCMchannel(xa_decode_t *xap);
+void CALLBACK SPU_d_playADPCMchannel(xa_decode_t *xap);
 
 void CALLBACK ZN_SPUplayADPCMchannel(xa_decode_t *xap)
 {
- SPUplayADPCMchannel(xap);
+ SPU_d_playADPCMchannel(xap);
 }
 
 //-------------------------------------------------------------------------// 
 // attention: no separate SPUInit/Shutdown funcs in ZN interface
 
-long CALLBACK SPUinit(void);
+long CALLBACK SPU_d_init(void);
 
 #ifdef _WINDOWS
 
-long CALLBACK SPUopen(HWND hW);
+long CALLBACK SPU_d_open(HWND hW);
 
 long CALLBACK ZN_SPUopen(HWND hW)                          
 {
  iZincEmu=1;
- SPUinit();
- return SPUopen(hW);
+ SPU_d_init();
+ return SPU_d_open(hW);
 }
 
 #else
 
-long SPUopen(void);
+long SPU_d_open(void);
 
 long ZN_SPUopen(void)
 {
  iZincEmu=1;
- SPUinit();
- return SPUopen();
+ SPU_d_init();
+ return SPU_d_open();
 }
 
 #endif
 
 //-------------------------------------------------------------------------// 
 
-long CALLBACK SPUshutdown(void);
-long CALLBACK SPUclose(void);
+long CALLBACK SPU_d_shutdown(void);
+long CALLBACK SPU_d_close(void);
 
 long CALLBACK ZN_SPUclose(void)
 {
- long lret=SPUclose();
- SPUshutdown();
+ long lret=SPU_d_close();
+ SPU_d_shutdown();
  return lret;
 }
 
 //-------------------------------------------------------------------------// 
 // not used by ZINC
 
-void CALLBACK SPUregisterCallback(void (CALLBACK *callback)(void));
+void CALLBACK SPU_d_registerCallback(void (CALLBACK *callback)(void));
 
 void CALLBACK ZN_SPUregisterCallback(void (CALLBACK *callback)(void))
 {
- SPUregisterCallback(callback);
+ SPU_d_registerCallback(callback);
 }
 
 //-------------------------------------------------------------------------// 
 // not used by ZINC
 
-long CALLBACK SPUfreeze(unsigned long ulFreezeMode,void * pF);
+long CALLBACK SPU_d_freeze(unsigned long ulFreezeMode,void * pF);
 
 long CALLBACK ZN_SPUfreeze(unsigned long ulFreezeMode,void * pF)
 {
- return SPUfreeze(ulFreezeMode,pF);
+ return SPU_d_freeze(ulFreezeMode,pF);
 }
 
 //-------------------------------------------------------------------------// 

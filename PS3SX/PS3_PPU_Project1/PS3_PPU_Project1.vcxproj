@@ -45,7 +45,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
+    <TargetExt>.elf</TargetExt>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">
     <ClCompile>
       <PreprocessorDefinitions>_DEBUG;__CELL_ASSERT__;%(PreprocessorDefinitions);</PreprocessorDefinitions>
@@ -128,21 +130,37 @@
     <ClCompile Include="..\pcsxcore\debug.c" />
     <ClCompile Include="..\pcsxcore\decode_xa.c" />
     <ClCompile Include="..\pcsxcore\dfsound\adsr.c" />
+    <ClCompile Include="..\pcsxcore\dfsound\cfg.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">$(IntDir)dfsound_cfg.o</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\pcsxcore\dfsound\dma.c" />
     <ClCompile Include="..\pcsxcore\dfsound\freeze.c" />
     <ClCompile Include="..\pcsxcore\dfsound\registers.c" />
-    <ClCompile Include="..\pcsxcore\dfsound\spu.c" />
+    <ClCompile Include="..\pcsxcore\dfsound\spu.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">$(IntDir)dfsound_spu.o</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\pcsxcore\dfsound\xa.c" />
+    <ClCompile Include="..\pcsxcore\dfsound\zn.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">$(IntDir)dfsound_zn.o</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\pcsxcore\disr3000a.c" />
-    <ClCompile Include="..\pcsxcore\gpu.c" />
-    <ClCompile Include="..\pcsxcore\GPU_SOFT\cfg.c" />
+    <ClCompile Include="..\pcsxcore\gpu.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">$(IntDir)pcsxcore_gpu.o</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\cfg.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">$(IntDir)gpu_soft_cfg.o</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\pcsxcore\GPU_SOFT\fps.c" />
-    <ClCompile Include="..\pcsxcore\GPU_SOFT\gpu.c" />
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\gpu.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">$(IntDir)gpu_soft_gpu.o</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\pcsxcore\GPU_SOFT\Gudraw.c" />
     <ClCompile Include="..\pcsxcore\GPU_SOFT\menu.c" />
     <ClCompile Include="..\pcsxcore\GPU_SOFT\prim.c" />
     <ClCompile Include="..\pcsxcore\GPU_SOFT\soft.c" />
-    <ClCompile Include="..\pcsxcore\GPU_SOFT\zn.c" />
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\zn.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">$(IntDir)gpu_soft_zn.o</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\pcsxcore\gte.c" />
     <ClCompile Include="..\pcsxcore\mdec.c" />
     <ClCompile Include="..\pcsxcore\misc.c" />
@@ -165,7 +183,9 @@
     <ClCompile Include="..\pcsxcore\r3000a.c" />
     <ClCompile Include="..\pcsxcore\sio.c" />
     <ClCompile Include="..\pcsxcore\socket.c" />
-    <ClCompile Include="..\pcsxcore\spu.c" />
+    <ClCompile Include="..\pcsxcore\spu.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">$(IntDir)pcsxcore_spu.o</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\pcsxcore\zlib\adler32.c" />
     <ClCompile Include="..\pcsxcore\zlib\compress.c" />
     <ClCompile Include="..\pcsxcore\zlib\crc32.c" />
@@ -193,9 +213,13 @@
     <ClCompile Include="..\ps3\rom_list.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\pcsxcore\ppc\pasm.s">
+    <CustomBuild Include="..\pcsxcore\ppc\pasm.S">
       <FileType>Document</FileType>
-    </None>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">ppu-lv2-gcc.exe -c -x assembler-with-cpp -o "$(IntDir)pasm.o" "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">$(IntDir)pasm.o;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">ppu-lv2-gcc.exe -c -x assembler-with-cpp -o "$(IntDir)pasm.o" "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">$(IntDir)pasm.o;%(Outputs)</Outputs>
+    </CustomBuild>
   </ItemGroup>
   <Import Condition="'$(ConfigurationType)' == 'Makefile' and Exists('$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets')" Project="$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

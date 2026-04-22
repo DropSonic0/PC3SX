@@ -398,10 +398,10 @@
     <ClCompile Include="..\pcsxcore\zlib\zutil.c">
       <Filter>Source Files\pcsxcore\zlib</Filter>
     </ClCompile>
+    <ClCompile Include="..\pcsxcore\dfsound\cfg.c" />
+    <ClCompile Include="..\pcsxcore\dfsound\zn.c" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\pcsxcore\ppc\pasm.s">
-      <Filter>Source Files\pcsxcore\ppc</Filter>
-    </None>
+    <CustomBuild Include="..\pcsxcore\ppc\pasm.S" />
   </ItemGroup>
 </Project>

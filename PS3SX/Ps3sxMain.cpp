@@ -391,7 +391,7 @@ void SysPrintf(const char *fmt, ...) {
     va_end(list);
 
 	dprintf_console(msg);
-	if(emuLog == NULL) emuLog = fopen("/dev_hdd0/emuLog.txt","wb");
+	if(emuLog == NULL) emuLog = fopen("/dev_hdd0/game/PCSX00001/emuLog.txt","ab");
 	if(emuLog) {
 		fputs(msg, emuLog);
 		fflush(emuLog);
@@ -408,11 +408,10 @@ void SysMessage(const char *fmt, ...) {
     va_end(list);
 
 	dprintf_console(msg);
-	if(emuLog == NULL) emuLog = fopen("/dev_hdd0/emuLog.txt","wb");
+	if(emuLog == NULL) emuLog = fopen("/dev_hdd0/game/PCSX00001/emuLog.txt","ab");
 	if(emuLog) {
 		fputs(msg, emuLog);
 		fflush(emuLog);
-		fclose(emuLog);
 	}
 	printf("%s", msg);
 }
@@ -568,7 +567,7 @@ void RomBrowser()
 
 int main()
 {
-	emuLog=NULL;
+	if(emuLog == NULL) emuLog = fopen("/dev_hdd0/game/PCSX00001/emuLog.txt","wb");
 	
     int i, ret;
 	

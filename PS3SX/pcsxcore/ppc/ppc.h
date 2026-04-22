@@ -19,7 +19,7 @@
 #define write32(val) *(u32*)ppcPtr = val; ppcPtr+=4;
 #define write64(val) *(u64*)ppcPtr = val; ppcPtr+=8;
 
-inline void CALLFunc(void* ptr);
+void CALLFunc(void* ptr);
 
 extern int cpuHWRegisters[NUM_HW_REGISTERS];
 
@@ -31,7 +31,7 @@ void ppcInit();
 void ppcSetPtr(u32 *ptr);
 void ppcShutdown();
 
-extern inline void ppcAlign();
+void ppcAlign(int bytes);
 void returnPC();
 void recRun(void (*func)(), u32 hw1, u32 hw2);
 u8 dynMemRead8(u32 mem);
