@@ -1,0 +1,407 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{955043ec-b5eb-422d-9edb-6ccc037d295a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ps3">
+      <UniqueIdentifier>{13231e57-fdcd-46d3-a279-61830eb51261}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\pcsxcore">
+      <UniqueIdentifier>{5b5078de-cf8e-49c9-80b0-62723e6b6a3d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{d42cb560-6b97-4241-8579-4d8fc41e4c60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ps3">
+      <UniqueIdentifier>{ce459729-0487-4594-b564-b85436514c5b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\pcsxcore">
+      <UniqueIdentifier>{8c61722e-fbf7-4d62-8c63-b7c79369882d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\pcsxcore\GPU_SOFT">
+      <UniqueIdentifier>{234d53d9-676e-4c6c-ada4-a79165494938}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\pcsxcore\ppc">
+      <UniqueIdentifier>{998b429e-c69d-4f23-9a73-059d395b1711}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\pcsxcore\dfsound">
+      <UniqueIdentifier>{4ccde6b0-5ba1-4b4c-ba08-c692e0d2f154}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\pcsxcore\zlib">
+      <UniqueIdentifier>{9bbdaedf-336e-47ab-abef-07c5893a9592}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\cell.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ps3\ps3audio.h">
+      <Filter>Header Files\ps3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ps3\ps3video.h">
+      <Filter>Header Files\ps3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ps3\rom_list.h">
+      <Filter>Header Files\ps3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ps3\input\cellInput.h">
+      <Filter>Header Files\ps3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ps3\graphics\PSGLGraphics.h">
+      <Filter>Header Files\ps3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ps3\graphics\GraphicsTypes.h">
+      <Filter>Header Files\ps3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ps3\graphics\IGraphics.h">
+      <Filter>Header Files\ps3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ps3\fileio\FileBrowser.h">
+      <Filter>Header Files\ps3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ps3\buffer.h">
+      <Filter>Header Files\ps3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ps3\resampler.h">
+      <Filter>Header Files\ps3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ps3\ini\ini.h">
+      <Filter>Header Files\ps3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ps3\ini\iniFile.h">
+      <Filter>Header Files\ps3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ps3\utility\OSKUtil.h">
+      <Filter>Header Files\ps3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ps3\utility\utils.h">
+      <Filter>Header Files\ps3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\psxcommon.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\psxmem.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\psxhw.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\psxdma.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\psxcounters.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\psxbios.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\r3000a.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\gte.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\mdec.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\spu.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\sio.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\cdrom.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\plugins.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\plugin.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\decode_xa.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\misc.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\system.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\debug.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\cheat.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\cdriso.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\ppf.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\socket.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\ppc\ppc.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\ppc\pR3000A.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\dfsound\spu.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\dfsound\adsr.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\dfsound\xa.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\dfsound\dma.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\dfsound\registers.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\zlib\zlib.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\zlib\zconf.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\GPU_SOFT\gpu.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\GPU_SOFT\cfg.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\GPU_SOFT\fps.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\GPU_SOFT\menu.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\GPU_SOFT\prim.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pcsxcore\GPU_SOFT\soft.h">
+      <Filter>Header Files\pcsxcore</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Ps3sxMain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ps3\ps3audio.cpp">
+      <Filter>Source Files\ps3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ps3\ps3video.cpp">
+      <Filter>Source Files\ps3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ps3\rom_list.cpp">
+      <Filter>Source Files\ps3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ps3\input\cellInput.cpp">
+      <Filter>Source Files\ps3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ps3\graphics\PSGLGraphics.cpp">
+      <Filter>Source Files\ps3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ps3\fileio\FileBrowser.cpp">
+      <Filter>Source Files\ps3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ps3\buffer.c">
+      <Filter>Source Files\ps3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ps3\resampler.c">
+      <Filter>Source Files\ps3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ps3\ini\ini.c">
+      <Filter>Source Files\ps3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ps3\ini\iniFile.cpp">
+      <Filter>Source Files\ps3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\psxbios.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\cdrom.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\psxcounters.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\psxdma.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\disr3000a.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\spu.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\sio.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\psxhw.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\mdec.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\gpu.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\psxcommon.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\psxmem.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\misc.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\plugins.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\plugin.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\decode_xa.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\r3000a.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\psxinterpreter.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\gte.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\psxhle.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\socket.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\ppf.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\debug.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\cheat.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\cdriso.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\PlugPAD.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\PlugCD.c">
+      <Filter>Source Files\pcsxcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\cfg.c">
+      <Filter>Source Files\pcsxcore\GPU_SOFT</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\Gudraw.c">
+      <Filter>Source Files\pcsxcore\GPU_SOFT</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\fps.c">
+      <Filter>Source Files\pcsxcore\GPU_SOFT</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\gpu.c">
+      <Filter>Source Files\pcsxcore\GPU_SOFT</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\menu.c">
+      <Filter>Source Files\pcsxcore\GPU_SOFT</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\prim.c">
+      <Filter>Source Files\pcsxcore\GPU_SOFT</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\soft.c">
+      <Filter>Source Files\pcsxcore\GPU_SOFT</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\zn.c">
+      <Filter>Source Files\pcsxcore\GPU_SOFT</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\ppc\pR3000A.c">
+      <Filter>Source Files\pcsxcore\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\ppc\ppc.c">
+      <Filter>Source Files\pcsxcore\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\ppc\reguse.c">
+      <Filter>Source Files\pcsxcore\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\dfsound\adsr.c">
+      <Filter>Source Files\pcsxcore\dfsound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\dfsound\xa.c">
+      <Filter>Source Files\pcsxcore\dfsound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\dfsound\spu.c">
+      <Filter>Source Files\pcsxcore\dfsound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\dfsound\dma.c">
+      <Filter>Source Files\pcsxcore\dfsound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\dfsound\registers.c">
+      <Filter>Source Files\pcsxcore\dfsound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\dfsound\freeze.c">
+      <Filter>Source Files\pcsxcore\dfsound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\zlib\adler32.c">
+      <Filter>Source Files\pcsxcore\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\zlib\compress.c">
+      <Filter>Source Files\pcsxcore\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\zlib\crc32.c">
+      <Filter>Source Files\pcsxcore\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\zlib\deflate.c">
+      <Filter>Source Files\pcsxcore\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\zlib\gzio.c">
+      <Filter>Source Files\pcsxcore\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\zlib\infblock.c">
+      <Filter>Source Files\pcsxcore\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\zlib\infcodes.c">
+      <Filter>Source Files\pcsxcore\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\zlib\inffast.c">
+      <Filter>Source Files\pcsxcore\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\zlib\inflate.c">
+      <Filter>Source Files\pcsxcore\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\zlib\inftrees.c">
+      <Filter>Source Files\pcsxcore\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\zlib\infutil.c">
+      <Filter>Source Files\pcsxcore\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\zlib\trees.c">
+      <Filter>Source Files\pcsxcore\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\zlib\uncompr.c">
+      <Filter>Source Files\pcsxcore\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pcsxcore\zlib\zutil.c">
+      <Filter>Source Files\pcsxcore\zlib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\pcsxcore\ppc\pasm.s">
+      <Filter>Source Files\pcsxcore\ppc</Filter>
+    </None>
+  </ItemGroup>
+</Project>

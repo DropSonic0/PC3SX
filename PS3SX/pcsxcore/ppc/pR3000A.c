@@ -29,7 +29,7 @@
 #include "pR3000A.h"
 #include "../R3000A.h"
 #include "../PsxHLE.h"
-#include <ppc-asm.h>
+#include <ppu_asm_intrinsics.h>
 #include <ppu_intrinsics.h>
 
 extern int is_running;
@@ -1014,8 +1014,8 @@ static int recInit() {
 }
 
 static void recReset() {
-	memset(recRAM, 0, 0x200000);
-	memset(recROM, 0, 0x080000);
+	memset((void*)recRAM, 0, 0x200000);
+	memset((void*)recROM, 0, 0x080000);
 
 	psxRegs.ICache_valid = FALSE;
 
@@ -1467,7 +1467,7 @@ static void recMULT() {
 		int shift = DoShift(k);
 		if (shift != -1) {
 			if (uselo) {
-				SLWI(PutHWReg32(REG_LO), GetHWReg32(r), shift)
+				SLWI(PutHWReg32(REG_LO), GetHWReg32(r), shift);
 			}
 			if (usehi) {
 				SRAWI(PutHWReg32(REG_HI), GetHWReg32(r), 31-shift);
@@ -2869,12 +2869,12 @@ static void recRecompile() {
 done:;
 	u32 a = (u32)(u8*)ptr;
 	while(a < (u32)(u8*)ppcPtr) {
-	  __asm__ __volatile__("icbi 0,%0" : : "r" (a));
-	  __asm__ __volatile__("dcbst 0,%0" : : "r" (a));
+	  __icbi((void*)a);
+	  __dcbst((void*)a);
 	  a += 4;
 	}
-	__asm__ __volatile__("sync");
-	__asm__ __volatile__("isync");
+	__sync();
+	__isync();
 
 	sprintf((char *)ppcPtr, "PC=%08x", pcold);
 	ppcPtr += strlen((char *)ppcPtr);
@@ -2889,4 +2889,3 @@ R3000Acpu psxRec = {
 	recClear,
 	recShutdown
 };
-

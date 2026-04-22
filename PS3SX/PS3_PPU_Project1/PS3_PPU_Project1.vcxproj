@@ -1,0 +1,204 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|PS3">
+      <Configuration>Debug</Configuration>
+      <Platform>PS3</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|PS3">
+      <Configuration>Release</Configuration>
+      <Platform>PS3</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCTargetsPath Condition="'$(VCTargetsPath11)' != '' and '$(VSVersion)' == '' and '$(VisualStudioVersion)' == ''">$(VCTargetsPath11)</VCTargetsPath>
+    <ProjectGuid>{C9E39932-79BA-4CAC-AF74-07393BEDE07B}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>SNC</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>SNC</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup Condition="'$(DebuggerFlavor)'=='PS3Debugger'" Label="OverrideDebuggerDefaults">
+    <!--LocalDebuggerCommand>$(TargetPath)</LocalDebuggerCommand-->
+    <!--LocalDebuggerCommandArguments></LocalDebuggerCommandArguments-->
+    <!--LocalDebuggerCommandLine>-r -e -m</LocalDebuggerCommandLine-->
+    <!--LocalRunCommandLine>-r</LocalRunCommandLine-->
+    <!--LocalTunerCommandLine></LocalTunerCommandLine-->
+    <!--LocalDebuggerFileServingDirectory>$(ProjectDir)</LocalDebuggerFileServingDirectory-->
+    <!--LocalDebuggerHomeDirectory>$(ProjectDir)</LocalDebuggerHomeDirectory-->
+    <!--LocalDebuggerProjectFile></LocalDebuggerProjectFile-->
+    <!--LocalDebuggerResetType>Soft</LocalDebuggerResetType-->
+    <!--LocalDebuggerClearTty>False</LocalDebuggerClearTty-->
+  </PropertyGroup>
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DEBUG;__CELL_ASSERT__;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DEBUG;__BIGENDIAN__;__ppc__;_BIG_ENDIAN;BIG_ENDIAN;PACKAGE_VERSION="0.3";PS3_SDK_3_41;PSGL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <OptimizationLevel>Level2</OptimizationLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>.;C:\PS3SX\pcsxcore;C:\PS3SX\pcsxcore\zlib;C:\PS3SX\pcsxcore\ppc;C:\PS3SX\PS3;C:\PS3SX\PS3\threads;C:\PS3SX\PS3\Audio;C:\PS3SX\PS3\input;C:\PS3SX\PS3\ini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </ClCompile>
+    <Link>
+      <OutputFormat>ELFFile</OutputFormat>
+      <AdditionalDependencies>libgcm_cmd.a;libgcm_sys_stub.a;libfs_stub.a;libPSGL.a;libPSGLcgc.a;libcgc.a;libsysmodule_stub.a;libresc_stub.a;libm.a;libdbgfont.a;libsysutil_stub.a;libio_stub.a;libaudio_stub.a;libpthread.a;libsysutil_game_stub.a;libnet_stub.a;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\usr\local\cell\target\ppu\lib\PSGL\RSX\ultra-opt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\cell.h" />
+    <ClInclude Include="..\pcsxcore\cdriso.h" />
+    <ClInclude Include="..\pcsxcore\cdrom.h" />
+    <ClInclude Include="..\pcsxcore\cheat.h" />
+    <ClInclude Include="..\pcsxcore\debug.h" />
+    <ClInclude Include="..\pcsxcore\decode_xa.h" />
+    <ClInclude Include="..\pcsxcore\dfsound\adsr.h" />
+    <ClInclude Include="..\pcsxcore\dfsound\dma.h" />
+    <ClInclude Include="..\pcsxcore\dfsound\registers.h" />
+    <ClInclude Include="..\pcsxcore\dfsound\spu.h" />
+    <ClInclude Include="..\pcsxcore\dfsound\xa.h" />
+    <ClInclude Include="..\pcsxcore\GPU_SOFT\cfg.h" />
+    <ClInclude Include="..\pcsxcore\GPU_SOFT\fps.h" />
+    <ClInclude Include="..\pcsxcore\GPU_SOFT\gpu.h" />
+    <ClInclude Include="..\pcsxcore\GPU_SOFT\menu.h" />
+    <ClInclude Include="..\pcsxcore\GPU_SOFT\prim.h" />
+    <ClInclude Include="..\pcsxcore\GPU_SOFT\soft.h" />
+    <ClInclude Include="..\pcsxcore\gte.h" />
+    <ClInclude Include="..\pcsxcore\mdec.h" />
+    <ClInclude Include="..\pcsxcore\misc.h" />
+    <ClInclude Include="..\pcsxcore\plugin.h" />
+    <ClInclude Include="..\pcsxcore\plugins.h" />
+    <ClInclude Include="..\pcsxcore\ppc\ppc.h" />
+    <ClInclude Include="..\pcsxcore\ppc\pR3000A.h" />
+    <ClInclude Include="..\pcsxcore\ppf.h" />
+    <ClInclude Include="..\pcsxcore\psxbios.h" />
+    <ClInclude Include="..\pcsxcore\psxcommon.h" />
+    <ClInclude Include="..\pcsxcore\psxcounters.h" />
+    <ClInclude Include="..\pcsxcore\psxdma.h" />
+    <ClInclude Include="..\pcsxcore\psxhw.h" />
+    <ClInclude Include="..\pcsxcore\psxmem.h" />
+    <ClInclude Include="..\pcsxcore\r3000a.h" />
+    <ClInclude Include="..\pcsxcore\sio.h" />
+    <ClInclude Include="..\pcsxcore\socket.h" />
+    <ClInclude Include="..\pcsxcore\spu.h" />
+    <ClInclude Include="..\pcsxcore\system.h" />
+    <ClInclude Include="..\pcsxcore\zlib\zconf.h" />
+    <ClInclude Include="..\pcsxcore\zlib\zlib.h" />
+    <ClInclude Include="..\ps3\buffer.h" />
+    <ClInclude Include="..\ps3\fileio\FileBrowser.h" />
+    <ClInclude Include="..\ps3\graphics\GraphicsTypes.h" />
+    <ClInclude Include="..\ps3\graphics\IGraphics.h" />
+    <ClInclude Include="..\ps3\graphics\PSGLGraphics.h" />
+    <ClInclude Include="..\ps3\ini\ini.h" />
+    <ClInclude Include="..\ps3\ini\iniFile.h" />
+    <ClInclude Include="..\ps3\input\cellInput.h" />
+    <ClInclude Include="..\ps3\ps3audio.h" />
+    <ClInclude Include="..\ps3\ps3video.h" />
+    <ClInclude Include="..\ps3\resampler.h" />
+    <ClInclude Include="..\ps3\rom_list.h" />
+    <ClInclude Include="..\ps3\utility\OSKUtil.h" />
+    <ClInclude Include="..\ps3\utility\utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\pcsxcore\cdriso.c" />
+    <ClCompile Include="..\pcsxcore\cdrom.c" />
+    <ClCompile Include="..\pcsxcore\cheat.c" />
+    <ClCompile Include="..\pcsxcore\debug.c" />
+    <ClCompile Include="..\pcsxcore\decode_xa.c" />
+    <ClCompile Include="..\pcsxcore\dfsound\adsr.c" />
+    <ClCompile Include="..\pcsxcore\dfsound\dma.c" />
+    <ClCompile Include="..\pcsxcore\dfsound\freeze.c" />
+    <ClCompile Include="..\pcsxcore\dfsound\registers.c" />
+    <ClCompile Include="..\pcsxcore\dfsound\spu.c" />
+    <ClCompile Include="..\pcsxcore\dfsound\xa.c" />
+    <ClCompile Include="..\pcsxcore\disr3000a.c" />
+    <ClCompile Include="..\pcsxcore\gpu.c" />
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\cfg.c" />
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\fps.c" />
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\gpu.c" />
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\Gudraw.c" />
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\menu.c" />
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\prim.c" />
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\soft.c" />
+    <ClCompile Include="..\pcsxcore\GPU_SOFT\zn.c" />
+    <ClCompile Include="..\pcsxcore\gte.c" />
+    <ClCompile Include="..\pcsxcore\mdec.c" />
+    <ClCompile Include="..\pcsxcore\misc.c" />
+    <ClCompile Include="..\pcsxcore\PlugCD.c" />
+    <ClCompile Include="..\pcsxcore\plugin.c" />
+    <ClCompile Include="..\pcsxcore\plugins.c" />
+    <ClCompile Include="..\pcsxcore\PlugPAD.c" />
+    <ClCompile Include="..\pcsxcore\ppc\ppc.c" />
+    <ClCompile Include="..\pcsxcore\ppc\pR3000A.c" />
+    <ClCompile Include="..\pcsxcore\ppc\reguse.c" />
+    <ClCompile Include="..\pcsxcore\ppf.c" />
+    <ClCompile Include="..\pcsxcore\psxbios.c" />
+    <ClCompile Include="..\pcsxcore\psxcommon.c" />
+    <ClCompile Include="..\pcsxcore\psxcounters.c" />
+    <ClCompile Include="..\pcsxcore\psxdma.c" />
+    <ClCompile Include="..\pcsxcore\psxhle.c" />
+    <ClCompile Include="..\pcsxcore\psxhw.c" />
+    <ClCompile Include="..\pcsxcore\psxinterpreter.c" />
+    <ClCompile Include="..\pcsxcore\psxmem.c" />
+    <ClCompile Include="..\pcsxcore\r3000a.c" />
+    <ClCompile Include="..\pcsxcore\sio.c" />
+    <ClCompile Include="..\pcsxcore\socket.c" />
+    <ClCompile Include="..\pcsxcore\spu.c" />
+    <ClCompile Include="..\pcsxcore\zlib\adler32.c" />
+    <ClCompile Include="..\pcsxcore\zlib\compress.c" />
+    <ClCompile Include="..\pcsxcore\zlib\crc32.c" />
+    <ClCompile Include="..\pcsxcore\zlib\deflate.c" />
+    <ClCompile Include="..\pcsxcore\zlib\gzio.c" />
+    <ClCompile Include="..\pcsxcore\zlib\infblock.c" />
+    <ClCompile Include="..\pcsxcore\zlib\infcodes.c" />
+    <ClCompile Include="..\pcsxcore\zlib\inffast.c" />
+    <ClCompile Include="..\pcsxcore\zlib\inflate.c" />
+    <ClCompile Include="..\pcsxcore\zlib\inftrees.c" />
+    <ClCompile Include="..\pcsxcore\zlib\infutil.c" />
+    <ClCompile Include="..\pcsxcore\zlib\trees.c" />
+    <ClCompile Include="..\pcsxcore\zlib\uncompr.c" />
+    <ClCompile Include="..\pcsxcore\zlib\zutil.c" />
+    <ClCompile Include="..\Ps3sxMain.cpp" />
+    <ClCompile Include="..\ps3\buffer.c" />
+    <ClCompile Include="..\ps3\fileio\FileBrowser.cpp" />
+    <ClCompile Include="..\ps3\graphics\PSGLGraphics.cpp" />
+    <ClCompile Include="..\ps3\ini\ini.c" />
+    <ClCompile Include="..\ps3\ini\iniFile.cpp" />
+    <ClCompile Include="..\ps3\input\cellInput.cpp" />
+    <ClCompile Include="..\ps3\ps3audio.cpp" />
+    <ClCompile Include="..\ps3\ps3video.cpp" />
+    <ClCompile Include="..\ps3\resampler.c" />
+    <ClCompile Include="..\ps3\rom_list.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\pcsxcore\ppc\pasm.s">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <Import Condition="'$(ConfigurationType)' == 'Makefile' and Exists('$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets')" Project="$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
