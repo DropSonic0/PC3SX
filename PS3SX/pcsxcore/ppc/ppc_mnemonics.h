@@ -176,6 +176,9 @@
 #define SUBCO_(REG_DST, REG1, REG2) \
 	{SUBFCO_(REG_DST, REG2, REG1)}
 
+#define SRAWI(REG_DST, REG_SRC, SHIFT) \
+	{int _src = (REG_SRC); int _dst=(REG_DST); \
+        INSTR = (0x7C000670 | (_src << 21) | (_dst << 16) | (SHIFT << 11));}
 
 #define MULHW(REG_DST, REG1, REG2) \
 	{int _reg1 = (REG1), _reg2 = (REG2); int _dst=(REG_DST); \

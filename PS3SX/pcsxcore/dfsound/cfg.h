@@ -25,7 +25,7 @@
 //*************************************************************************//
 
 
-void SPU_ReadConfig(void);
+void ReadConfig(void);
 
 
 #ifdef _WINDOWS

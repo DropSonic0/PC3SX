@@ -170,7 +170,7 @@ char buf[12];
     g->WriteCfg("GpuPeopsSDL","iUseNoStretchBlt", buf);
 }
 
-int FPSE_ReadConfig(void){
+int ReadConfig(void){
     
     char myvalue[256];
     
@@ -231,7 +231,7 @@ int GPU_Open(UINT32 *par)
     
 #ifndef _WINDOWS    
     printf("(.) Gpu : GpuPeopsSDL %d.%d \n",VERSION >>8,VERSION & 0xFF);
-    if (FPSE_ReadConfig()!=FPSE_OK) {
+    if (ReadConfig()!=FPSE_OK) {
      printf("->(!) Gpu not configured, using defaults.\n");
     // iResX=320;iResY=240;
 //	iResX=362;iResY=272;  // 362x272
@@ -341,7 +341,7 @@ iResX=640;iResY=480;  //
      iUseFixes=0;
      iUseNoStretchBlt=0;
      iShowFPS=0;
-if (FPSE_ReadConfig()!=FPSE_OK) {
+if (ReadConfig()!=FPSE_OK) {
      printf("->(!) Gpu not configured, using defaults.\n");
 }
 GPUconfigure();

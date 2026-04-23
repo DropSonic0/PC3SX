@@ -31,7 +31,7 @@ void ppcAlign(int bytes) {
 void ppcShutdown() {
 }
 
-void CALLFunc(void* ptr) {
+inline void CALLFunc(void* ptr) {
 	u32* opd = (u32*)ptr;
 	u32 func = opd[0];
 	u32 rtoc = opd[1];

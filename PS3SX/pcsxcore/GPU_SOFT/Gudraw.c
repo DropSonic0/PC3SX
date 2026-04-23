@@ -66,9 +66,9 @@ int iFPSEInterface = 0;
 unsigned int   LUT16to32[65536];
 unsigned int   RGBtoYUV[65536];
 char *               pCaptionText;
-static unsigned char	GXtexture[RESX_MAX*RESY_MAX*4];
+static unsigned char	GXtexture[RESX_MAX*RESY_MAX*2];
 //char *	Xpixels;
-static unsigned char	Xpixels[RESX_MAX*RESY_MAX*4];
+static unsigned char	Xpixels[RESX_MAX*RESY_MAX*2];
 
 
 void init_video()
@@ -478,8 +478,8 @@ void DoBufferSwap(void)
 unsigned long ulInitDisplay(void)
 {
  
-	memset(Xpixels,0,iResX_Max*iResY_Max*4);
-	memset(GXtexture,0,iResX_Max*iResY_Max*4);
+	memset(Xpixels,0,iResX_Max*iResY_Max*2);
+	memset(GXtexture,0,iResX_Max*iResY_Max*2);
  
  return (unsigned long)Xpixels;
 }

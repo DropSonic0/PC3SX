@@ -1183,7 +1183,7 @@ long SPU_d_open(void)
  hWMain = hW;                                          // store hwnd
 #endif
 
- SPU_ReadConfig();                                     // read user stuff
+ ReadConfig();                                         // read user stuff
  
  SetupSound();                                         // setup sound (before init!)
 

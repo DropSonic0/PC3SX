@@ -27,11 +27,7 @@ extern "C" {
 
 #include "psxcommon.h"
 
-#if defined(__PPC__) || defined(__ppc__)
-#include <ppu_intrinsics.h>
-#endif
-
-#if defined(__BIGENDIAN__) || defined(HW_RVL) || defined(HW_DOL) || defined(BIG_ENDIAN) || defined(_BIG_ENDIAN)
+#if defined(__BIGENDIAN__) || defined(HW_RVL) || defined(HW_DOL) || defined(BIG_ENDIAN)
 
 #define _SWAP16(b) ((((unsigned char*)&(b))[0]&0xff) | (((unsigned char*)&(b))[1]&0xff)<<8)
 #define _SWAP32(b) ((((unsigned char*)&(b))[0]&0xff) | ((((unsigned char*)&(b))[1]&0xff)<<8) | ((((unsigned char*)&(b))[2]&0xff)<<16) | (((unsigned char*)&(b))[3]<<24))
@@ -44,21 +40,9 @@ extern "C" {
 #define SWAPu16(v) SWAP16((u16)(v))
 #define SWAPs16(v) SWAP16((s16)(v))
 
-#if defined(__PPC__) || defined(__ppc__)
-static __inline__ u16 SWAP16p(u16 *ptr) {
-	return __lhbrx(ptr);
-}
-static __inline__ u32 SWAP32p(u32 *ptr) {
-	return __lwbrx(ptr);
-}
-static __inline__ void SWAP32wp(u32 *ptr, u32 val) {
-	__stwbrx(ptr, val);
-}
-#else
-#define SWAP16p(ptr) SWAP16(*(u16*)(ptr))
-#define SWAP32p(ptr) SWAP32(*(u32*)(ptr))
-#define SWAP32wp(ptr, val) (*(u32*)(ptr) = SWAP32(val))
-#endif
+#define SWAP16p(ptr) ({u16 __ret, *__ptr=(ptr); __asm__ ("lhbrx %0, 0, %1" : "=r" (__ret) : "r" (__ptr)); __ret;})
+#define SWAP32p(ptr) ({u32 __ret, *__ptr=(ptr); __asm__ ("lwbrx %0, 0, %1" : "=r" (__ret) : "r" (__ptr)); __ret;})
+#define SWAP32wp(ptr,val) ({u32 __val=(val), *__ptr=(ptr); __asm__ ("stwbrx %0, 0, %1" : : "r" (__val), "r" (__ptr) : "memory");})
 
 #else
 

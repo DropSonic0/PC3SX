@@ -164,7 +164,7 @@ char * pConfigFile=NULL;
 
 /////////////////////////////////////////////////////////////////////////////
 //extern char app_path[128];
-void GPU_ReadConfigFile()
+void ReadConfigFile()
 {
  struct stat buf;
  FILE *in;char t[256];int len, size;
@@ -174,19 +174,13 @@ void GPU_ReadConfigFile()
       strcpy(t,pConfigFile);
  else
   {
-   const char *home = getenv("HOME");
-   if (home) sprintf(t,"%s/gpucfg/gpuPeopsSoftX.cfg", home);
-   else strcpy(t,"gpucfg/gpuPeopsSoftX.cfg");
-   in = fopen(t,"rb");
+   sprintf(t,"%s/gpucfg/gpuPeopsSoftX.cfg");
+  in = fopen(t,"rb");
    if (!in)
     {
      strcpy(t,"gpuPeopsSoftX.cfg");
      in = fopen(t,"rb");
-     if(!in) 
-      {
-       if (home) sprintf(t,"%s/cfg/gpuPeopsSoftX.cfg", home);
-       else strcpy(t,"cfg/gpuPeopsSoftX.cfg");
-      }
+     if(!in) sprintf(t,"%s/cfg/gpuPeopsSoftX.cfg");
      else    fclose(in);
     }
    else     fclose(in);
@@ -198,11 +192,10 @@ void GPU_ReadConfigFile()
  in = fopen(t,"rb");
  if (!in) return;
 
- pB=(char *)malloc(size + 1);
- memset(pB,0,size + 1);
+ pB=(char *)malloc(size);
+ memset(pB,0,size);
 
  len = fread(pB, 1, size, in);
- pB[len] = 0;
  fclose(in);
 
  GetValue("ResX", iResX);
@@ -289,7 +282,7 @@ void AboutDlgProc(void)
 
 ////////////////////////////////////////////////////////////////////////
 
-void GPU_ReadConfig(void)
+void ReadConfig(void)
 {
   // defaults
   iResX=640;iResY=480;
@@ -304,8 +297,6 @@ void GPU_ReadConfig(void)
   iUseNoStretchBlt=1;
   iUseDither=0;
   iShowFPS=0;
-
- GPU_ReadConfigFile();
 
  // additional checks
  if(!iColDepth)       iColDepth=32;

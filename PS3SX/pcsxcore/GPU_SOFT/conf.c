@@ -377,7 +377,7 @@ void SoftDlgProc(void)
 {
  char Text[32];
 
- GPU_ReadConfig();
+ ReadConfig();
 
  ConfDlg = create_Config();
 #ifdef _SDL
@@ -575,7 +575,7 @@ void AboutDlgProc(void)
   size+=sprintf(pB+size, "%s = %.1f\n", name, (double)var); \
  }
 
-void GPU_ReadConfigFile()
+void ReadConfigFile()
 {
 
  struct stat buf;
@@ -586,18 +586,13 @@ void GPU_ReadConfigFile()
       strcpy(t,pConfigFile);
  else 
   {
-   const char *home = getenv("HOME");
    strcpy(t,"cfg/gpuPeopsSoftX.cfg");
    in = fopen(t,"rb");
    if (!in)
     {
      strcpy(t,"gpuPeopsSoftX.cfg");
      in = fopen(t,"rb");
-     if(!in) 
-      {
-       if (home) sprintf(t,"%s/gpuPeopsSoftX.cfg", home);
-       else strcpy(t,"gpuPeopsSoftX.cfg");
-      }
+     if(!in) sprintf(t,"%s/gpuPeopsSoftX.cfg",getenv("HOME"));
      else    fclose(in);
     }
    else     fclose(in);
@@ -609,11 +604,10 @@ void GPU_ReadConfigFile()
  in = fopen(t,"rb");
  if (!in) return;
 
- pB=(char *)malloc(size + 1);
- memset(pB,0,size + 1);
+ pB=(char *)malloc(size);
+ memset(pB,0,size);
 
  len = fread(pB, 1, size, in);
- pB[len] = 0;
  fclose(in);
 
  GetValue("ResX", iResX);
@@ -670,7 +664,7 @@ void GPU_ReadConfigFile()
 
 ////////////////////////////////////////////////////////////////////////
 
-void GPU_ReadConfig(void)
+void ReadConfig(void)
 {
 
  // defaults psp setting :=)
@@ -690,7 +684,7 @@ void GPU_ReadConfig(void)
  iShowFPS=0;
 
  // read sets
- GPU_ReadConfigFile();
+ ReadConfigFile();
 
  // additional checks
  if(!iColDepth)       iColDepth=32;

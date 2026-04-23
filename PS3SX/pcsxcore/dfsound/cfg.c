@@ -64,7 +64,7 @@ void StartCfgTool(char * pCmdLine)
 // READ LINUX CONFIG FILE
 /////////////////////////////////////////////////////////
 
-void SPU_ReadConfigFile(void)
+void ReadConfigFile(void)
 {
 }
 
@@ -72,7 +72,7 @@ void SPU_ReadConfigFile(void)
 // READ CONFIG called by spu funcs
 /////////////////////////////////////////////////////////
 
-void SPU_ReadConfig(void)             
+void ReadConfig(void)             
 {
 #ifndef __GX__
  iVolume=3; 
@@ -86,7 +86,7 @@ void SPU_ReadConfig(void)
  iDisStereo=0;
  iUseDBufIrq=0;
 
- SPU_ReadConfigFile();
+ ReadConfigFile();
 
 }
 

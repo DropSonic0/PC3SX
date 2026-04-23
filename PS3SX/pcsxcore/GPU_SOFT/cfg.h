@@ -27,7 +27,7 @@
 #ifndef _GPU_CFG_H_
 #define _GPU_CFG_H_
 
-void GPU_ReadConfig(void);
+void ReadConfig(void);
 void WriteConfig(void);
 void ReadWinSizeConfig(void);
 

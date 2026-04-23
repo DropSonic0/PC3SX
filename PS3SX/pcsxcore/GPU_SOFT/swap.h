@@ -1,19 +1,11 @@
-#ifndef __SWAP_H__
-#define __SWAP_H__
-
 #include <stdint.h>
-
-#if defined(__PPC__) || defined(__ppc__)
-#include <ppu_intrinsics.h>
-#include "ppu_asm_intrinsics.h"
-#endif
 
 // byteswappings
 
-#define SWAP16(x) (((uint16_t)(x)>>8 & 0xff) | ((uint16_t)(x)<<8 & 0xff00))
-#define SWAP32(x) (((uint32_t)(x)>>24 & 0xfful) | ((uint32_t)(x)>>8 & 0xff00ul) | ((uint32_t)(x)<<8 & 0xff0000ul) | ((uint32_t)(x)<<24 & 0xff000000ul))
+#define SWAP16(x) ({ uint16_t y=(x); (((y)>>8 & 0xff) | ((y)<<8 & 0xff00)); })
+#define SWAP32(x) ({ uint32_t y=(x); (((y)>>24 & 0xfful) | ((y)>>8 & 0xff00ul) | ((y)<<8 & 0xff0000ul) | ((y)<<24 & 0xff000000ul)); })
 
-#if defined(__BIGENDIAN__) || defined(_BIG_ENDIAN) || defined(BIG_ENDIAN)
+#ifdef __BIGENDIAN__
 
 // big endian config
 #define HOST2LE32(x) SWAP32(x)
@@ -41,39 +33,39 @@
 
 #endif
 
-#if (defined(__PPC__) || defined(__ppc__)) && (defined(__BIGENDIAN__) || defined(_BIG_ENDIAN) || defined(BIG_ENDIAN))
+#define GETLEs16(X) ((int16_t)GETLE16((uint16_t *)X))
+#define GETLEs32(X) ((int16_t)GETLE32((uint16_t *)X))
 
-// Use SDK intrinsics
-static __inline__ uint16_t GETLE16(void *ptr) {
-    return __lhbrx(ptr);
+#if defined(__PPC__) && defined(__BIG_ENDIAN__)
+
+// GCC style
+static __inline__ uint16_t GETLE16(uint16_t *ptr) {
+    uint16_t ret; __asm__ ("lhbrx %0, 0, %1" : "=r" (ret) : "r" (ptr));
+    return ret;
 }
-static __inline__ uint32_t GETLE32(void *ptr) {
-    return __lwbrx(ptr);
+static __inline__ uint32_t GETLE32(uint32_t *ptr) {
+    uint32_t ret;
+    __asm__ ("lwbrx %0, 0, %1" : "=r" (ret) : "r" (ptr));
+    return ret;
 }
-static __inline__ uint32_t GETLE16D(void *ptr) {
-    uint32_t ret = __lwbrx(ptr);
-	return (ret << 16) | (ret >> 16);
+static __inline__ uint32_t GETLE16D(uint32_t *ptr) {
+    uint32_t ret;
+    __asm__ ("lwbrx %0, 0, %1\n"
+             "rlwinm %0, %0, 16, 0, 31" : "=r" (ret) : "r" (ptr));
+    return ret;
 }
 
-static __inline__ void PUTLE16(void *ptr, uint16_t val) {
-    __sthbrx(ptr, val);
+static __inline__ void PUTLE16(uint16_t *ptr, uint16_t val) {
+    __asm__ ("sthbrx %0, 0, %1" : : "r" (val), "r" (ptr) : "memory");
 }
-static __inline__ void PUTLE32(void *ptr, uint32_t val) {
-    __stwbrx(ptr, val);
+static __inline__ void PUTLE32(uint32_t *ptr, uint32_t val) {
+    __asm__ ("stwbrx %0, 0, %1" : : "r" (val), "r" (ptr) : "memory");
 }
 
 #else
-#define GETLE16(X) LE2HOST16(*(uint16_t *)(X))
-#define GETLE32(X) LE2HOST32(*(uint32_t *)(X))
-static __inline__ uint32_t GETLE16D(void *X) {
-	uint32_t val = GETLE32(X);
-	return (val<<16 | val >> 16);
-}
-#define PUTLE16(X, Y) do{*((uint16_t *)(X))=HOST2LE16((uint16_t)(Y));}while(0)
-#define PUTLE32(X, Y) do{*((uint32_t *)(X))=HOST2LE32((uint32_t)(Y));}while(0)
-#endif
-
-#define GETLEs16(X) ((int16_t)GETLE16(X))
-#define GETLEs32(X) ((int32_t)GETLE32(X))
-
+#define GETLE16(X) LE2HOST16(*(uint16_t *)X)
+#define GETLE32(X) LE2HOST32(*(uint32_t *)X)
+#define GETLE16D(X) ({uint32_t val = GETLE32(X); (val<<16 | val >> 16);})
+#define PUTLE16(X, Y) do{*((uint16_t *)X)=HOST2LE16((uint16_t)Y);}while(0)
+#define PUTLE32(X, Y) do{*((uint32_t *)X)=HOST2LE16((uint32_t)Y);}while(0)
 #endif
