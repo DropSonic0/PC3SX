@@ -4,6 +4,8 @@
  *           alexey silinov
  */
 
+#if defined (__ppc__) || defined (__ppc64__) || defined (__powerpc__) || (__powerpc64__)
+
 #include <stdio.h>
 #include <string.h>
 
@@ -27,9 +29,9 @@ void ppcAlign(int bytes) {
 	ppcPtr = (u32*)(((u32)ppcPtr + bytes) & ~(bytes - 1));
 }
 
-
 void ppcShutdown() {
 }
+
 
 inline void CALLFunc(void* ptr) {
 	u32* opd = (u32*)ptr;
@@ -46,4 +48,4 @@ inline void CALLFunc(void* ptr) {
     }
 }
 
-
+#endif

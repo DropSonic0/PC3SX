@@ -384,6 +384,7 @@
 
 #define ORIS(REG_DST, REG_SRC, IMM) \
 	{int _src = (REG_SRC), _imm = (IMM); int _dst = (REG_DST); \
+        if (!((_imm == 0) && ((_src^_dst) == 0))) \
         INSTR = (0x64000000 | (_src << 21) | (_dst << 16) | (_imm & 0xffff));}
 
 #define OR(REG_DST, REG1, REG2) \

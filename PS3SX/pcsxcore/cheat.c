@@ -19,7 +19,6 @@
 #include "psxcommon.h"
 #include "r3000a.h"
 #include "psxmem.h"
-#include <ctype.h>
 
 #include "cheat.h"
 
@@ -37,16 +36,6 @@ int NumSearchResults = 0;
 static int NumSearchResultsAllocated = 0;
 
 #define ALLOC_INCREMENT		100
-
-void trim(char *str) {
-	char *p = str;
-	int l = strlen(p);
-
-	while (l > 0 && isspace((unsigned char)p[l - 1])) p[--l] = 0;
-	while (*p && isspace((unsigned char)*p)) ++p, --l;
-
-	memmove(str, p, l + 1);
-}
 
 void ClearAllCheats() {
 	int i;

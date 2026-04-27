@@ -73,7 +73,7 @@ typedef long (CALLBACK* CBGPUgetScreenPic)(unsigned char *);
 typedef long (CALLBACK* CBGPUshowScreenPic)(unsigned char *);
 typedef void (CALLBACK* CBGPUclearDynarec)(void (CALLBACK *callback)(void));
 typedef void (CALLBACK* CBGPUidle)(void);
-
+    typedef void (CALLBACK* CBGPUaddVertex)(short,short,s64,s64,s64);
 //plugin stuff From Shadow
 // *** walking in the valley of your darking soul i realize that i was alone
 //Gpu function pointers
@@ -101,6 +101,7 @@ extern CBGPUgetScreenPic  GPU_getScreenPic;
 extern CBGPUshowScreenPic GPU_showScreenPic;
 extern CBGPUclearDynarec  GPU_clearDynarec;
 extern CBGPUidle          GPU_idle;
+extern CBGPUaddVertex     GPU_addVertex;
 
 //cd rom plugin ;)
 typedef long (CALLBACK* CDRinit)(void);
@@ -134,7 +135,7 @@ struct SubQ {
 	unsigned char TrackRelativeAddress[3];
 	unsigned char Filler;
 	unsigned char AbsoluteAddress[3];
-	unsigned char subq_crc[2];
+	unsigned char CRC[2];
 	char res1[72];
 };
 typedef unsigned char* (CALLBACK* CDRgetBufferSub)(void);

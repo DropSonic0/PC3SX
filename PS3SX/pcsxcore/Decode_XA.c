@@ -51,17 +51,17 @@ static double K1[4] = {
 };
 #else
 static int K0[4] = {
-	(int)(0.0       * (1<<SHC)),
-	(int)(0.9375    * (1<<SHC)),
-	(int)(1.796875  * (1<<SHC)),
-	(int)(1.53125   * (1<<SHC))
+	0.0       * (1<<SHC),
+	0.9375    * (1<<SHC),
+	1.796875  * (1<<SHC),
+	1.53125   * (1<<SHC)
 };
  
 static int K1[4] = {
-	(int)(0.0       * (1<<SHC)),
-	(int)(0.0       * (1<<SHC)),
-	(int)(-0.8125   * (1<<SHC)),
-	(int)(-0.859375 * (1<<SHC))
+	0.0       * (1<<SHC),
+	0.0       * (1<<SHC),
+	-0.8125   * (1<<SHC),
+	-0.859375 * (1<<SHC)
 };
 #endif
 
@@ -347,3 +347,21 @@ s32 xa_decode_sector( xa_decode_t *xdp,
 
 	return 0;
 }
+
+/* EXAMPLE:
+"nsamples" is the number of 16 bit samples
+every sample is 2 bytes in mono and 4 bytes in stereo
+
+xa_decode_t	xa;
+
+	sectorp = read_first_sector();
+	xa_decode_sector( &xa, sectorp, 1 );
+	play_wave( xa.pcm, xa.freq, xa.nsamples );
+
+	while ( --n_sectors )
+	{
+		sectorp = read_next_sector();
+		xa_decode_sector( &xa, sectorp, 0 );
+		play_wave( xa.pcm, xa.freq, xa.nsamples );
+	}
+*/

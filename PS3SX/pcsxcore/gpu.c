@@ -2,25 +2,23 @@
  *  Portions Copyright (c) 2002, Pete Bernert.
  *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by  *
- *  the Free Software Foundation; either version 2 of the License, or     *
- *  (at your option) any later version.                                   *
- *                                                                         *
- *  This program is distributed in the hope that it will be useful,       *
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *  GNU General Public License for more details.                          *
- *                                                                         *
- *  You should have received a copy of the GNU General Public License     *
- *  along with this program; if not, write to the                         *
- *  Free Software Foundation, Inc.,                                       *
- *  51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA            *
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA
  */
 
 #include "psxhw.h"
 #include "gpu.h"
 #include "psxdma.h"
-#include "plugins.h"
 
 #define GPUSTATUS_ODDLINES            0x80000000
 #define GPUSTATUS_DMABITS             0x60000000 // Two bits
@@ -40,7 +38,7 @@
 #define GPUSTATUS_DITHER              0x00000200
 
 // Taken from PEOPS SOFTGPU
-static u32 lUsedAddr[3];
+u32 lUsedAddr[3];
 
 static inline boolean CheckForEndlessLoop(u32 laddr) {
 	if (laddr == lUsedAddr[1]) return TRUE;
@@ -83,7 +81,7 @@ static u32 gpuDmaChainSize(u32 addr) {
 	return size;
 }
 
-int gpuReadStatus(void) {
+int gpuReadStatus() {
 	int hard;
 
 
@@ -117,7 +115,7 @@ void psxDma2(u32 madr, u32 bcr, u32 chcr) { // GPU
 			}
 			// BA blocks * BS words (word = 32-bits)
 			size = (bcr >> 16) * (bcr & 0xffff);
-			GPU_readDataMem((unsigned long *)ptr, size);
+			GPU_readDataMem(ptr, size);
 			psxCpu->Clear(madr, size);
 
 #if 1
@@ -142,7 +140,7 @@ void psxDma2(u32 madr, u32 bcr, u32 chcr) { // GPU
 			}
 			// BA blocks * BS words (word = 32-bits)
 			size = (bcr >> 16) * (bcr & 0xffff);
-			GPU_writeDataMem((unsigned long *)ptr, size);
+			GPU_writeDataMem(ptr, size);
 
 #if 1
 			// already 32-bit word size ((size * 4) / 4)
@@ -160,7 +158,7 @@ void psxDma2(u32 madr, u32 bcr, u32 chcr) { // GPU
 #endif
 
 			size = gpuDmaChainSize(madr);
-			GPU_dmaChain((unsigned long *)psxM, madr & 0x1fffff);
+			GPU_dmaChain((u32 *)psxM, madr & 0x1fffff);
 
 			// Tekken 3 = use 1.0 only (not 1.5x)
 
@@ -182,7 +180,7 @@ void psxDma2(u32 madr, u32 bcr, u32 chcr) { // GPU
 	DMA_INTERRUPT(2);
 }
 
-void gpuInterrupt(void) {
+void gpuInterrupt() {
 	HW_DMA2_CHCR &= SWAP32(~0x01000000);
 	DMA_INTERRUPT(2);
 }

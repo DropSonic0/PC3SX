@@ -60,10 +60,10 @@ unsigned char cardh[4] = { 0x00, 0x00, 0x5a, 0x5d };
 
 // Transfer Ready and the Buffer is Empty
 // static unsigned short StatReg = 0x002b;
-unsigned short StatReg = TX_RDY | TX_EMPTY;
-unsigned short ModeReg;
-unsigned short CtrlReg;
-unsigned short BaudReg;
+static unsigned short StatReg = TX_RDY | TX_EMPTY;
+static unsigned short ModeReg;
+static unsigned short CtrlReg;
+static unsigned short BaudReg;
 
 static unsigned int bufcount;
 static unsigned int parp;
@@ -771,7 +771,7 @@ void sioWriteBaud16(unsigned short value) {
 	BaudReg = value;
 }
 
-unsigned char sioRead8(void) {
+unsigned char sioRead8() {
 	unsigned char ret = 0;
 
 	if ((StatReg & RX_RDY)/* && (CtrlReg & RX_PERM)*/) {
@@ -808,8 +808,8 @@ unsigned char sioRead8(void) {
 	return ret;
 }
 
-unsigned short sioReadStat16(void) {
-	unsigned short hard;
+unsigned short sioReadStat16() {
+	u16 hard;
 
 	hard = StatReg;
 
@@ -826,21 +826,21 @@ unsigned short sioReadStat16(void) {
 	return hard;
 }
 
-unsigned short sioReadMode16(void) {
+unsigned short sioReadMode16() {
 	return ModeReg;
 }
 
-unsigned short sioReadCtrl16(void) {
+unsigned short sioReadCtrl16() {
 	return CtrlReg;
 }
 
-unsigned short sioReadBaud16(void) {
+unsigned short sioReadBaud16() {
 	return BaudReg;
 }
 
-void netError(void) {
+void netError() {
 	ClosePlugins();
-	SysMessage("Connection closed!\n");
+	SysMessage(_("Connection closed!\n"));
 
 	CdromId[0] = '\0';
 	CdromLabel[0] = '\0';
@@ -848,7 +848,7 @@ void netError(void) {
 	SysRunGui();
 }
 
-void sioInterrupt(void) {
+void sioInterrupt() {
 #ifdef PAD_LOG
 	PAD_LOG("Sio Interrupt (CP0.Status = %x)\n", psxRegs.CP0.n.Status);
 #endif
@@ -873,35 +873,35 @@ void LoadMcd(int mcd, char *str) {
 
 	if (*str == 0) {
 		sprintf(str, "memcards/card%d.mcd", mcd);
-		SysPrintf("No memory card value was specified - creating a default card %s\n", str);
+		SysPrintf(_("No memory card value was specified - creating a default card %s\n"), str);
 	}
 	f = fopen(str, "rb");
 	if (f == NULL) {
-		SysPrintf("The memory card %s doesn't exist - creating it\n", str);
+		SysPrintf(_("The memory card %s doesn't exist - creating it\n"), str);
 		CreateMcd(str);
 		f = fopen(str, "rb");
 		if (f != NULL) {
-			struct stat buf_stat;
+			struct stat buf;
 
-			if (stat(str, &buf_stat) != -1) {
-				if (buf_stat.st_size == MCD_SIZE + 64)
+			if (stat(str, &buf) != -1) {
+				if (buf.st_size == MCD_SIZE + 64)
 					fseek(f, 64, SEEK_SET);
-				else if(buf_stat.st_size == MCD_SIZE + 3904)
+				else if(buf.st_size == MCD_SIZE + 3904)
 					fseek(f, 3904, SEEK_SET);
 			}
 			fread(data, 1, MCD_SIZE, f);
 			fclose(f);
 		}
 		else
-			SysMessage("Memory card %s failed to load!\n", str);
+			SysMessage(_("Memory card %s failed to load!\n"), str);
 	}
 	else {
-		struct stat buf_stat;
-		SysPrintf("Loading memory card %s\n", str);
-		if (stat(str, &buf_stat) != -1) {
-			if (buf_stat.st_size == MCD_SIZE + 64)
+		struct stat buf;
+		SysPrintf(_("Loading memory card %s\n"), str);
+		if (stat(str, &buf) != -1) {
+			if (buf.st_size == MCD_SIZE + 64)
 				fseek(f, 64, SEEK_SET);
-			else if(buf_stat.st_size == MCD_SIZE + 3904)
+			else if(buf.st_size == MCD_SIZE + 3904)
 				fseek(f, 3904, SEEK_SET);
 		}
 		fread(data, 1, MCD_SIZE, f);
@@ -919,12 +919,12 @@ void SaveMcd(char *mcd, char *data, uint32_t adr, int size) {
 
 	f = fopen(mcd, "r+b");
 	if (f != NULL) {
-		struct stat buf_stat;
+		struct stat buf;
 
-		if (stat(mcd, &buf_stat) != -1) {
-			if (buf_stat.st_size == MCD_SIZE + 64)
+		if (stat(mcd, &buf) != -1) {
+			if (buf.st_size == MCD_SIZE + 64)
 				fseek(f, adr + 64, SEEK_SET);
-			else if (buf_stat.st_size == MCD_SIZE + 3904)
+			else if (buf.st_size == MCD_SIZE + 3904)
 				fseek(f, adr + 3904, SEEK_SET);
 			else
 				fseek(f, adr, SEEK_SET);
@@ -950,7 +950,7 @@ void SaveMcd(char *mcd, char *data, uint32_t adr, int size) {
 
 void CreateMcd(char *mcd) {
 	FILE *f;
-	struct stat buf_stat;
+	struct stat buf;
 	int s = MCD_SIZE;
 	int i = 0, j;
 
@@ -958,8 +958,8 @@ void CreateMcd(char *mcd) {
 	if (f == NULL)
 		return;
 
-	if (stat(mcd, &buf_stat) != -1) {
-		if ((buf_stat.st_size == MCD_SIZE + 3904) || strstr(mcd, ".gme")) {
+	if (stat(mcd, &buf) != -1) {
+		if ((buf.st_size == MCD_SIZE + 3904) || strstr(mcd, ".gme")) {
 			s = s + 3904;
 			fputc('1', f);
 			s--;
@@ -1006,7 +1006,7 @@ void CreateMcd(char *mcd) {
 			fputc(0xff, f);
 			while (s-- > (MCD_SIZE + 1))
 				fputc(0, f);
-		} else if ((buf_stat.st_size == MCD_SIZE + 64) || strstr(mcd, ".mem") || strstr(mcd, ".vgs")) {
+		} else if ((buf.st_size == MCD_SIZE + 64) || strstr(mcd, ".mem") || strstr(mcd, ".vgs")) {
 			s = s + 64;
 			fputc('V', f);
 			s--;
@@ -1175,15 +1175,15 @@ void ConvertMcd(char *mcd, char *data) {
 }
 
 void GetMcdBlockInfo(int mcd, int block, McdBlock *Info) {
-	unsigned char *data = NULL, *ptr, *str_ptr, *sstr;
+	unsigned char *data = NULL, *ptr, *str, *sstr;
 	unsigned short clut[16];
 	unsigned short c;
 	int i, x;
 
 	memset(Info, 0, sizeof(McdBlock));
 
-	if (mcd == 1) data = (unsigned char *)Mcd1Data;
-	if (mcd == 2) data = (unsigned char *)Mcd2Data;
+	if (mcd == 1) data = Mcd1Data;
+	if (mcd == 2) data = Mcd2Data;
 
 	ptr = data + block * 8192 + 2;
 
@@ -1193,8 +1193,8 @@ void GetMcdBlockInfo(int mcd, int block, McdBlock *Info) {
 
 	x = 0;
 
-	str_ptr = (unsigned char *)Info->Title;
-	sstr = (unsigned char *)Info->sTitle;
+	str = Info->Title;
+	sstr = Info->sTitle;
 
 	for (i = 0; i < 48; i++) {
 		c = *(ptr) << 8;
@@ -1221,17 +1221,17 @@ void GetMcdBlockInfo(int mcd, int block, McdBlock *Info) {
 		else if (c == 0x816E) c = ']';
 		else if (c == 0x817C) c = '-';
 		else {
-			str_ptr[i] = ' ';
+			str[i] = ' ';
 			sstr[x++] = *ptr++; sstr[x++] = *ptr++;
 			continue;
 		}
 
-		str_ptr[i] = sstr[x++] = (unsigned char)c;
+		str[i] = sstr[x++] = c;
 		ptr += 2;
 	}
 
-	// trim(str); // trim not defined?
-	// trim(sstr);
+	trim(str);
+	trim(sstr);
 
 	ptr = data + block * 8192 + 0x60; // icon palette data
 
@@ -1257,9 +1257,9 @@ void GetMcdBlockInfo(int mcd, int block, McdBlock *Info) {
 	Info->Flags = *ptr;
 
 	ptr += 0xa;
-	strncpy(Info->ID, (char *)ptr, 12);
+	strncpy(Info->ID, ptr, 12);
 	ptr += 12;
-	strncpy(Info->Name, (char *)ptr, 16);
+	strncpy(Info->Name, ptr, 16);
 }
 
 int sioFreeze(gzFile f, int Mode) {
@@ -1292,7 +1292,7 @@ void LoadDongle( char *str )
 	else {
 		u32 *ptr, lcv;
 
-		ptr = (u32 *) DongleData;
+		ptr = (unsigned int *) DongleData;
 
 		// create temp data
 		ptr[0] = (u32) 0x02015447;

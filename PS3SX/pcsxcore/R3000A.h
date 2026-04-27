@@ -30,17 +30,17 @@ extern "C" {
 #include "psxbios.h"
 
 typedef struct {
-	int  (*Init)(void);
-	void (*Reset)(void);
-	void (*Execute)(void);		/* executes up to a break */
-	void (*ExecuteBlock)(void);	/* executes up to a jump */
+	int  (*Init)();
+	void (*Reset)();
+	void (*Execute)();		/* executes up to a break */
+	void (*ExecuteBlock)();	/* executes up to a jump */
 	void (*Clear)(u32 Addr, u32 Size);
-	void (*Shutdown)(void);
+	void (*Shutdown)();
 } R3000Acpu;
 
 extern R3000Acpu *psxCpu;
 extern R3000Acpu psxInt;
-#if (defined(__x86_64__) || defined(__i386__) || defined(__sh__) || defined(__ppc__) || defined(__BIGENDIAN__)) && !defined(NOPSXREC)
+#if (defined(__x86_64__) || defined(__i386__) || defined(__sh__) || defined(__ppc__)) && !defined(NOPSXREC)
 extern R3000Acpu psxRec;
 #define PSXREC
 #endif
@@ -72,9 +72,9 @@ typedef union {
 
 typedef union {
 	struct {
-		u32	Index,     Random,    EntryLo0,  EntryLo1,
-				Context,   PageMask,  Wired,     Reserved0,
-				BadVAddr,  Count,     EntryHi,   Compare,
+		u32	Index,     Random,    EntryLo0,  BPC,
+				Context,   BDA,       PIDMask,   DCIC,
+				BadVAddr,  BDAM,      EntryHi,   BPCM,
 				Status,    Cause,     EPC,       PRid,
 				Config,    LLAddr,    WatchLO,   WatchHI,
 				XContext,  Reserved1, Reserved2, Reserved3,
@@ -144,10 +144,6 @@ typedef union {
 	PAIR p[32];
 } psxCP2Ctrl;
 
-typedef struct {
-	u32 sCycle, cycle;
-} psxIntCycle;
-
 enum {
 	PSXINT_SIO = 0,
 	PSXINT_CDR,
@@ -174,7 +170,7 @@ typedef struct {
   u32 code;					/* The instruction */
 	u32 cycle;
 	u32 interrupt;
-	psxIntCycle intCycle[32];
+	struct { u32 sCycle, cycle; } intCycle[32];
 	u8 ICache_Addr[0x1000];
 	u8 ICache_Code[0x1000];
 	boolean ICache_valid;
@@ -326,18 +322,18 @@ static inline u32 *Read_ICache(u32 pc, boolean isolate) {
 
 #define _SetLink(x)     psxRegs.GPR.r[x] = _PC_ + 4;       // Sets the return address in the link register
 
-int  psxInit(void);
-void psxReset(void);
-void psxShutdown(void);
+int  psxInit();
+void psxReset();
+void psxShutdown();
 void psxException(u32 code, u32 bd);
-void psxBranchTest(void);
-void psxExecuteBios(void);
+void psxBranchTest();
+void psxExecuteBios();
 int  psxTestLoadDelay(int reg, u32 tmp);
 void psxDelayTest(int reg, u32 bpc);
-void psxTestSWInts(void);
-void psxJumpTest(void);
+void psxTestSWInts();
+void psxJumpTest();
 
 #ifdef __cplusplus
 }
 #endif
-#endif /* __R3000A_H__ */
+#endif

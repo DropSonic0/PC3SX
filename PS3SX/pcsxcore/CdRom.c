@@ -24,7 +24,6 @@
 #include "cdrom.h"
 #include "ppf.h"
 #include "psxdma.h"
-#include "misc.h"
 
 cdrStruct cdr;
 
@@ -122,7 +121,7 @@ unsigned char Test23[] = { 0x43, 0x58, 0x44, 0x32, 0x39 ,0x34, 0x30, 0x51 };
 // so (PSXCLK / 75) = cdr read time (linuzappz)
 #define cdReadTime (PSXCLK / 75)
 
-#ifdef MDFNPS3 //Rename stat to avoid conflict with libc
+#ifdef MDCFNPS3 //Rename stat to avoid conflict with libc
 # define stat cdrstat
 #endif
 
@@ -130,12 +129,26 @@ static struct CdrStat stat;
 static struct SubQ *subq;
 
 //ROBO: Copy from cdriso.c
-extern unsigned int msf2sec(u8 *msf);
-extern void sec2msf(unsigned int s, u8 *msf);
+#ifndef MDCFNPS3 //Include functions unavailable due to exclusion of cdriso.c
+extern unsigned int msf2sec(char *msf);
+extern void sec2msf(unsigned int s, char *msf);
 
 extern u16 *iso_play_cdbuf;
 extern u16 iso_play_bufptr;
 extern long CALLBACK ISOinit(void);
+#else
+unsigned int msf2sec(char *msf) {
+	return ((msf[0] * 60 + msf[1]) * 75) + msf[2];
+}
+
+void sec2msf(unsigned int s, char *msf) {
+	msf[0] = s / 75 / 60;
+	s = s - msf[0] * 75 * 60;
+	msf[1] = s / 75;
+	s = s - msf[1] * 75;
+	msf[2] = s;
+}
+#endif
 
 extern void CALLBACK SPUirq(void);
 extern SPUregisterCallback SPU_registerCallback;
@@ -209,7 +222,7 @@ extern SPUregisterCallback SPU_registerCallback;
 	cdr.ResultReady = 1; \
 }
 
-void adjustTransferIndex(void)
+void adjustTransferIndex()
 {
 	unsigned int bufSize;
 	
@@ -223,9 +236,9 @@ void adjustTransferIndex(void)
 		cdr.transferIndex %= bufSize;
 }
 
-void cdrDecodedBufferInterrupt(void)
+void cdrDecodedBufferInterrupt()
 {
-#ifndef MDFNPS3 //Not using cdriso
+#ifndef MDCFNPS3 //Not using cdriso
 	u16 buf_ptr[0x400], lcv;
 
 #if 0
@@ -293,7 +306,7 @@ void cdrDecodedBufferInterrupt(void)
 }
 
 
-void cdrLidSeekInterrupt(void)
+void cdrLidSeekInterrupt()
 {
 	// turn back on checking
 	if( cdr.LidCheck == 0x10 )
@@ -460,7 +473,7 @@ void Check_Shell( int Irq )
 }
 
 
-void Find_CurTrack(void) {
+void Find_CurTrack() {
 	cdr.CurTrack = 0;
 
 	if (CDR_getTN(cdr.ResultTN) != -1) {
@@ -496,10 +509,10 @@ void Find_CurTrack(void) {
 	}
 }
 
-static void ReadTrack( u8 *msf ) {
-	cdr.Prev[0] = itob( msf[0] );
-	cdr.Prev[1] = itob( msf[1] );
-	cdr.Prev[2] = itob( msf[2] );
+static void ReadTrack( u8 *time ) {
+	cdr.Prev[0] = itob( time[0] );
+	cdr.Prev[1] = itob( time[1] );
+	cdr.Prev[2] = itob( time[2] );
 
 #ifdef CDR_LOG
 	CDR_LOG("ReadTrack() Log: KEY *** %x:%x:%x\n", cdr.Prev[0], cdr.Prev[1], cdr.Prev[2]);
@@ -508,13 +521,12 @@ static void ReadTrack( u8 *msf ) {
 }
 
 
-static void CDXA_Attenuation( s16 *buf, int size, int stereo, int attenuate_type )
+static CDXA_Attenuation( s16 *buf, int size, int stereo, int attenuate_type )
 {
 	s16 *spsound;
 	s32 lc,rc;
 	int i;
 
-	(void)stereo;
 	spsound = buf;
 
 #if 0
@@ -567,7 +579,7 @@ void AddIrqQueue(unsigned char irq, unsigned long ecycle) {
 }
 
 
-void Set_Track(void)
+void Set_Track()
 {
 	if (CDR_getTN(cdr.ResultTN) != -1) {
 		int lcv;
@@ -600,7 +612,7 @@ void Set_Track(void)
 
 
 static u8 fake_subq_local[3], fake_subq_real[3], fake_subq_index, fake_subq_change;
-void Create_Fake_Subq(void)
+void Create_Fake_Subq()
 {
 	u8 temp_cur[3], temp_next[3], temp_start[3], pregap;
 	int diff;
@@ -683,7 +695,7 @@ void Create_Fake_Subq(void)
 }
 
 
-void cdrPlayInterrupt_Autopause(void)
+void cdrPlayInterrupt_Autopause()
 {
 	if ((cdr.Mode & (MODE_AUTOPAUSE|MODE_CDDA)) != (MODE_AUTOPAUSE|MODE_CDDA)) return;
 
@@ -762,7 +774,7 @@ void cdrPlayInterrupt_Autopause(void)
 }
 
 
-void cdrPlayInterrupt_Repplay(void)
+void cdrPlayInterrupt_Repplay()
 {
 	// BIOS - HACK: Switch between local / absolute times
 	static u8 report_time = 1;
@@ -896,7 +908,7 @@ void cdrPlayInterrupt_Repplay(void)
 }
 
 	
-void cdrPlayInterrupt(void)
+void cdrPlayInterrupt()
 {
 	if( !cdr.Play ) return;
 
@@ -967,7 +979,7 @@ void cdrPlayInterrupt(void)
 }
 
 
-void cdrInterrupt(void) {
+void cdrInterrupt() {
 	int i;
 	unsigned char Irq = cdr.Irq;
 
@@ -1277,7 +1289,7 @@ void cdrInterrupt(void) {
 
 				// subQ integrity check - data only (skip audio)
 				if( subq->TrackNumber == 1 && stat.Type == 0x01 ) {
-					if (calcCrc((u8 *)subq + 12, 10) != (((u16)subq->subq_crc[0] << 8) | subq->subq_crc[1])) {
+					if (calcCrc((u8 *)subq + 12, 10) != (((u16)subq->CRC[0] << 8) | subq->CRC[1])) {
 						memset(cdr.Result + 2, 0, 3 + 3); // CRC wrong, wipe out time data
 					}
 				}
@@ -1582,7 +1594,7 @@ void cdrInterrupt(void) {
 #endif
 }
 
-void cdrReadInterrupt(void) {
+void cdrReadInterrupt() {
 	u8 *buf;
 
 	if (!cdr.Reading)
@@ -1641,8 +1653,42 @@ void cdrReadInterrupt(void) {
 			int ret = xa_decode_sector(&cdr.Xa, cdr.Transfer+4, cdr.FirstSector);
 
 			if (!ret) {
+				int xa_type;
+
+#if 0
+				// save - set only for FirstSector
+				xa_type = cdr.Xa.stereo;
+
+
+				// Duke Nukem - Time to Kill - speech, music volume control
+				// Tekken 3 - post-match fade out
+				if( cdr.Xa.stereo == 0 )
+					CDXA_Attenuation( cdr.Xa.pcm, cdr.Xa.nsamples * 2, cdr.Xa.stereo, XA_ATTENUATE );
+				else
+					CDXA_Attenuation( cdr.Xa.pcm, cdr.Xa.nsamples * 4, cdr.Xa.stereo, XA_ATTENUATE );
+
+
+				// fix mono xa attenuation
+				if( cdr.Xa.stereo == 0 ) cdr.Xa.stereo = 1;
+#endif
+
 				SPU_playADPCMchannel(&cdr.Xa);
 				cdr.FirstSector = 0;
+
+
+#if 0
+				cdr.Xa.stereo = xa_type;
+#endif
+
+
+#if 0
+				// Crash Team Racing: music, speech
+				// - done using cdda decoded buffer (spu irq)
+				// - don't do here
+
+				// signal ADPCM data ready
+				psxHu32ref(0x1070) |= SWAP32((u32)0x200);
+#endif
 			}
 			else cdr.FirstSector = -1;
 		}
@@ -1946,7 +1992,7 @@ void cdrWrite1(unsigned char rt) {
 			StopCdda();
 			StopReading();
 			cdr.Ctrl |= 0x80;
-    		cdr.Stat = NoIntr; 
+    		cdr.Stat = NoIntr;
     		AddIrqQueue(cdr.Cmd, 0x800);
         	break;
 
@@ -2291,6 +2337,82 @@ void psxDma3(u32 madr, u32 bcr, u32 chcr) {
 				break;
 			}
 
+/*
+#if 1
+			/*
+			GS CDX: Enhancement CD crash
+			- Setloc 0:0:0
+			- CdlPlay
+			- Spams DMA3 and gets buffer overrun
+			*/
+/*
+			if( (cdr.pTransfer-cdr.Transfer) + cdsize > 2352 )
+			{
+				// avoid crash - probably should wrap here
+				//memcpy(ptr, cdr.pTransfer, cdsize);
+			}
+			else
+			{
+				memcpy(ptr, cdr.pTransfer, cdsize);
+			}
+
+			psxCpu->Clear(madr, cdsize / 4);
+			cdr.pTransfer += cdsize;
+#else
+			cdwrap_ptr = cdr.Transfer;
+			switch (cdr.Mode & (MODE_SIZE_2340|MODE_SIZE_2328)) {
+				case MODE_SIZE_2340: cdwrap_ptr += 2340; break;
+				case MODE_SIZE_2328: cdwrap_ptr += 12 + 2328; break;
+				case MODE_SIZE_2048: cdwrap_ptr += 12 + 2048; break;
+			}
+
+
+			// fast copy - no wrap
+			if( cdr.pTransfer + cdsize <= cdwrap_ptr ) {
+				memcpy(ptr, cdr.pTransfer, cdsize);
+
+				psxCpu->Clear(madr, cdsize / 4);
+				cdr.pTransfer += cdsize;
+			} else {
+				int lcv;
+
+				/*
+				CDROM wrapping
+
+				Ape Escape - used several times
+				Gameshark Lite - opening movie
+
+				Gameshark CDX: enhancement CD patcher
+				- calls CdlPlay @ 0:2:0
+				- spams DMA3 and overruns buffer
+				*/
+/*
+				for( lcv = 0; lcv < cdsize; lcv++ )
+				{
+					// wrap cdrom ptr
+					if( cdr.pTransfer == cdwrap_ptr ) {
+						switch (cdr.Mode & (MODE_SIZE_2340|MODE_SIZE_2328)) {
+							case MODE_SIZE_2328:
+							case MODE_SIZE_2048:
+								cdr.pTransfer = cdr.Transfer + 12;
+								break;
+
+							case MODE_SIZE_2340:
+								cdr.pTransfer = cdr.Transfer + 0;
+								break;
+						}
+					}
+
+
+					*(ptr+lcv) = *cdr.pTransfer;
+	
+					cdr.pTransfer++;
+				}
+
+				psxCpu->Clear(madr, cdsize / 4);
+			}
+#endif
+*/
 			{
 				int i;
 				
@@ -2328,13 +2450,13 @@ void psxDma3(u32 madr, u32 bcr, u32 chcr) {
 	DMA_INTERRUPT(3);
 }
 
-void cdrDmaInterrupt(void)
+void cdrDmaInterrupt()
 {
 	HW_DMA3_CHCR &= SWAP32(~0x01000000);
 	DMA_INTERRUPT(3);
 }
 
-void cdrReset(void) {
+void cdrReset() {
 	memset(&cdr, 0, sizeof(cdr));
 	cdr.CurTrack = 1;
 	cdr.File = 1;
@@ -2373,7 +2495,7 @@ int cdrFreeze(gzFile f, int Mode) {
 	return 0;
 }
 
-void LidInterrupt(void) {
+void LidInterrupt() {
 	cdr.LidCheck = 0x20; // start checker
 
 	CDRLID_INT( cdReadTime * 3 );

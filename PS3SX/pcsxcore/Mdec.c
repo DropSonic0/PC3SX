@@ -60,6 +60,16 @@
 #define	RLE_RUN(a)	((a) >> 10)
 #define	RLE_VAL(a)	(((int)(a) << (sizeof(int) * 8 - 10)) >> (sizeof(int) * 8 - 10))
 
+#if 0
+static void printmatrixu8(u8 *m) {
+	int i;
+	for(i = 0; i < DSIZE2; i++) {
+		printf("%3d ",m[i]);
+		if((i+1) % 8 == 0) printf("\n");
+	}
+}
+#endif
+
 static inline void fillcol(int *blk, int val) {
 	blk[0 * DSIZE] = blk[1 * DSIZE] = blk[2 * DSIZE] = blk[3 * DSIZE]
 		= blk[4 * DSIZE] = blk[5 * DSIZE] = blk[6 * DSIZE] = blk[7 * DSIZE] = val;
@@ -119,6 +129,26 @@ void idct(int *block,int used_col) {
 		tmp6 = SCALE(z10*(FIX_2_613125930) + z5, AAN_CONST_BITS) - tmp7; 
 		tmp5 = MULS(z11 - z13, FIX_1_414213562) - tmp6;
 		tmp4 = SCALE(z12*(FIX_1_082392200) - z5, AAN_CONST_BITS) + tmp5; 
+
+		// path #1
+		//z5 = (z12 - z10)* FIX_1_847759065; 
+		// tmp0 = (d17 + d53) * 2*A2
+
+		//tmp6 = DESCALE(z10*FIX_2_613125930 + z5, CONST_BITS) - tmp7; 
+		// od16 = (d53*-2*B2 + tmp0) - od07
+
+		//tmp4 = DESCALE(z12*FIX_1_082392200 - z5, CONST_BITS) + tmp5; 
+		// od34 = (d17*2*B6 - tmp0) + od25
+
+		// path #2
+
+		// od34 = d17*2*(B6-A2) - d53*2*A2
+		// od16 = d53*2*(A2-B2) + d17*2*A2
+
+		// end
+
+		//    tmp5 = MULS(z11 - z13, FIX_1_414213562) - tmp6;
+		// od25 = (s17 - s53)*2*A4 - od16
 
 		ptr[DSIZE * 0] = (tmp0 + tmp7); // os07 + od07
 		ptr[DSIZE * 7] = (tmp0 - tmp7); // os07 - od07
@@ -252,6 +282,7 @@ unsigned short *rl2blk(int *blk, unsigned short *mdec_rl) {
 			k += RLE_RUN(rl) + 1;	// skip zero-coefficients
 
 			if (k > 63) {
+				// printf("run lenght exceeded 64 enties\n");
 				break;
 			}
 
@@ -262,12 +293,22 @@ unsigned short *rl2blk(int *blk, unsigned short *mdec_rl) {
 		}
 
 		if (k == 0) used_col = -1;
+		// used_col is -1 for blocks with only the DC coefficient
+		// any other value is a bitmask of the columns that have 
+		// at least one non zero cofficient in the rows 1-7
+		// single coefficients in row 0 are treted specially 
+		// in the idtc function
 		idct(blk, used_col);
 		blk += DSIZE2;
 	}
 	return mdec_rl;
 }
 
+// full scale (JPEG)
+// Y/Cb/Cr[0...255] -> R/G/B[0...255]
+// R = 1.000 * (Y) + 1.400 * (Cr - 128)
+// G = 1.000 * (Y) - 0.343 * (Cb - 128) - 0.711 (Cr - 128)
+// B = 1.000 * (Y) + 1.765 * (Cb - 128)
 #define	MULR(a)			((1434 * (a))) 
 #define	MULB(a)			((1807 * (a))) 
 #define	MULG2(a, b)		((-351 * (a) - 728 * (b)))
@@ -283,17 +324,18 @@ unsigned short *rl2blk(int *blk, unsigned short *mdec_rl) {
 #define CLAMP_SCALE8(a)   (CLAMP8(SCALE8(a)))
 #define CLAMP_SCALE5(a)   (CLAMP5(SCALE5(a)))
 
-static inline void putlinebw15(u16 *image, int *Yblk) {
+inline void putlinebw15(u16 *image, int *Yblk) {
 	int i;
 	int A = (mdec.reg0 & MDEC0_STP) ? 0x8000 : 0;
 
 	for (i = 0; i < 8; i++, Yblk++) {
 		int Y = *Yblk;
+		// missing rounding
 		image[i] = SWAP16((CLAMP5(Y >> 3) * 0x421) | A);
 	}
 }
 
-static inline void putquadrgb15(u16 *image, int *Yblk, int Cr, int Cb) {
+inline void putquadrgb15(u16 *image, int *Yblk, int Cr, int Cb) {
 	int Y, R, G, B;
 	int A = (mdec.reg0 & MDEC0_STP) ? 0x8000 : 0;
 	R = MULR(Cr);
@@ -311,7 +353,7 @@ static inline void putquadrgb15(u16 *image, int *Yblk, int Cr, int Cb) {
 	image[17] = MAKERGB15(CLAMP_SCALE5(Y + R), CLAMP_SCALE5(Y + G), CLAMP_SCALE5(Y + B), A);
 }
 
-void yuv2rgb15(int *blk, unsigned short *image) {
+inline void yuv2rgb15(int *blk, unsigned short *image) {
 	int x, y;
 	int *Yblk = blk + DSIZE2 * 2;
 	int *Crblk = blk;
@@ -334,7 +376,7 @@ void yuv2rgb15(int *blk, unsigned short *image) {
 	}
 }
 
-static inline void putlinebw24(u8 * image, int *Yblk) {
+inline void putlinebw24(u8 * image, int *Yblk) {
 	int i;
 	unsigned char Y;
 	for (i = 0; i < 8 * 3; i += 3, Yblk++) {
@@ -345,7 +387,7 @@ static inline void putlinebw24(u8 * image, int *Yblk) {
 	}
 }
 
-static inline void putquadrgb24(u8 * image, int *Yblk, int Cr, int Cb) {
+inline void putquadrgb24(u8 * image, int *Yblk, int Cr, int Cb) {
 	int Y, R, G, B;
 
 	R = MULR(Cr);
@@ -370,7 +412,7 @@ static inline void putquadrgb24(u8 * image, int *Yblk, int Cr, int Cb) {
 	image[17 * 3 + 2] = CLAMP_SCALE8(Y + B);
 }
 
-void yuv2rgb24(int *blk, u8 *image) {
+static void yuv2rgb24(int *blk, u8 *image) {
 	int x, y;
 	int *Yblk = blk + DSIZE2 * 2;
 	int *Crblk = blk;
@@ -462,6 +504,9 @@ void psxDma0(u32 adr, u32 bcr, u32 chcr) {
 		case 0x4: // quantization table upload
 			{
 				u8 *p = (u8 *)PSXM(adr);
+				// printf("uploading new quantization table\n");
+				// printmatrixu8(p);
+				// printmatrixu8(p + 64);
 				iqtab_init(iq_y, p);
 				iqtab_init(iq_uv, p + 64);
 			}
@@ -470,10 +515,13 @@ void psxDma0(u32 adr, u32 bcr, u32 chcr) {
       return;
 
 		case 0x6: // cosine table
+			// printf("mdec cosine table\n");
+
 			MDECINDMA_INT( size / 4 );
       return;
 
 		default:
+			// printf("mdec unknown command\n");
 			break;
 	}
 
@@ -481,7 +529,7 @@ void psxDma0(u32 adr, u32 bcr, u32 chcr) {
 	DMA_INTERRUPT(0);
 }
 
-void mdec0Interrupt(void)
+void mdec0Interrupt()
 {
 	HW_DMA0_CHCR &= SWAP32(~0x01000000);
 	DMA_INTERRUPT(0);
@@ -578,8 +626,32 @@ void psxDma1(u32 adr, u32 bcr, u32 chcr) {
 	}
 }
 
-void mdec1Interrupt(void) {
-	/* Author : gschwind */
+void mdec1Interrupt() {
+	/* Author : gschwind
+	 *
+	 * in that case we have done all decoding stuff
+	 * Note that : each block end with 0xfe00 flags
+	 * the list of blocks end with the same 0xfe00 flags
+	 * data loock like :
+	 *
+	 *  data block ...
+	 *  0xfe00
+	 *  data block ...
+	 *  0xfe00
+	 *  a lost of block ..
+	 *
+	 *  0xfe00
+	 *  the last block
+	 *  0xfe00
+	 *  0xfe00
+	 *
+	 * OR
+	 *
+	 * if the 0xfe00 is not present the data size is important.
+	 *
+	 */
+
+	/* this else if avoid to read outside memory */
 	if(mdec.rl >= mdec.rl_end) {
 		mdec.reg1 &= ~MDEC1_STP;
 		HW_DMA0_CHCR &= SWAP32(~0x01000000);
@@ -594,6 +666,7 @@ void mdec1Interrupt(void) {
 
 	HW_DMA1_CHCR &= SWAP32(~0x01000000);
 	DMA_INTERRUPT(1);
+	return;
 }
 
 int mdecFreeze(gzFile f, int Mode) {

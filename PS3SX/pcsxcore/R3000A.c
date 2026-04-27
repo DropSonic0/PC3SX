@@ -22,7 +22,6 @@
 */
 
 #include "r3000a.h"
-#include "psxhw.h"
 #include "cdrom.h"
 #include "mdec.h"
 #include "gpu.h"
@@ -31,8 +30,8 @@
 R3000Acpu *psxCpu = NULL;
 psxRegisters psxRegs;
 
-int psxInit(void) {
-	SysPrintf("Running PS3SX Version %s (%s).\n", "1.9.92", __DATE__);
+int psxInit() {
+	SysPrintf(_("Running PCSXR Version %s (%s).\n"), PACKAGE_VERSION, __DATE__);
 
 #ifdef PSXREC
 	if (Config.Cpu == CPU_INTERPRETER) {
@@ -49,7 +48,7 @@ int psxInit(void) {
 	return psxCpu->Init();
 }
 
-void psxReset(void) {
+void psxReset() {
 	psxCpu->Reset();
 
 	psxMemReset();
@@ -73,7 +72,7 @@ void psxReset(void) {
 	Log = 0;
 }
 
-void psxShutdown(void) {
+void psxShutdown() {
 	psxMemShutdown();
 	psxBiosShutdown();
 
@@ -107,7 +106,7 @@ void psxException(u32 code, u32 bd) {
 	if (Config.HLE) psxBiosException();
 }
 
-void psxBranchTest(void) {
+void psxBranchTest() {
 	// GameShark Sampler: Give VSync pin some delay before exception eats it
 	if (psxHu32(0x1070) & psxHu32(0x1074)) {
 		if ((psxRegs.CP0.n.Status & 0x401) == 0x401) {
@@ -187,12 +186,12 @@ void psxBranchTest(void) {
 				spuInterrupt();
 			}
 		}
-		if (psxRegs.interrupt & (1 << PSXINT_GPUBUSY)) { // gpu busy
-			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_GPUBUSY].sCycle) >= psxRegs.intCycle[PSXINT_GPUBUSY].cycle) {
-				psxRegs.interrupt &= ~(1 << PSXINT_GPUBUSY);
-				GPU_idle();
-			}
-		}
+    if (psxRegs.interrupt & (1 << PSXINT_GPUBUSY)) { // gpu busy
+      if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_GPUBUSY].sCycle) >= psxRegs.intCycle[PSXINT_GPUBUSY].cycle) {
+        psxRegs.interrupt &= ~(1 << PSXINT_GPUBUSY);
+        GPU_idle();
+      }
+    }
 
 		if (psxRegs.interrupt & (1 << PSXINT_MDECINDMA)) { // mdec in
 			if ((psxRegs.cycle - psxRegs.intCycle[PSXINT_MDECINDMA].sCycle) >= psxRegs.intCycle[PSXINT_MDECINDMA].cycle) {
@@ -238,7 +237,7 @@ void psxBranchTest(void) {
 	}
 }
 
-void psxJumpTest(void) {
+void psxJumpTest() {
 	if (!Config.HLE && Config.PsxOut) {
 		u32 call = psxRegs.GPR.n.t1 & 0xff;
 		switch (psxRegs.pc & 0x1fffff) {
@@ -269,7 +268,8 @@ void psxJumpTest(void) {
 	}
 }
 
-void psxExecuteBios(void) {
+void psxExecuteBios() {
 	while (psxRegs.pc != 0x80030000)
 		psxCpu->ExecuteBlock();
 }
+

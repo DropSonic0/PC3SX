@@ -25,7 +25,6 @@
 #include "r3000a.h"
 #include "gte.h"
 #include "psxhle.h"
-#include "debug.h"
 
 static int branch = 0;
 static int branch2 = 0;
@@ -158,9 +157,11 @@ int psxTestLoadDelay(int reg, u32 tmp) {
 				case 0x10: case 0x11: // BLTZ/BGEZ...
 					// Xenogears - lbu v0 / beq v0
 					// - no load delay (fixes battle loading)
-					return 0;
+					break;
+
+					if (_tRs_ == reg) return 2;
+					break;
 			}
-			if (_tRs_ == reg) return 2;
 			break;
 
 		// J would be just a break;
@@ -171,12 +172,18 @@ int psxTestLoadDelay(int reg, u32 tmp) {
 		case 0x04: case 0x05: // BEQ/BNE
 			// Xenogears - lbu v0 / beq v0
 			// - no load delay (fixes battle loading)
-			return 0;
+			break;
+
+			if (_tRs_ == reg || _tRt_ == reg) return 2;
+			break;
 
 		case 0x06: case 0x07: // BLEZ/BGTZ
 			// Xenogears - lbu v0 / beq v0
 			// - no load delay (fixes battle loading)
-			return 0;
+			break;
+
+			if (_tRs_ == reg) return 2;
+			break;
 
 		case 0x08: case 0x09: case 0x0a: case 0x0b:
 		case 0x0c: case 0x0d: case 0x0e: // ADDI/ADDIU...
@@ -982,6 +989,9 @@ void psxCOP0() {
 }
 
 void psxCOP2() {
+	if ((psxRegs.CP0.n.Status & 0x40000000) == 0 )
+		return;
+
 	psxCP2[_Funct_]();
 }
 
@@ -1039,7 +1049,7 @@ void (*psxCP2[64])() = {
 	gteNCT  , psxNULL , psxNULL , psxNULL, psxNULL, psxNULL , psxNULL , psxNULL, // 20
 	gteSQR  , gteDCPL , gteDPCT , psxNULL, psxNULL, gteAVSZ3, gteAVSZ4, psxNULL, // 28 
 	gteRTPT , psxNULL , psxNULL , psxNULL, psxNULL, psxNULL , psxNULL , psxNULL, // 30
-	psxNULL , psxNULL , psxNULL , psxNULL, psxNULL, gteGPF  , gteGPL  , gteNCCT   // 38
+	psxNULL , psxNULL , psxNULL , psxNULL, psxNULL, gteGPF  , gteGPL  , gteNCCT  // 38
 };
 
 void (*psxCP2BSC[32])() = {
@@ -1060,7 +1070,7 @@ static void intReset() {
 	psxRegs.ICache_valid = FALSE;
 }
 
-#ifndef MDFNPS3 //Leave on command
+#ifndef MDCFNPS3 //Leave on command
 static void intExecute() {
 	for (;;) 
 		execI();
@@ -1091,7 +1101,7 @@ inline void execI() {
 
 	debugI();
 
-#ifndef MDFNPS3 //No debug
+#ifndef MDCFNPS3 //No debug
 	if (Config.Debug) ProcessDebug();
 #endif
 
@@ -1102,15 +1112,6 @@ inline void execI() {
 }
 
 R3000Acpu psxInt = {
-	intInit,
-	intReset,
-	intExecute,
-	intExecuteBlock,
-	intClear,
-	intShutdown
-};
-
-R3000Acpu psxIntDbg = {
 	intInit,
 	intReset,
 	intExecute,

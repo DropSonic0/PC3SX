@@ -23,32 +23,25 @@
 
 #include "cheat.h"
 #include "ppf.h"
-#include "cdriso.h"
-#include "debug.h"
 
 PcsxConfig Config;
 boolean NetOpened = FALSE;
 
 int Log = 0;
 FILE *emuLog = NULL;
-boolean hleSoftCall = FALSE;
 
-int EmuInit(void) {
-	cdrIsoInit();
-	if (Config.Debug) StartDebugger();
+int EmuInit() {
 	return psxInit();
 }
 
-void EmuReset(void) {
+void EmuReset() {
 	FreeCheatSearchResults();
 	FreeCheatSearchMem();
 
 	psxReset();
 }
 
-void EmuShutdown(void) {
-	StopDebugger();
-
+void EmuShutdown() {
 	ClearAllCheats();
 	FreeCheatSearchResults();
 	FreeCheatSearchMem();
@@ -58,7 +51,7 @@ void EmuShutdown(void) {
 	psxShutdown();
 }
 
-void EmuUpdate(void) {
+void EmuUpdate() {
 	// Do not allow hotkeys inside a softcall from HLE BIOS
 	if (!Config.HLE || !hleSoftCall)
 		SysUpdate();
@@ -68,16 +61,16 @@ void EmuUpdate(void) {
 
 void __Log(char *fmt, ...) {
 	va_list list;
+#ifdef LOG_STDOUT
 	char tmp[1024];
+#endif
 
 	va_start(list, fmt);
-	if (emuLog != NULL) {
-		va_list list2;
-		va_copy(list2, list);
-		vfprintf(emuLog, fmt, list2);
-		va_end(list2);
-	}
-	vsnprintf(tmp, sizeof(tmp), fmt, list);
-	SysPrintf("%s", tmp);
+#ifndef LOG_STDOUT
+	vfprintf(emuLog, fmt, list);
+#else
+	vsprintf(tmp, fmt, list);
+	SysPrintf(tmp);
+#endif
 	va_end(list);
 }

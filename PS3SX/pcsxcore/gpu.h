@@ -6,12 +6,10 @@ extern "C"
 {
 #endif
 
-#include "psxcommon.h"
-
-int gpuReadStatus(void);
+int gpuReadStatus();
 
 void psxDma2(u32 madr, u32 bcr, u32 chcr);
-void gpuInterrupt(void);
+void gpuInterrupt();
 
 #ifdef __cplusplus
 }

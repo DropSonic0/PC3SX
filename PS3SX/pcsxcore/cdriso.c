@@ -29,8 +29,6 @@
 #else
 #include <pthread.h>
 #include <sys/time.h>
-#include <sys/sys_time.h>
-#include <sys/timer.h>
 #endif
 
 static FILE *cdHandle = NULL;
@@ -84,11 +82,11 @@ static int numtracks = 0;
 static struct trackinfo ti[MAXTRACKS];
 
 // get a sector from a msf-array
-unsigned int msf2sec(u8 *msf) {
+unsigned int msf2sec(char *msf) {
 	return ((msf[0] * 60 + msf[1]) * 75) + msf[2];
 }
 
-void sec2msf(unsigned int s, u8 *msf) {
+void sec2msf(unsigned int s, char *msf) {
 	msf[0] = s / 75 / 60;
 	s = s - msf[0] * 75 * 60;
 	msf[1] = s / 75;
@@ -127,7 +125,16 @@ static void tok2msf(char *time, char *msf) {
 
 #ifndef _WIN32
 static long GetTickCount(void) {
-	return (long)(sys_time_get_system_time() / 1000);
+	static time_t		initial_time = 0;
+	struct timeval		now;
+
+	sys_time_get_system_time(&now, NULL);
+
+	if (initial_time == 0) {
+		initial_time = now.tv_sec;
+	}
+
+	return (now.tv_sec - initial_time) * 1000L + now.tv_usec / 1000L;
 }
 #endif
 

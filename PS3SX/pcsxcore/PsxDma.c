@@ -22,12 +22,11 @@
  */
 
 #include "psxdma.h"
-#include "plugins.h"
 
 // Dma0/1 in Mdec.c
-// Dma3 in cdrom.c
+// Dma3 in CdRom.c
 
-void spuInterrupt(void) {
+void spuInterrupt() {
 	HW_DMA4_CHCR &= SWAP32(~0x01000000);
 	DMA_INTERRUPT(4);
 }
@@ -114,7 +113,7 @@ void psxDma6(u32 madr, u32 bcr, u32 chcr) {
 			madr -= 4;
 		}
 		mem++;
-		*mem = SWAP32(0xffffff);
+		*mem = 0xffffff;
 
 #if 1
 		GPUOTCDMA_INT(size);
@@ -135,7 +134,7 @@ void psxDma6(u32 madr, u32 bcr, u32 chcr) {
 	DMA_INTERRUPT(6);
 }
 
-void gpuotcInterrupt(void) {
+void gpuotcInterrupt() {
 	HW_DMA6_CHCR &= SWAP32(~0x01000000);
 	DMA_INTERRUPT(6);
 }
