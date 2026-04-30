@@ -13,6 +13,10 @@ void cellAudioPortWrite(const audio_input_t* buffer, uint64_t samples);
 
 // How many samples can we write to buffer without blocking?
 uint64_t cellAudioPortWriteAvail();
+
+// How many bytes are currently in the buffer?
+uint64_t cellAudioPortBuffered();
+
 void cellAudioPortExit();
 
 #endif

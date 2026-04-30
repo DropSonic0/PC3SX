@@ -24,7 +24,7 @@ int RomType=0;
 int CpuConfig = 0;
 
 #define SAMPLERATE_44KHZ 44100
-#define SB_SIZE 3840
+#define SB_SIZE 20480
 
 static bool runbios = 0;
 char rom_path[256];
@@ -71,7 +71,7 @@ long LoadCdBios = 0;
 //Sound Function
 unsigned long SoundGetBytesBuffered(void)
 {
-		return cellAudioPortWriteAvail();
+		return cellAudioPortBuffered();
 }
 
 void SoundFeedStreamData(unsigned char *pSound, long lBytes)

@@ -57,7 +57,7 @@ void SignalExit(int sig) {
 //	OnFile_Exit();
 }
 
-void SPUirq(void);
+extern void SPUirq(void);
 
 void OpenPlugins() {
 	int ret;

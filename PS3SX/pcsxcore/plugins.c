@@ -282,6 +282,13 @@ long CALLBACK SPU__configure(void) { return 0; }
 void CALLBACK SPU__about(void) {}
 long CALLBACK SPU__test(void) { return 0; }
 
+#if defined(__ppc__)
+#define PS3LoadSpuSym(dest) \
+	SPU_##dest = (SPU##dest) pkSPU##dest;
+
+#define PS3LoadSpuSym1(dest) \
+	SPU_##dest = (SPU##dest) SPU__##dest;
+#else
 #define LoadSpuSym1(dest, name) \
 	LoadSym(SPU_##dest, SPU##dest, name, TRUE);
 
@@ -291,8 +298,31 @@ long CALLBACK SPU__test(void) { return 0; }
 
 #define LoadSpuSymN(dest, name) \
 	LoadSym(SPU_##dest, SPU##dest, name, FALSE);
+#endif
 
 static int LoadSPUplugin(const char *SPUdll) {
+#if defined(__ppc__)
+	PS3LoadSpuSym(init);
+	PS3LoadSpuSym(shutdown);
+	PS3LoadSpuSym(open);
+	PS3LoadSpuSym(close);
+	PS3LoadSpuSym(configure);
+	PS3LoadSpuSym(about);
+	PS3LoadSpuSym(test);
+	PS3LoadSpuSym(writeRegister);
+	PS3LoadSpuSym(readRegister);
+	PS3LoadSpuSym(writeDMA);
+	PS3LoadSpuSym(readDMA);
+	PS3LoadSpuSym(writeDMAMem);
+	PS3LoadSpuSym(readDMAMem);
+	PS3LoadSpuSym(playADPCMchannel);
+	PS3LoadSpuSym(freeze);
+	PS3LoadSpuSym(registerCallback);
+	PS3LoadSpuSym(async);
+	PS3LoadSpuSym(playCDDAchannel);
+
+	hSPUDriver = (void*)SPUdll;
+#else
 	void *drv;
 
 	hSPUDriver = SysLoadLibrary(SPUdll);
@@ -319,6 +349,7 @@ static int LoadSPUplugin(const char *SPUdll) {
 	LoadSpuSym1(registerCallback, "SPUregisterCallback");
 	LoadSpuSymN(async, "SPUasync");
 	LoadSpuSymN(playCDDAchannel, "SPUplayCDDAchannel");
+#endif
 
 	return 0;
 }

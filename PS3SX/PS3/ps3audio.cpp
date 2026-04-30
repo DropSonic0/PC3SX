@@ -135,6 +135,11 @@ uint64_t cellAudioPortWriteAvail()
    return fifo_write_avail(aud->buffer)/sizeof(audio_input_t);
 }
 
+uint64_t cellAudioPortBuffered()
+{
+   return fifo_read_avail(aud->buffer);
+}
+
 void cellAudioPortExit()
 {
    aud->quit_thread = true;

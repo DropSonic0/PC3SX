@@ -168,7 +168,7 @@ typedef void (CALLBACK* SPUregisterCallback)(void (CALLBACK *callback)(void));
 typedef long (CALLBACK* SPUconfigure)(void);
 typedef long (CALLBACK* SPUtest)(void);
 typedef void (CALLBACK* SPUabout)(void);
-typedef struct {
+typedef struct SPUFreeze_t {
 	unsigned char PluginName[8];
 	uint32_t PluginVersion;
 	uint32_t Size;
