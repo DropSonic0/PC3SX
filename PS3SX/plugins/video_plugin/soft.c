@@ -15,12 +15,12 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "externals.h"
+#include "globals.h"
 #include "soft.h"
 #include "swap.h"
 
-#define min(a,b) ((a) > (b) ? (b) : (a))
-#define max(a,b) ((a) < (b) ? (b) : (a))
+#define MIN(a,b) ((a) > (b) ? (b) : (a))
+#define MAX(a,b) ((a) < (b) ? (b) : (a))
 
 #define LOWORD(l)           ((unsigned short)(l))
 #define HIWORD(l)           ((unsigned short)(((uint32_t)(l) >> 16) & 0xFFFF))
@@ -81,6 +81,7 @@
 // soft globals
 ////////////////////////////////////////////////////////////////////////////////////
 
+
 ////////////////////////////////////////////////////////////////////////
 // POLYGON OFFSET FUNCS
 ////////////////////////////////////////////////////////////////////////
@@ -89,10 +90,10 @@ void offsetPSXLine(void) {
 	short x0, x1, y0, y1, dx, dy;
 	float px, py;
 
-	x0 = lx0 + 1 + g_gpu.DrawOffset.x;
-	x1 = lx1 + 1 + g_gpu.DrawOffset.x;
-	y0 = ly0 + 1 + g_gpu.DrawOffset.y;
-	y1 = ly1 + 1 + g_gpu.DrawOffset.y;
+	x0 = g_soft.lx0 + 1 + g_gpu.dsp.DrawOffset.x;
+	x1 = g_soft.lx1 + 1 + g_gpu.dsp.DrawOffset.x;
+	y0 = g_soft.ly0 + 1 + g_gpu.dsp.DrawOffset.y;
+	y1 = g_soft.ly1 + 1 + g_gpu.dsp.DrawOffset.y;
 
 	dx = x1 - x0;
 	dy = y1 - y0;
@@ -139,44 +140,44 @@ void offsetPSXLine(void) {
 		}
 	}
 
-	lx0 = (short) ((float) x0 - px);
-	lx3 = (short) ((float) x0 + py);
+	g_soft.lx0 = (short) ((float) x0 - px);
+	g_soft.lx3 = (short) ((float) x0 + py);
 
-	ly0 = (short) ((float) y0 - py);
-	ly3 = (short) ((float) y0 - px);
+	g_soft.ly0 = (short) ((float) y0 - py);
+	g_soft.ly3 = (short) ((float) y0 - px);
 
-	lx1 = (short) ((float) x1 - py);
-	lx2 = (short) ((float) x1 + px);
+	g_soft.lx1 = (short) ((float) x1 - py);
+	g_soft.lx2 = (short) ((float) x1 + px);
 
-	ly1 = (short) ((float) y1 + px);
-	ly2 = (short) ((float) y1 + py);
+	g_soft.ly1 = (short) ((float) y1 + px);
+	g_soft.ly2 = (short) ((float) y1 + py);
 }
 
 void offsetPSX2(void) {
-	lx0 += g_gpu.DrawOffset.x;
-	ly0 += g_gpu.DrawOffset.y;
-	lx1 += g_gpu.DrawOffset.x;
-	ly1 += g_gpu.DrawOffset.y;
+	g_soft.lx0 += g_gpu.dsp.DrawOffset.x;
+	g_soft.ly0 += g_gpu.dsp.DrawOffset.y;
+	g_soft.lx1 += g_gpu.dsp.DrawOffset.x;
+	g_soft.ly1 += g_gpu.dsp.DrawOffset.y;
 }
 
 void offsetPSX3(void) {
-	lx0 += g_gpu.DrawOffset.x;
-	ly0 += g_gpu.DrawOffset.y;
-	lx1 += g_gpu.DrawOffset.x;
-	ly1 += g_gpu.DrawOffset.y;
-	lx2 += g_gpu.DrawOffset.x;
-	ly2 += g_gpu.DrawOffset.y;
+	g_soft.lx0 += g_gpu.dsp.DrawOffset.x;
+	g_soft.ly0 += g_gpu.dsp.DrawOffset.y;
+	g_soft.lx1 += g_gpu.dsp.DrawOffset.x;
+	g_soft.ly1 += g_gpu.dsp.DrawOffset.y;
+	g_soft.lx2 += g_gpu.dsp.DrawOffset.x;
+	g_soft.ly2 += g_gpu.dsp.DrawOffset.y;
 }
 
 void offsetPSX4(void) {
-	lx0 += g_gpu.DrawOffset.x;
-	ly0 += g_gpu.DrawOffset.y;
-	lx1 += g_gpu.DrawOffset.x;
-	ly1 += g_gpu.DrawOffset.y;
-	lx2 += g_gpu.DrawOffset.x;
-	ly2 += g_gpu.DrawOffset.y;
-	lx3 += g_gpu.DrawOffset.x;
-	ly3 += g_gpu.DrawOffset.y;
+	g_soft.lx0 += g_gpu.dsp.DrawOffset.x;
+	g_soft.ly0 += g_gpu.dsp.DrawOffset.y;
+	g_soft.lx1 += g_gpu.dsp.DrawOffset.x;
+	g_soft.ly1 += g_gpu.dsp.DrawOffset.y;
+	g_soft.lx2 += g_gpu.dsp.DrawOffset.x;
+	g_soft.ly2 += g_gpu.dsp.DrawOffset.y;
+	g_soft.lx3 += g_gpu.dsp.DrawOffset.x;
+	g_soft.ly3 += g_gpu.dsp.DrawOffset.y;
 }
 
 /////////////////////////////////////////////////////////////////
@@ -196,7 +197,7 @@ void Dither16(uint16_t * pdest, uint32_t r, uint32_t g, uint32_t b, uint16_t sM)
 	uint8_t rlow, glow, blow;
 	int x, y;
 
-	x = pdest - psxVuw;
+	x = pdest - g_gpu.psx_vram.u16;
 	y = x >> 10;
 	x -= (y << 10);
 
@@ -228,23 +229,23 @@ inline void GetShadeTransCol_Dither(uint16_t * pdest, int32_t m1,
 		int32_t m2, int32_t m3) {
 	int32_t r, g, b;
 
-	if (bCheckMask && (*pdest & HOST2LE16(0x8000)))
+	if (g_draw.bCheckMask && (*pdest & HOST2LE16(0x8000)))
 		return;
 
-	if (DrawSemiTrans) {
+	if (g_soft.DrawSemiTrans) {
 		r = ((XCOL1D(GETLE16(pdest))) << 3);
 		b = ((XCOL2D(GETLE16(pdest))) << 3);
 		g = ((XCOL3D(GETLE16(pdest))) << 3);
 
-		if (GlobalTextABR == 0) {
+		if (g_soft.GlobalTextABR == 0) {
 			r = (r >> 1) + (m1 >> 1);
 			b = (b >> 1) + (m2 >> 1);
 			g = (g >> 1) + (m3 >> 1);
-		} else if (GlobalTextABR == 1) {
+		} else if (g_soft.GlobalTextABR == 1) {
 			r += m1;
 			b += m2;
 			g += m3;
-		} else if (GlobalTextABR == 2) {
+		} else if (g_soft.GlobalTextABR == 2) {
 			r -= m1;
 			b -= m2;
 			g -= m3;
@@ -278,31 +279,31 @@ inline void GetShadeTransCol_Dither(uint16_t * pdest, int32_t m1,
 	if (g & 0x7FFFFF00)
 		g = 0xff;
 
-	Dither16(pdest, r, b, g, sSetMask);
+	Dither16(pdest, r, b, g, g_draw.sSetMask);
 }
 
 ////////////////////////////////////////////////////////////////////////
 
 inline void GetShadeTransCol(unsigned short * pdest, unsigned short color) {
-	if (bCheckMask && (*pdest & HOST2LE16(0x8000)))
+	if (g_draw.bCheckMask && (*pdest & HOST2LE16(0x8000)))
 		return;
 
-	if (DrawSemiTrans) {
+	if (g_soft.DrawSemiTrans) {
 		int32_t r, g, b;
 
-		if (GlobalTextABR == 0) {
-			PUTLE16(pdest, (((GETLE16(pdest)&0x7bde)>>1)+(((color)&0x7bde)>>1))|sSetMask);//0x8000;
+		if (g_soft.GlobalTextABR == 0) {
+			PUTLE16(pdest, (((GETLE16(pdest)&0x7bde)>>1)+(((color)&0x7bde)>>1))|g_draw.sSetMask);//0x8000;
 			return;
 			/*
 			 r=(XCOL1(*pdest)>>1)+((XCOL1(color))>>1);
 			 b=(XCOL2(*pdest)>>1)+((XCOL2(color))>>1);
 			 g=(XCOL3(*pdest)>>1)+((XCOL3(color))>>1);
 			 */
-		} else if (GlobalTextABR == 1) {
+		} else if (g_soft.GlobalTextABR == 1) {
 			r = (XCOL1(GETLE16(pdest))) + ((XCOL1(color)));
 			b = (XCOL2(GETLE16(pdest))) + ((XCOL2(color)));
 			g = (XCOL3(GETLE16(pdest))) + ((XCOL3(color)));
-		} else if (GlobalTextABR == 2) {
+		} else if (g_soft.GlobalTextABR == 2) {
 			r = (XCOL1(GETLE16(pdest))) - ((XCOL1(color)));
 			b = (XCOL2(GETLE16(pdest))) - ((XCOL2(color)));
 			g = (XCOL3(GETLE16(pdest))) - ((XCOL3(color)));
@@ -331,30 +332,30 @@ inline void GetShadeTransCol(unsigned short * pdest, unsigned short color) {
 		if (g & 0x7FFF8000)
 			g = 0x7c00;
 
-		PUTLE16(pdest, (XPSXCOL(r,g,b))|sSetMask);//0x8000;
+		PUTLE16(pdest, (XPSXCOL(r,g,b))|g_draw.sSetMask);//0x8000;
 	}
-else		PUTLE16(pdest, color|sSetMask);
+else		PUTLE16(pdest, color|g_draw.sSetMask);
 	}
 
 	////////////////////////////////////////////////////////////////////////
 
 inline void GetShadeTransCol32(uint32_t * pdest, uint32_t color) {
-	if (DrawSemiTrans) {
+	if (g_soft.DrawSemiTrans) {
 		int32_t r, g, b;
 
-		if (GlobalTextABR == 0) {
-			if (!bCheckMask) {
-				PUTLE32(pdest, (((GETLE32(pdest)&0x7bde7bde)>>1)+(((color)&0x7bde7bde)>>1))|lSetMask);//0x80008000;
+		if (g_soft.GlobalTextABR == 0) {
+			if (!g_draw.bCheckMask) {
+				PUTLE32(pdest, (((GETLE32(pdest)&0x7bde7bde)>>1)+(((color)&0x7bde7bde)>>1))|g_draw.lSetMask);//0x80008000;
 				return;
 			}
 			r = (X32ACOL1(GETLE32(pdest)) >> 1) + ((X32ACOL1(color)) >> 1);
 			b = (X32ACOL2(GETLE32(pdest)) >> 1) + ((X32ACOL2(color)) >> 1);
 			g = (X32ACOL3(GETLE32(pdest)) >> 1) + ((X32ACOL3(color)) >> 1);
-		} else if (GlobalTextABR == 1) {
+		} else if (g_soft.GlobalTextABR == 1) {
 			r = (X32COL1(GETLE32(pdest))) + ((X32COL1(color)));
 			b = (X32COL2(GETLE32(pdest))) + ((X32COL2(color)));
 			g = (X32COL3(GETLE32(pdest))) + ((X32COL3(color)));
-		} else if (GlobalTextABR == 2) {
+		} else if (g_soft.GlobalTextABR == 2) {
 			int32_t sr, sb, sg, src, sbc, sgc, c;
 			src = XCOL1(color);
 			sbc = XCOL2(color);
@@ -410,20 +411,20 @@ inline void GetShadeTransCol32(uint32_t * pdest, uint32_t color) {
 		if (g & 0x7FE0)
 			g = 0x1f | (g & 0xFFFF0000);
 
-		if (bCheckMask) {
+		if (g_draw.bCheckMask) {
 			uint32_t ma = GETLE32(pdest);
-			PUTLE32(pdest, (X32PSXCOL(r,g,b))|lSetMask);//0x80008000;
+			PUTLE32(pdest, (X32PSXCOL(r,g,b))|g_draw.lSetMask);//0x80008000;
 			if (ma & 0x80000000)
 				PUTLE32(pdest, (ma&0xFFFF0000)|(*pdest&0xFFFF));
 			if (ma & 0x00008000)
 				PUTLE32(pdest, (ma&0xFFFF) |(*pdest&0xFFFF0000));
 			return;
 		}
-		PUTLE32(pdest, (X32PSXCOL(r,g,b))|lSetMask);//0x80008000;
+		PUTLE32(pdest, (X32PSXCOL(r,g,b))|g_draw.lSetMask);//0x80008000;
 	} else {
-		if (bCheckMask) {
+		if (g_draw.bCheckMask) {
 			uint32_t ma = GETLE32(pdest);
-			PUTLE32(pdest, color|lSetMask);//0x80008000;
+			PUTLE32(pdest, color|g_draw.lSetMask);//0x80008000;
 			if (ma & 0x80000000)
 				PUTLE32(pdest, (ma&0xFFFF0000)|(GETLE32(pdest)&0xFFFF));
 			if (ma & 0x00008000)
@@ -431,7 +432,7 @@ inline void GetShadeTransCol32(uint32_t * pdest, uint32_t color) {
 			return;
 		}
 
-		PUTLE32(pdest, color|lSetMask);//0x80008000;
+		PUTLE32(pdest, color|g_draw.lSetMask);//0x80008000;
 	}
 }
 
@@ -444,38 +445,38 @@ inline void GetTextureTransColG(unsigned short * pdest, unsigned short color) {
 	if (color == 0)
 		return;
 
-	if (bCheckMask && (*pdest & HOST2LE16(0x8000)))
+	if (g_draw.bCheckMask && (*pdest & HOST2LE16(0x8000)))
 		return;
 
-	l = sSetMask | (color & 0x8000);
+	l = g_draw.sSetMask | (color & 0x8000);
 
-	if (DrawSemiTrans && (color & 0x8000)) {
-		if (GlobalTextABR == 0) {
+	if (g_soft.DrawSemiTrans && (color & 0x8000)) {
+		if (g_soft.GlobalTextABR == 0) {
 			unsigned short d;
 			d = (GETLE16(pdest) & 0x7bde) >> 1;
 			color = ((color) & 0x7bde) >> 1;
-			r = (XCOL1(d)) + ((((XCOL1(color))) * g_m1) >> 7);
-			b = (XCOL2(d)) + ((((XCOL2(color))) * g_m2) >> 7);
-			g = (XCOL3(d)) + ((((XCOL3(color))) * g_m3) >> 7);
+			r = (XCOL1(d)) + ((((XCOL1(color))) * g_soft.g_m1) >> 7);
+			b = (XCOL2(d)) + ((((XCOL2(color))) * g_soft.g_m2) >> 7);
+			g = (XCOL3(d)) + ((((XCOL3(color))) * g_soft.g_m3) >> 7);
 
 			/*
-			 r=(XCOL1(*pdest)>>1)+((((XCOL1(color))>>1)* g_m1)>>7);
-			 b=(XCOL2(*pdest)>>1)+((((XCOL2(color))>>1)* g_m2)>>7);
-			 g=(XCOL3(*pdest)>>1)+((((XCOL3(color))>>1)* g_m3)>>7);
+			 r=(XCOL1(*pdest)>>1)+((((XCOL1(color))>>1)* g_soft.g_m1)>>7);
+			 b=(XCOL2(*pdest)>>1)+((((XCOL2(color))>>1)* g_soft.g_m2)>>7);
+			 g=(XCOL3(*pdest)>>1)+((((XCOL3(color))>>1)* g_soft.g_m3)>>7);
 			 */
-		} else if (GlobalTextABR == 1) {
-			r = (XCOL1(GETLE16(pdest))) + ((((XCOL1(color))) * g_m1)
+		} else if (g_soft.GlobalTextABR == 1) {
+			r = (XCOL1(GETLE16(pdest))) + ((((XCOL1(color))) * g_soft.g_m1)
 					>> 7);
-			b = (XCOL2(GETLE16(pdest))) + ((((XCOL2(color))) * g_m2)
+			b = (XCOL2(GETLE16(pdest))) + ((((XCOL2(color))) * g_soft.g_m2)
 					>> 7);
-			g = (XCOL3(GETLE16(pdest))) + ((((XCOL3(color))) * g_m3)
+			g = (XCOL3(GETLE16(pdest))) + ((((XCOL3(color))) * g_soft.g_m3)
 					>> 7);
-		} else if (GlobalTextABR == 2) {
-			r = (XCOL1(GETLE16(pdest))) - ((((XCOL1(color))) * g_m1)
+		} else if (g_soft.GlobalTextABR == 2) {
+			r = (XCOL1(GETLE16(pdest))) - ((((XCOL1(color))) * g_soft.g_m1)
 					>> 7);
-			b = (XCOL2(GETLE16(pdest))) - ((((XCOL2(color))) * g_m2)
+			b = (XCOL2(GETLE16(pdest))) - ((((XCOL2(color))) * g_soft.g_m2)
 					>> 7);
-			g = (XCOL3(GETLE16(pdest))) - ((((XCOL3(color))) * g_m3)
+			g = (XCOL3(GETLE16(pdest))) - ((((XCOL3(color))) * g_soft.g_m3)
 					>> 7);
 			if (r & 0x80000000)
 				r = 0;
@@ -486,21 +487,21 @@ inline void GetTextureTransColG(unsigned short * pdest, unsigned short color) {
 		} else {
 #ifdef HALFBRIGHTMODE3
 			r = (XCOL1(GETLE16(pdest)))
-					+ ((((XCOL1(color)) >> 2) * g_m1) >> 7);
+					+ ((((XCOL1(color)) >> 2) * g_soft.g_m1) >> 7);
 			b = (XCOL2(GETLE16(pdest)))
-					+ ((((XCOL2(color)) >> 2) * g_m2) >> 7);
+					+ ((((XCOL2(color)) >> 2) * g_soft.g_m2) >> 7);
 			g = (XCOL3(GETLE16(pdest)))
-					+ ((((XCOL3(color)) >> 2) * g_m3) >> 7);
+					+ ((((XCOL3(color)) >> 2) * g_soft.g_m3) >> 7);
 #else
-			r=(XCOL1(GETLE16(pdest)))+((((XCOL1(color))>>1)* g_m1)>>7);
-			b=(XCOL2(GETLE16(pdest)))+((((XCOL2(color))>>1)* g_m2)>>7);
-			g=(XCOL3(GETLE16(pdest)))+((((XCOL3(color))>>1)* g_m3)>>7);
+			r=(XCOL1(GETLE16(pdest)))+((((XCOL1(color))>>1)* g_soft.g_m1)>>7);
+			b=(XCOL2(GETLE16(pdest)))+((((XCOL2(color))>>1)* g_soft.g_m2)>>7);
+			g=(XCOL3(GETLE16(pdest)))+((((XCOL3(color))>>1)* g_soft.g_m3)>>7);
 #endif
 		}
 	} else {
-		r = ((XCOL1(color)) * g_m1) >> 7;
-		b = ((XCOL2(color)) * g_m2) >> 7;
-		g = ((XCOL3(color)) * g_m3) >> 7;
+		r = ((XCOL1(color)) * g_soft.g_m1) >> 7;
+		b = ((XCOL2(color)) * g_soft.g_m2) >> 7;
+		g = ((XCOL3(color)) * g_soft.g_m3) >> 7;
 	}
 
 	if (r & 0x7FFFFFE0)
@@ -522,11 +523,11 @@ inline void GetTextureTransColG_S(unsigned short * pdest, unsigned short color) 
 	if (color == 0)
 		return;
 
-	l = sSetMask | (color & 0x8000);
+	l = g_draw.sSetMask | (color & 0x8000);
 
-	r = ((XCOL1(color)) * g_m1) >> 7;
-	b = ((XCOL2(color)) * g_m2) >> 7;
-	g = ((XCOL3(color)) * g_m3) >> 7;
+	r = ((XCOL1(color)) * g_soft.g_m1) >> 7;
+	b = ((XCOL2(color)) * g_soft.g_m2) >> 7;
+	g = ((XCOL3(color)) * g_soft.g_m3) >> 7;
 
 	if (r & 0x7FFFFFE0)
 		r = 0x1f;
@@ -548,38 +549,38 @@ inline void GetTextureTransColG_SPR(unsigned short * pdest,
 	if (color == 0)
 		return;
 
-	if (bCheckMask && (GETLE16(pdest) & 0x8000))
+	if (g_draw.bCheckMask && (GETLE16(pdest) & 0x8000))
 		return;
 
-	l = sSetMask | (color & 0x8000);
+	l = g_draw.sSetMask | (color & 0x8000);
 
-	if (DrawSemiTrans && (color & 0x8000)) {
-		if (GlobalTextABR == 0) {
+	if (g_soft.DrawSemiTrans && (color & 0x8000)) {
+		if (g_soft.GlobalTextABR == 0) {
 			unsigned short d;
 			d = (GETLE16(pdest) & 0x7bde) >> 1;
 			color = ((color) & 0x7bde) >> 1;
-			r = (XCOL1(d)) + ((((XCOL1(color))) * g_m1) >> 7);
-			b = (XCOL2(d)) + ((((XCOL2(color))) * g_m2) >> 7);
-			g = (XCOL3(d)) + ((((XCOL3(color))) * g_m3) >> 7);
+			r = (XCOL1(d)) + ((((XCOL1(color))) * g_soft.g_m1) >> 7);
+			b = (XCOL2(d)) + ((((XCOL2(color))) * g_soft.g_m2) >> 7);
+			g = (XCOL3(d)) + ((((XCOL3(color))) * g_soft.g_m3) >> 7);
 
 			/*
-			 r=(XCOL1(*pdest)>>1)+((((XCOL1(color))>>1)* g_m1)>>7);
-			 b=(XCOL2(*pdest)>>1)+((((XCOL2(color))>>1)* g_m2)>>7);
-			 g=(XCOL3(*pdest)>>1)+((((XCOL3(color))>>1)* g_m3)>>7);
+			 r=(XCOL1(*pdest)>>1)+((((XCOL1(color))>>1)* g_soft.g_m1)>>7);
+			 b=(XCOL2(*pdest)>>1)+((((XCOL2(color))>>1)* g_soft.g_m2)>>7);
+			 g=(XCOL3(*pdest)>>1)+((((XCOL3(color))>>1)* g_soft.g_m3)>>7);
 			 */
-		} else if (GlobalTextABR == 1) {
-			r = (XCOL1(GETLE16(pdest))) + ((((XCOL1(color))) * g_m1)
+		} else if (g_soft.GlobalTextABR == 1) {
+			r = (XCOL1(GETLE16(pdest))) + ((((XCOL1(color))) * g_soft.g_m1)
 					>> 7);
-			b = (XCOL2(GETLE16(pdest))) + ((((XCOL2(color))) * g_m2)
+			b = (XCOL2(GETLE16(pdest))) + ((((XCOL2(color))) * g_soft.g_m2)
 					>> 7);
-			g = (XCOL3(GETLE16(pdest))) + ((((XCOL3(color))) * g_m3)
+			g = (XCOL3(GETLE16(pdest))) + ((((XCOL3(color))) * g_soft.g_m3)
 					>> 7);
-		} else if (GlobalTextABR == 2) {
-			r = (XCOL1(GETLE16(pdest))) - ((((XCOL1(color))) * g_m1)
+		} else if (g_soft.GlobalTextABR == 2) {
+			r = (XCOL1(GETLE16(pdest))) - ((((XCOL1(color))) * g_soft.g_m1)
 					>> 7);
-			b = (XCOL2(GETLE16(pdest))) - ((((XCOL2(color))) * g_m2)
+			b = (XCOL2(GETLE16(pdest))) - ((((XCOL2(color))) * g_soft.g_m2)
 					>> 7);
-			g = (XCOL3(GETLE16(pdest))) - ((((XCOL3(color))) * g_m3)
+			g = (XCOL3(GETLE16(pdest))) - ((((XCOL3(color))) * g_soft.g_m3)
 					>> 7);
 			if (r & 0x80000000)
 				r = 0;
@@ -590,21 +591,21 @@ inline void GetTextureTransColG_SPR(unsigned short * pdest,
 		} else {
 #ifdef HALFBRIGHTMODE3
 			r = (XCOL1(GETLE16(pdest)))
-					+ ((((XCOL1(color)) >> 2) * g_m1) >> 7);
+					+ ((((XCOL1(color)) >> 2) * g_soft.g_m1) >> 7);
 			b = (XCOL2(GETLE16(pdest)))
-					+ ((((XCOL2(color)) >> 2) * g_m2) >> 7);
+					+ ((((XCOL2(color)) >> 2) * g_soft.g_m2) >> 7);
 			g = (XCOL3(GETLE16(pdest)))
-					+ ((((XCOL3(color)) >> 2) * g_m3) >> 7);
+					+ ((((XCOL3(color)) >> 2) * g_soft.g_m3) >> 7);
 #else
-			r=(XCOL1(GETLE16(pdest)))+((((XCOL1(color))>>1)* g_m1)>>7);
-			b=(XCOL2(GETLE16(pdest)))+((((XCOL2(color))>>1)* g_m2)>>7);
-			g=(XCOL3(GETLE16(pdest)))+((((XCOL3(color))>>1)* g_m3)>>7);
+			r=(XCOL1(GETLE16(pdest)))+((((XCOL1(color))>>1)* g_soft.g_m1)>>7);
+			b=(XCOL2(GETLE16(pdest)))+((((XCOL2(color))>>1)* g_soft.g_m2)>>7);
+			g=(XCOL3(GETLE16(pdest)))+((((XCOL3(color))>>1)* g_soft.g_m3)>>7);
 #endif
 		}
 	} else {
-		r = ((XCOL1(color)) * g_m1) >> 7;
-		b = ((XCOL2(color)) * g_m2) >> 7;
-		g = ((XCOL3(color)) * g_m3) >> 7;
+		r = ((XCOL1(color)) * g_soft.g_m1) >> 7;
+		b = ((XCOL2(color)) * g_soft.g_m2) >> 7;
+		g = ((XCOL3(color)) * g_soft.g_m3) >> 7;
 	}
 
 	if (r & 0x7FFFFFE0)
@@ -625,26 +626,26 @@ inline void GetTextureTransColG32(uint32_t * pdest, uint32_t color) {
 	if (color == 0)
 		return;
 
-	l = lSetMask | (color & 0x80008000);
+	l = g_draw.lSetMask | (color & 0x80008000);
 
-	if (DrawSemiTrans && (color & 0x80008000)) {
-		if (GlobalTextABR == 0) {
+	if (g_soft.DrawSemiTrans && (color & 0x80008000)) {
+		if (g_soft.GlobalTextABR == 0) {
 			r = ((((X32TCOL1(GETLE32(pdest)))
-					+ ((X32COL1(color)) * g_m1)) & 0xFF00FF00) >> 8);
+					+ ((X32COL1(color)) * g_soft.g_m1)) & 0xFF00FF00) >> 8);
 			b = ((((X32TCOL2(GETLE32(pdest)))
-					+ ((X32COL2(color)) * g_m2)) & 0xFF00FF00) >> 8);
+					+ ((X32COL2(color)) * g_soft.g_m2)) & 0xFF00FF00) >> 8);
 			g = ((((X32TCOL3(GETLE32(pdest)))
-					+ ((X32COL3(color)) * g_m3)) & 0xFF00FF00) >> 8);
-		} else if (GlobalTextABR == 1) {
+					+ ((X32COL3(color)) * g_soft.g_m3)) & 0xFF00FF00) >> 8);
+		} else if (g_soft.GlobalTextABR == 1) {
 			r = (X32COL1(GETLE32(pdest)))
-					+ (((((X32COL1(color))) * g_m1) & 0xFF80FF80) >> 7);
+					+ (((((X32COL1(color))) * g_soft.g_m1) & 0xFF80FF80) >> 7);
 			b = (X32COL2(GETLE32(pdest)))
-					+ (((((X32COL2(color))) * g_m2) & 0xFF80FF80) >> 7);
+					+ (((((X32COL2(color))) * g_soft.g_m2) & 0xFF80FF80) >> 7);
 			g = (X32COL3(GETLE32(pdest)))
-					+ (((((X32COL3(color))) * g_m3) & 0xFF80FF80) >> 7);
-		} else if (GlobalTextABR == 2) {
+					+ (((((X32COL3(color))) * g_soft.g_m3) & 0xFF80FF80) >> 7);
+		} else if (g_soft.GlobalTextABR == 2) {
 			int32_t t;
-			r = (((((X32COL1(color))) * g_m1) & 0xFF80FF80) >> 7);
+			r = (((((X32COL1(color))) * g_soft.g_m1) & 0xFF80FF80) >> 7);
 			t = (GETLE32(pdest) & 0x001f0000) - (r & 0x003f0000);
 			if (t & 0x80000000)
 				t = 0;
@@ -653,7 +654,7 @@ inline void GetTextureTransColG32(uint32_t * pdest, uint32_t color) {
 				r = 0;
 			r |= t;
 
-			b = (((((X32COL2(color))) * g_m2) & 0xFF80FF80) >> 7);
+			b = (((((X32COL2(color))) * g_soft.g_m2) & 0xFF80FF80) >> 7);
 			t = ((GETLE32(pdest) >> 5) & 0x001f0000) - (b & 0x003f0000);
 			if (t & 0x80000000)
 				t = 0;
@@ -662,7 +663,7 @@ inline void GetTextureTransColG32(uint32_t * pdest, uint32_t color) {
 				b = 0;
 			b |= t;
 
-			g = (((((X32COL3(color))) * g_m3) & 0xFF80FF80) >> 7);
+			g = (((((X32COL3(color))) * g_soft.g_m3) & 0xFF80FF80) >> 7);
 			t = ((GETLE32(pdest) >> 10) & 0x001f0000) - (g & 0x003f0000);
 			if (t & 0x80000000)
 				t = 0;
@@ -673,39 +674,39 @@ inline void GetTextureTransColG32(uint32_t * pdest, uint32_t color) {
 		} else {
 #ifdef HALFBRIGHTMODE3
 			r = (X32COL1(GETLE32(pdest))) + (((((X32BCOL1(color)) >> 2)
-					* g_m1) & 0xFF80FF80) >> 7);
+					* g_soft.g_m1) & 0xFF80FF80) >> 7);
 			b = (X32COL2(GETLE32(pdest))) + (((((X32BCOL2(color)) >> 2)
-					* g_m2) & 0xFF80FF80) >> 7);
+					* g_soft.g_m2) & 0xFF80FF80) >> 7);
 			g = (X32COL3(GETLE32(pdest))) + (((((X32BCOL3(color)) >> 2)
-					* g_m3) & 0xFF80FF80) >> 7);
+					* g_soft.g_m3) & 0xFF80FF80) >> 7);
 #else
-			r=(X32COL1(GETLE32(pdest)))+(((((X32ACOL1(color))>>1)* g_m1)&0xFF80FF80)>>7);
-			b=(X32COL2(GETLE32(pdest)))+(((((X32ACOL2(color))>>1)* g_m2)&0xFF80FF80)>>7);
-			g=(X32COL3(GETLE32(pdest)))+(((((X32ACOL3(color))>>1)* g_m3)&0xFF80FF80)>>7);
+			r=(X32COL1(GETLE32(pdest)))+(((((X32ACOL1(color))>>1)* g_soft.g_m1)&0xFF80FF80)>>7);
+			b=(X32COL2(GETLE32(pdest)))+(((((X32ACOL2(color))>>1)* g_soft.g_m2)&0xFF80FF80)>>7);
+			g=(X32COL3(GETLE32(pdest)))+(((((X32ACOL3(color))>>1)* g_soft.g_m3)&0xFF80FF80)>>7);
 #endif
 		}
 
 		if (!(color & 0x8000)) {
-			r = (r & 0xffff0000) | ((((X32COL1(color)) * g_m1)
+			r = (r & 0xffff0000) | ((((X32COL1(color)) * g_soft.g_m1)
 					& 0x0000FF80) >> 7);
-			b = (b & 0xffff0000) | ((((X32COL2(color)) * g_m2)
+			b = (b & 0xffff0000) | ((((X32COL2(color)) * g_soft.g_m2)
 					& 0x0000FF80) >> 7);
-			g = (g & 0xffff0000) | ((((X32COL3(color)) * g_m3)
+			g = (g & 0xffff0000) | ((((X32COL3(color)) * g_soft.g_m3)
 					& 0x0000FF80) >> 7);
 		}
 		if (!(color & 0x80000000)) {
-			r = (r & 0xffff) | ((((X32COL1(color)) * g_m1) & 0xFF800000)
+			r = (r & 0xffff) | ((((X32COL1(color)) * g_soft.g_m1) & 0xFF800000)
 					>> 7);
-			b = (b & 0xffff) | ((((X32COL2(color)) * g_m2) & 0xFF800000)
+			b = (b & 0xffff) | ((((X32COL2(color)) * g_soft.g_m2) & 0xFF800000)
 					>> 7);
-			g = (g & 0xffff) | ((((X32COL3(color)) * g_m3) & 0xFF800000)
+			g = (g & 0xffff) | ((((X32COL3(color)) * g_soft.g_m3) & 0xFF800000)
 					>> 7);
 		}
 
 	} else {
-		r = (((X32COL1(color)) * g_m1) & 0xFF80FF80) >> 7;
-		b = (((X32COL2(color)) * g_m2) & 0xFF80FF80) >> 7;
-		g = (((X32COL3(color)) * g_m3) & 0xFF80FF80) >> 7;
+		r = (((X32COL1(color)) * g_soft.g_m1) & 0xFF80FF80) >> 7;
+		b = (((X32COL2(color)) * g_soft.g_m2) & 0xFF80FF80) >> 7;
+		g = (((X32COL3(color)) * g_soft.g_m3) & 0xFF80FF80) >> 7;
 	}
 
 	if (r & 0x7FE00000)
@@ -721,7 +722,7 @@ inline void GetTextureTransColG32(uint32_t * pdest, uint32_t color) {
 	if (g & 0x7FE0)
 		g = 0x1f | (g & 0xFFFF0000);
 
-	if (bCheckMask) {
+	if (g_draw.bCheckMask) {
 		uint32_t ma = GETLE32(pdest);
 
 		PUTLE32(pdest, (X32PSXCOL(r,g,b))|l);
@@ -757,9 +758,9 @@ inline void GetTextureTransColG32_S(uint32_t * pdest, uint32_t color) {
 	if (color == 0)
 		return;
 
-	r = (((X32COL1(color)) * g_m1) & 0xFF80FF80) >> 7;
-	b = (((X32COL2(color)) * g_m2) & 0xFF80FF80) >> 7;
-	g = (((X32COL3(color)) * g_m3) & 0xFF80FF80) >> 7;
+	r = (((X32COL1(color)) * g_soft.g_m1) & 0xFF80FF80) >> 7;
+	b = (((X32COL2(color)) * g_soft.g_m2) & 0xFF80FF80) >> 7;
+	g = (((X32COL3(color)) * g_soft.g_m3) & 0xFF80FF80) >> 7;
 
 	if (r & 0x7FE00000)
 		r = 0x1f0000 | (r & 0xFFFF);
@@ -775,15 +776,15 @@ inline void GetTextureTransColG32_S(uint32_t * pdest, uint32_t color) {
 		g = 0x1f | (g & 0xFFFF0000);
 
 	if ((color & 0xffff) == 0) {
-		PUTLE32(pdest, (GETLE32(pdest)&0xffff)|(((X32PSXCOL(r,g,b))|lSetMask|(color&0x80008000))&0xffff0000));
+		PUTLE32(pdest, (GETLE32(pdest)&0xffff)|(((X32PSXCOL(r,g,b))|g_draw.lSetMask|(color&0x80008000))&0xffff0000));
 		return;
 	}
 	if ((color & 0xffff0000) == 0) {
-		PUTLE32(pdest, (GETLE32(pdest)&0xffff0000)|(((X32PSXCOL(r,g,b))|lSetMask|(color&0x80008000))&0xffff));
+		PUTLE32(pdest, (GETLE32(pdest)&0xffff0000)|(((X32PSXCOL(r,g,b))|g_draw.lSetMask|(color&0x80008000))&0xffff));
 		return;
 	}
 
-	PUTLE32(pdest, (X32PSXCOL(r,g,b))|lSetMask|(color&0x80008000));
+	PUTLE32(pdest, (X32PSXCOL(r,g,b))|g_draw.lSetMask|(color&0x80008000));
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -794,24 +795,24 @@ inline void GetTextureTransColG32_SPR(uint32_t * pdest, uint32_t color) {
 	if (color == 0)
 		return;
 
-	if (DrawSemiTrans && (color & 0x80008000)) {
-		if (GlobalTextABR == 0) {
+	if (g_soft.DrawSemiTrans && (color & 0x80008000)) {
+		if (g_soft.GlobalTextABR == 0) {
 			r = ((((X32TCOL1(GETLE32(pdest)))
-					+ ((X32COL1(color)) * g_m1)) & 0xFF00FF00) >> 8);
+					+ ((X32COL1(color)) * g_soft.g_m1)) & 0xFF00FF00) >> 8);
 			b = ((((X32TCOL2(GETLE32(pdest)))
-					+ ((X32COL2(color)) * g_m2)) & 0xFF00FF00) >> 8);
+					+ ((X32COL2(color)) * g_soft.g_m2)) & 0xFF00FF00) >> 8);
 			g = ((((X32TCOL3(GETLE32(pdest)))
-					+ ((X32COL3(color)) * g_m3)) & 0xFF00FF00) >> 8);
-		} else if (GlobalTextABR == 1) {
+					+ ((X32COL3(color)) * g_soft.g_m3)) & 0xFF00FF00) >> 8);
+		} else if (g_soft.GlobalTextABR == 1) {
 			r = (X32COL1(GETLE32(pdest)))
-					+ (((((X32COL1(color))) * g_m1) & 0xFF80FF80) >> 7);
+					+ (((((X32COL1(color))) * g_soft.g_m1) & 0xFF80FF80) >> 7);
 			b = (X32COL2(GETLE32(pdest)))
-					+ (((((X32COL2(color))) * g_m2) & 0xFF80FF80) >> 7);
+					+ (((((X32COL2(color))) * g_soft.g_m2) & 0xFF80FF80) >> 7);
 			g = (X32COL3(GETLE32(pdest)))
-					+ (((((X32COL3(color))) * g_m3) & 0xFF80FF80) >> 7);
-		} else if (GlobalTextABR == 2) {
+					+ (((((X32COL3(color))) * g_soft.g_m3) & 0xFF80FF80) >> 7);
+		} else if (g_soft.GlobalTextABR == 2) {
 			int32_t t;
-			r = (((((X32COL1(color))) * g_m1) & 0xFF80FF80) >> 7);
+			r = (((((X32COL1(color))) * g_soft.g_m1) & 0xFF80FF80) >> 7);
 			t = (GETLE32(pdest) & 0x001f0000) - (r & 0x003f0000);
 			if (t & 0x80000000)
 				t = 0;
@@ -820,7 +821,7 @@ inline void GetTextureTransColG32_SPR(uint32_t * pdest, uint32_t color) {
 				r = 0;
 			r |= t;
 
-			b = (((((X32COL2(color))) * g_m2) & 0xFF80FF80) >> 7);
+			b = (((((X32COL2(color))) * g_soft.g_m2) & 0xFF80FF80) >> 7);
 			t = ((GETLE32(pdest) >> 5) & 0x001f0000) - (b & 0x003f0000);
 			if (t & 0x80000000)
 				t = 0;
@@ -829,7 +830,7 @@ inline void GetTextureTransColG32_SPR(uint32_t * pdest, uint32_t color) {
 				b = 0;
 			b |= t;
 
-			g = (((((X32COL3(color))) * g_m3) & 0xFF80FF80) >> 7);
+			g = (((((X32COL3(color))) * g_soft.g_m3) & 0xFF80FF80) >> 7);
 			t = ((GETLE32(pdest) >> 10) & 0x001f0000) - (g & 0x003f0000);
 			if (t & 0x80000000)
 				t = 0;
@@ -840,39 +841,39 @@ inline void GetTextureTransColG32_SPR(uint32_t * pdest, uint32_t color) {
 		} else {
 #ifdef HALFBRIGHTMODE3
 			r = (X32COL1(GETLE32(pdest))) + (((((X32BCOL1(color)) >> 2)
-					* g_m1) & 0xFF80FF80) >> 7);
+					* g_soft.g_m1) & 0xFF80FF80) >> 7);
 			b = (X32COL2(GETLE32(pdest))) + (((((X32BCOL2(color)) >> 2)
-					* g_m2) & 0xFF80FF80) >> 7);
+					* g_soft.g_m2) & 0xFF80FF80) >> 7);
 			g = (X32COL3(GETLE32(pdest))) + (((((X32BCOL3(color)) >> 2)
-					* g_m3) & 0xFF80FF80) >> 7);
+					* g_soft.g_m3) & 0xFF80FF80) >> 7);
 #else
-			r=(X32COL1(GETLE32(pdest)))+(((((X32ACOL1(color))>>1)* g_m1)&0xFF80FF80)>>7);
-			b=(X32COL2(GETLE32(pdest)))+(((((X32ACOL2(color))>>1)* g_m2)&0xFF80FF80)>>7);
-			g=(X32COL3(GETLE32(pdest)))+(((((X32ACOL3(color))>>1)* g_m3)&0xFF80FF80)>>7);
+			r=(X32COL1(GETLE32(pdest)))+(((((X32ACOL1(color))>>1)* g_soft.g_m1)&0xFF80FF80)>>7);
+			b=(X32COL2(GETLE32(pdest)))+(((((X32ACOL2(color))>>1)* g_soft.g_m2)&0xFF80FF80)>>7);
+			g=(X32COL3(GETLE32(pdest)))+(((((X32ACOL3(color))>>1)* g_soft.g_m3)&0xFF80FF80)>>7);
 #endif
 		}
 
 		if (!(color & 0x8000)) {
-			r = (r & 0xffff0000) | ((((X32COL1(color)) * g_m1)
+			r = (r & 0xffff0000) | ((((X32COL1(color)) * g_soft.g_m1)
 					& 0x0000FF80) >> 7);
-			b = (b & 0xffff0000) | ((((X32COL2(color)) * g_m2)
+			b = (b & 0xffff0000) | ((((X32COL2(color)) * g_soft.g_m2)
 					& 0x0000FF80) >> 7);
-			g = (g & 0xffff0000) | ((((X32COL3(color)) * g_m3)
+			g = (g & 0xffff0000) | ((((X32COL3(color)) * g_soft.g_m3)
 					& 0x0000FF80) >> 7);
 		}
 		if (!(color & 0x80000000)) {
-			r = (r & 0xffff) | ((((X32COL1(color)) * g_m1) & 0xFF800000)
+			r = (r & 0xffff) | ((((X32COL1(color)) * g_soft.g_m1) & 0xFF800000)
 					>> 7);
-			b = (b & 0xffff) | ((((X32COL2(color)) * g_m2) & 0xFF800000)
+			b = (b & 0xffff) | ((((X32COL2(color)) * g_soft.g_m2) & 0xFF800000)
 					>> 7);
-			g = (g & 0xffff) | ((((X32COL3(color)) * g_m3) & 0xFF800000)
+			g = (g & 0xffff) | ((((X32COL3(color)) * g_soft.g_m3) & 0xFF800000)
 					>> 7);
 		}
 
 	} else {
-		r = (((X32COL1(color)) * g_m1) & 0xFF80FF80) >> 7;
-		b = (((X32COL2(color)) * g_m2) & 0xFF80FF80) >> 7;
-		g = (((X32COL3(color)) * g_m3) & 0xFF80FF80) >> 7;
+		r = (((X32COL1(color)) * g_soft.g_m1) & 0xFF80FF80) >> 7;
+		b = (((X32COL2(color)) * g_soft.g_m2) & 0xFF80FF80) >> 7;
+		g = (((X32COL3(color)) * g_soft.g_m3) & 0xFF80FF80) >> 7;
 	}
 
 	if (r & 0x7FE00000)
@@ -888,10 +889,10 @@ inline void GetTextureTransColG32_SPR(uint32_t * pdest, uint32_t color) {
 	if (g & 0x7FE0)
 		g = 0x1f | (g & 0xFFFF0000);
 
-	if (bCheckMask) {
+	if (g_draw.bCheckMask) {
 		uint32_t ma = GETLE32(pdest);
 
-		PUTLE32(pdest, (X32PSXCOL(r,g,b))|lSetMask|(color&0x80008000));
+		PUTLE32(pdest, (X32PSXCOL(r,g,b))|g_draw.lSetMask|(color&0x80008000));
 
 		if ((color & 0xffff) == 0)
 			PUTLE32(pdest, (ma&0xffff)|(GETLE32(pdest)&0xffff0000));
@@ -905,15 +906,15 @@ inline void GetTextureTransColG32_SPR(uint32_t * pdest, uint32_t color) {
 		return;
 	}
 	if ((color & 0xffff) == 0) {
-		PUTLE32(pdest, (GETLE32(pdest)&0xffff)|(((X32PSXCOL(r,g,b))|lSetMask|(color&0x80008000))&0xffff0000));
+		PUTLE32(pdest, (GETLE32(pdest)&0xffff)|(((X32PSXCOL(r,g,b))|g_draw.lSetMask|(color&0x80008000))&0xffff0000));
 		return;
 	}
 	if ((color & 0xffff0000) == 0) {
-		PUTLE32(pdest, (GETLE32(pdest)&0xffff0000)|(((X32PSXCOL(r,g,b))|lSetMask|(color&0x80008000))&0xffff));
+		PUTLE32(pdest, (GETLE32(pdest)&0xffff0000)|(((X32PSXCOL(r,g,b))|g_draw.lSetMask|(color&0x80008000))&0xffff));
 		return;
 	}
 
-	PUTLE32(pdest, (X32PSXCOL(r,g,b))|lSetMask|(color&0x80008000));
+	PUTLE32(pdest, (X32PSXCOL(r,g,b))|g_draw.lSetMask|(color&0x80008000));
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -925,27 +926,27 @@ inline void GetTextureTransColGX_Dither(unsigned short * pdest,
 	if (color == 0)
 		return;
 
-	if (bCheckMask && (*pdest & HOST2LE16(0x8000)))
+	if (g_draw.bCheckMask && (*pdest & HOST2LE16(0x8000)))
 		return;
 
 	m1 = (((XCOL1D(color))) * m1) >> 4;
 	m2 = (((XCOL2D(color))) * m2) >> 4;
 	m3 = (((XCOL3D(color))) * m3) >> 4;
 
-	if (DrawSemiTrans && (color & 0x8000)) {
+	if (g_soft.DrawSemiTrans && (color & 0x8000)) {
 		r = ((XCOL1D(GETLE16(pdest))) << 3);
 		b = ((XCOL2D(GETLE16(pdest))) << 3);
 		g = ((XCOL3D(GETLE16(pdest))) << 3);
 
-		if (GlobalTextABR == 0) {
+		if (g_soft.GlobalTextABR == 0) {
 			r = (r >> 1) + (m1 >> 1);
 			b = (b >> 1) + (m2 >> 1);
 			g = (g >> 1) + (m3 >> 1);
-		} else if (GlobalTextABR == 1) {
+		} else if (g_soft.GlobalTextABR == 1) {
 			r += m1;
 			b += m2;
 			g += m3;
-		} else if (GlobalTextABR == 2) {
+		} else if (g_soft.GlobalTextABR == 2) {
 			r -= m1;
 			b -= m2;
 			g -= m3;
@@ -979,7 +980,7 @@ inline void GetTextureTransColGX_Dither(unsigned short * pdest,
 	if (g & 0x7FFFFF00)
 		g = 0xff;
 
-	Dither16(pdest, r, b, g, sSetMask | (color & 0x8000));
+	Dither16(pdest, r, b, g, g_draw.sSetMask | (color & 0x8000));
 
 }
 
@@ -993,13 +994,13 @@ inline void GetTextureTransColGX(unsigned short * pdest, unsigned short color,
 	if (color == 0)
 		return;
 
-	if (bCheckMask && (*pdest & HOST2LE16(0x8000)))
+	if (g_draw.bCheckMask && (*pdest & HOST2LE16(0x8000)))
 		return;
 
-	l = sSetMask | (color & 0x8000);
+	l = g_draw.sSetMask | (color & 0x8000);
 
-	if (DrawSemiTrans && (color & 0x8000)) {
-		if (GlobalTextABR == 0) {
+	if (g_soft.DrawSemiTrans && (color & 0x8000)) {
+		if (g_soft.GlobalTextABR == 0) {
 			unsigned short d;
 			d = (GETLE16(pdest) & 0x7bde) >> 1;
 			color = ((color) & 0x7bde) >> 1;
@@ -1011,11 +1012,11 @@ inline void GetTextureTransColGX(unsigned short * pdest, unsigned short color,
 			 b=(XCOL2(*pdest)>>1)+((((XCOL2(color))>>1)* m2)>>7);
 			 g=(XCOL3(*pdest)>>1)+((((XCOL3(color))>>1)* m3)>>7);
 			 */
-		} else if (GlobalTextABR == 1) {
+		} else if (g_soft.GlobalTextABR == 1) {
 			r = (XCOL1(GETLE16(pdest))) + ((((XCOL1(color))) * m1) >> 7);
 			b = (XCOL2(GETLE16(pdest))) + ((((XCOL2(color))) * m2) >> 7);
 			g = (XCOL3(GETLE16(pdest))) + ((((XCOL3(color))) * m3) >> 7);
-		} else if (GlobalTextABR == 2) {
+		} else if (g_soft.GlobalTextABR == 2) {
 			r = (XCOL1(GETLE16(pdest))) - ((((XCOL1(color))) * m1) >> 7);
 			b = (XCOL2(GETLE16(pdest))) - ((((XCOL2(color))) * m2) >> 7);
 			g = (XCOL3(GETLE16(pdest))) - ((((XCOL3(color))) * m3) >> 7);
@@ -1072,7 +1073,7 @@ inline void GetTextureTransColGX_S(unsigned short * pdest,
 	if (g & 0x7FFF8000)
 		g = 0x7c00;
 
-	PUTLE16(pdest, (XPSXCOL(r,g,b))|sSetMask|(color&0x8000));
+	PUTLE16(pdest, (XPSXCOL(r,g,b))|g_draw.sSetMask|(color&0x8000));
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1102,15 +1103,15 @@ inline void GetTextureTransColGX32_S(uint32_t * pdest, uint32_t color,
 		g = 0x1f | (g & 0xFFFF0000);
 
 	if ((color & 0xffff) == 0) {
-		PUTLE32(pdest, (GETLE32(pdest)&0xffff)|(((X32PSXCOL(r,g,b))|lSetMask|(color&0x80008000))&0xffff0000));
+		PUTLE32(pdest, (GETLE32(pdest)&0xffff)|(((X32PSXCOL(r,g,b))|g_draw.lSetMask|(color&0x80008000))&0xffff0000));
 		return;
 	}
 	if ((color & 0xffff0000) == 0) {
-		PUTLE32(pdest, (GETLE32(pdest)&0xffff0000)|(((X32PSXCOL(r,g,b))|lSetMask|(color&0x80008000))&0xffff));
+		PUTLE32(pdest, (GETLE32(pdest)&0xffff0000)|(((X32PSXCOL(r,g,b))|g_draw.lSetMask|(color&0x80008000))&0xffff));
 		return;
 	}
 
-	PUTLE32(pdest, (X32PSXCOL(r,g,b))|lSetMask|(color&0x80008000));
+	PUTLE32(pdest, (X32PSXCOL(r,g,b))|g_draw.lSetMask|(color&0x80008000));
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1126,19 +1127,19 @@ void FillSoftwareAreaTrans(short x0, short y0, short x1, // FILL AREA TRANS
 	if (x0 > x1)
 		return;
 
-	if (x1 < drawX)
+	if (x1 < g_prim.drawX)
 		return;
-	if (y1 < drawY)
+	if (y1 < g_prim.drawY)
 		return;
-	if (x0 > drawW)
+	if (x0 > g_prim.drawW)
 		return;
-	if (y0 > drawH)
+	if (y0 > g_prim.drawH)
 		return;
 
-	x1 = min(x1, drawW + 1);
-	y1 = min(y1, drawH + 1);
-	x0 = max(x0, drawX);
-	y0 = max(y0, drawY);
+	x1 = MIN(x1, g_prim.drawW + 1);
+	y1 = MIN(y1, g_prim.drawH + 1);
+	x0 = MAX(x0, g_prim.drawX);
+	y0 = MAX(y0, g_prim.drawY);
 
 	if (y0 >= 512)
 		return;
@@ -1180,7 +1181,7 @@ void FillSoftwareAreaTrans(short x0, short y0, short x1, // FILL AREA TRANS
 	{
 		unsigned short *DSTPtr;
 		unsigned short LineOffset;
-		DSTPtr = psxVuw + (1024 * y0) + x0;
+		DSTPtr = g_gpu.psx_vram.u16 + (1024 * y0) + x0;
 		LineOffset = 1024 - dx;
 		for (i = 0; i < dy; i++) {
 			for (j = 0; j < dx; j++)
@@ -1191,12 +1192,12 @@ void FillSoftwareAreaTrans(short x0, short y0, short x1, // FILL AREA TRANS
 	{
 		uint32_t *DSTPtr;
 		unsigned short LineOffset;
-		uint32_t lcol = lSetMask | (((uint32_t) (col)) << 16) | col;
+		uint32_t lcol = g_draw.lSetMask | (((uint32_t) (col)) << 16) | col;
 		dx >>= 1;
-		DSTPtr = (uint32_t *) (psxVuw + (1024 * y0) + x0);
+		DSTPtr = (uint32_t *) (g_gpu.psx_vram.u16 + (1024 * y0) + x0);
 		LineOffset = 512 - dx;
 
-		if (!bCheckMask && !DrawSemiTrans) {
+		if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 			for (i = 0; i < dy; i++) {
 				for (j = 0; j < dx; j++) {
 					PUTLE32(DSTPtr, lcol);
@@ -1242,7 +1243,7 @@ void FillSoftwareArea(short x0, short y0, short x1, // FILL AREA (BLK FILL)
 		unsigned short *DSTPtr;
 		unsigned short LineOffset;
 
-		DSTPtr = psxVuw + (1024 * y0) + x0;
+		DSTPtr = g_gpu.psx_vram.u16 + (1024 * y0) + x0;
 		LineOffset = 1024 - dx;
 
 		for (i = 0; i < dy; i++) {
@@ -1257,7 +1258,7 @@ void FillSoftwareArea(short x0, short y0, short x1, // FILL AREA (BLK FILL)
 		unsigned short LineOffset;
 		uint32_t lcol = (((int32_t) col) << 16) | col;
 		dx >>= 1;
-		DSTPtr = (uint32_t *) (psxVuw + (1024 * y0) + x0);
+		DSTPtr = (uint32_t *) (g_gpu.psx_vram.u16 + (1024 * y0) + x0);
 		LineOffset = 512 - dx;
 
 		for (i = 0; i < dy; i++) {
@@ -1463,8 +1464,8 @@ inline char SetupSections_F(short x1, short y1, short x2, short y2, short x3,
 		}
 	}
 
-	Ymin = v1->y;
-	Ymax = min(v3->y - 1, drawH);
+	g_soft.Ymin = v1->y;
+	g_soft.Ymax = MIN(v3->y - 1, g_prim.drawH);
 
 	return 1;
 }
@@ -1629,8 +1630,8 @@ inline char SetupSections_G(short x1, short y1, short x2, short y2, short x3,
 			longest = 0x1000;
 	}
 
-	Ymin = v1->y;
-	Ymax = min(v3->y - 1, drawH);
+	g_soft.Ymin = v1->y;
+	g_soft.Ymax = MIN(v3->y - 1, g_prim.drawH);
 
 	delta_right_R = shl10idiv(temp * ((v3->R - v1->R) >> 10) + ((v1->R - v2->R)
 			<< 6), longest);
@@ -1799,8 +1800,8 @@ inline char SetupSections_FT(short x1, short y1, short x2, short y2, short x3,
 			longest = 0x1000;
 	}
 
-	Ymin = v1->y;
-	Ymax = min(v3->y - 1, drawH);
+	g_soft.Ymin = v1->y;
+	g_soft.Ymax = MIN(v3->y - 1, g_prim.drawH);
 
 	delta_right_u = shl10idiv(temp * ((v3->u - v1->u) >> 10) + ((v1->u - v2->u)
 			<< 6), longest);
@@ -2004,8 +2005,8 @@ inline char SetupSections_GT(short x1, short y1, short x2, short y2, short x3,
 			longest = 0x1000;
 	}
 
-	Ymin = v1->y;
-	Ymax = min(v3->y - 1, drawH);
+	g_soft.Ymin = v1->y;
+	g_soft.Ymax = MIN(v3->y - 1, g_prim.drawH);
 
 	delta_right_R = shl10idiv(temp * ((v3->R - v1->R) >> 10) + ((v1->R - v2->R)
 			<< 6), longest);
@@ -2258,8 +2259,8 @@ inline char SetupSections_F4(short x1, short y1, short x2, short y2, short x3,
 			break;
 	}
 
-	Ymin = v1->y;
-	Ymax = min(v4->y - 1, drawH);
+	g_soft.Ymin = v1->y;
+	g_soft.Ymax = MIN(v4->y - 1, g_prim.drawH);
 
 	return 1;
 }
@@ -2510,8 +2511,8 @@ inline char SetupSections_FT4(short x1, short y1, short x2, short y2, short x3,
 			break;
 	}
 
-	Ymin = v1->y;
-	Ymax = min(v4->y - 1, drawH);
+	g_soft.Ymin = v1->y;
+	g_soft.Ymax = MIN(v4->y - 1, g_prim.drawH);
 
 	return 1;
 }
@@ -2795,8 +2796,8 @@ inline char SetupSections_GT4(short x1, short y1, short x2, short y2, short x3,
 			break;
 	}
 
-	Ymin = v1->y;
-	Ymax = min(v4->y - 1, drawH);
+	g_soft.Ymin = v1->y;
+	g_soft.Ymax = MIN(v4->y - 1, g_prim.drawH);
 
 	return 1;
 }
@@ -2819,49 +2820,49 @@ inline void drawPoly3Fi(short x1, short y1, short x2, short y2, short x3,
 	unsigned short color;
 	uint32_t lcolor;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_F(x1, y1, x2, y2, x3, y3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
 	color = ((rgb & 0x00f80000) >> 9) | ((rgb & 0x0000f800) >> 6) | ((rgb
 			& 0x000000f8) >> 3);
-	lcolor = lSetMask | (((uint32_t) (color)) << 16) | color;
+	lcolor = g_draw.lSetMask | (((uint32_t) (color)) << 16) | color;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_F())
 			return;
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
-		color |= sSetMask;
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
+		color |= g_draw.sSetMask;
 		for (i = ymin; i <= ymax; i++) {
 			xmin = left_x >> 16;
-			if (drawX > xmin)
-				xmin = drawX;
+			if (g_prim.drawX > xmin)
+				xmin = g_prim.drawX;
 			xmax = (right_x >> 16) - 1;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j < xmax; j += 2) {
-				PUTLE32(((uint32_t *)&psxVuw[(i<<10)+j]), lcolor);
+				PUTLE32(((uint32_t *)&g_gpu.psx_vram.u16[(i<<10)+j]), lcolor);
 			}
 			if (j == xmax)
-				PUTLE16(&psxVuw[(i<<10)+j], color);
+				PUTLE16(&g_gpu.psx_vram.u16[(i<<10)+j], color);
 
 			if (NextRow_F())
 				return;
@@ -2873,18 +2874,18 @@ inline void drawPoly3Fi(short x1, short y1, short x2, short y2, short x3,
 
 	for (i = ymin; i <= ymax; i++) {
 		xmin = left_x >> 16;
-		if (drawX > xmin)
-			xmin = drawX;
+		if (g_prim.drawX > xmin)
+			xmin = g_prim.drawX;
 		xmax = (right_x >> 16) - 1;
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		for (j = xmin; j < xmax; j += 2) {
-			GetShadeTransCol32((uint32_t *) &psxVuw[(i << 10) + j],
+			GetShadeTransCol32((uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
 					lcolor);
 		}
 		if (j == xmax)
-			GetShadeTransCol(&psxVuw[(i << 10) + j], color);
+			GetShadeTransCol(&g_gpu.psx_vram.u16[(i << 10) + j], color);
 
 		if (NextRow_F())
 			return;
@@ -2894,16 +2895,16 @@ inline void drawPoly3Fi(short x1, short y1, short x2, short y2, short x3,
 ////////////////////////////////////////////////////////////////////////
 
 void drawPoly3F(int32_t rgb) {
-	drawPoly3Fi(lx0, ly0, lx1, ly1, lx2,
-			ly2, rgb);
+	drawPoly3Fi(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1, g_soft.lx2,
+			g_soft.ly2, rgb);
 }
 
 #ifdef POLYQUAD3FS
 
 void drawPoly4F_TRI(int32_t rgb)
 {
-	drawPoly3Fi(lx1,ly1,lx3,ly3,lx2,ly2,rgb);
-	drawPoly3Fi(lx0,ly0,lx1,ly1,lx2,ly2,rgb);
+	drawPog_soft.ly3Fi(g_soft.lx1,g_soft.ly1,g_soft.lx3,g_soft.ly3,g_soft.lx2,g_soft.ly2,rgb);
+	drawPog_soft.ly3Fi(g_soft.lx0,g_soft.ly0,g_soft.lx1,g_soft.ly1,g_soft.lx2,g_soft.ly2,rgb);
 }
 
 #endif
@@ -2915,54 +2916,54 @@ void drawPoly4F(int32_t rgb) {
 	unsigned short color;
 	uint32_t lcolor;
 
-	if (lx0 > drawW && lx1 > drawW && lx2
-			> drawW && lx3 > drawW)
+	if (g_soft.lx0 > g_prim.drawW && g_soft.lx1 > g_prim.drawW && g_soft.lx2
+			> g_prim.drawW && g_soft.lx3 > g_prim.drawW)
 		return;
-	if (ly0 > drawH && ly1 > drawH && ly2
-			> drawH && ly3 > drawH)
+	if (g_soft.ly0 > g_prim.drawH && g_soft.ly1 > g_prim.drawH && g_soft.ly2
+			> g_prim.drawH && g_soft.ly3 > g_prim.drawH)
 		return;
-	if (lx0 < drawX && lx1 < drawX && lx2
-			< drawX && lx3 < drawX)
+	if (g_soft.lx0 < g_prim.drawX && g_soft.lx1 < g_prim.drawX && g_soft.lx2
+			< g_prim.drawX && g_soft.lx3 < g_prim.drawX)
 		return;
-	if (ly0 < drawY && ly1 < drawY && ly2
-			< drawY && ly3 < drawY)
+	if (g_soft.ly0 < g_prim.drawY && g_soft.ly1 < g_prim.drawY && g_soft.ly2
+			< g_prim.drawY && g_soft.ly3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
-		return;
-
-	if (!SetupSections_F4(lx0, ly0, lx1, ly1,
-			lx2, ly2, lx3, ly3))
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
-	ymax = Ymax;
+	if (!SetupSections_F4(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+			g_soft.lx2, g_soft.ly2, g_soft.lx3, g_soft.ly3))
+		return;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	ymax = g_soft.Ymax;
+
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_F4())
 			return;
 
 	color = ((rgb & 0x00f80000) >> 9) | ((rgb & 0x0000f800) >> 6) | ((rgb
 			& 0x000000f8) >> 3);
-	lcolor = lSetMask | (((uint32_t) (color)) << 16) | color;
+	lcolor = g_draw.lSetMask | (((uint32_t) (color)) << 16) | color;
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
-		color |= sSetMask;
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
+		color |= g_draw.sSetMask;
 		for (i = ymin; i <= ymax; i++) {
 			xmin = left_x >> 16;
-			if (drawX > xmin)
-				xmin = drawX;
+			if (g_prim.drawX > xmin)
+				xmin = g_prim.drawX;
 			xmax = (right_x >> 16) - 1;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j < xmax; j += 2) {
-				PUTLE32(((uint32_t *)&psxVuw[(i<<10)+j]), lcolor);
+				PUTLE32(((uint32_t *)&g_gpu.psx_vram.u16[(i<<10)+j]), lcolor);
 			}
 			if (j == xmax)
-				PUTLE16(&psxVuw[(i<<10)+j], color);
+				PUTLE16(&g_gpu.psx_vram.u16[(i<<10)+j], color);
 
 			if (NextRow_F4())
 				return;
@@ -2974,18 +2975,18 @@ void drawPoly4F(int32_t rgb) {
 
 	for (i = ymin; i <= ymax; i++) {
 		xmin = left_x >> 16;
-		if (drawX > xmin)
-			xmin = drawX;
+		if (g_prim.drawX > xmin)
+			xmin = g_prim.drawX;
 		xmax = (right_x >> 16) - 1;
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		for (j = xmin; j < xmax; j += 2) {
-			GetShadeTransCol32((uint32_t *) &psxVuw[(i << 10) + j],
+			GetShadeTransCol32((uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
 					lcolor);
 		}
 		if (j == xmax)
-			GetShadeTransCol(&psxVuw[(i << 10) + j], color);
+			GetShadeTransCol(&g_gpu.psx_vram.u16[(i << 10) + j], color);
 
 		if (NextRow_F4())
 			return;
@@ -3005,31 +3006,31 @@ void drawPoly3TEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 	int32_t clutP;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
 
 	difX = delta_right_u;
 	difX2 = difX << 1;
@@ -3038,20 +3039,20 @@ void drawPoly3TEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
 				posY = left_v;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
@@ -3059,19 +3060,19 @@ void drawPoly3TEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 				for (j = xmin; j < xmax; j += 2) {
 					XAdjust = (posX >> 16);
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust
 									+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
 					XAdjust = ((posX + difX) >> 16);
-					tC2 = psxVub[(((posY + difY) >> 5)
+					tC2 = g_gpu.psx_vram.u8[(((posY + difY) >> 5)
 							& (int32_t) 0xFFFFF800) + YAdjust + (XAdjust >> 1)];
 					tC2 = (tC2 >> ((XAdjust & 1) << 2)) & 0xf;
 
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16);
 
 					posX += difX2;
@@ -3080,12 +3081,12 @@ void drawPoly3TEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 				if (j == xmax) {
 					XAdjust = (posX >> 16);
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust
 									+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-					GetTextureTransColG_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]));
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 				}
 			}
 			if (NextRow_FT()) {
@@ -3100,34 +3101,34 @@ void drawPoly3TEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
 			posY = left_v;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 
 			for (j = xmin; j < xmax; j += 2) {
 				XAdjust = (posX >> 16);
-				tC1 = psxVub[((posY >> 5) & (int32_t) 0xFFFFF800)
+				tC1 = g_gpu.psx_vram.u8[((posY >> 5) & (int32_t) 0xFFFFF800)
 						+ YAdjust + (XAdjust >> 1)];
 				tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
 				XAdjust = ((posX + difX) >> 16);
-				tC2 = psxVub[(((posY + difY) >> 5)
+				tC2 = g_gpu.psx_vram.u8[(((posY + difY) >> 5)
 						& (int32_t) 0xFFFFF800) + YAdjust + (XAdjust >> 1)];
 				tC2 = (tC2 >> ((XAdjust & 1) << 2)) & 0xf;
 
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1])
-								| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+								| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 										<< 16);
 
 				posX += difX2;
@@ -3135,11 +3136,11 @@ void drawPoly3TEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 			}
 			if (j == xmax) {
 				XAdjust = (posX >> 16);
-				tC1 = psxVub[((posY >> 5) & (int32_t) 0xFFFFF800)
+				tC1 = g_gpu.psx_vram.u8[((posY >> 5) & (int32_t) 0xFFFFF800)
 						+ YAdjust + (XAdjust >> 1)];
 				tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-				GetTextureTransColG(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				GetTextureTransColG(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 		}
 		if (NextRow_FT()) {
@@ -3159,31 +3160,31 @@ void drawPoly3TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 	int32_t clutP;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = (GlobalTextAddrY << 10) + GlobalTextAddrX;
+	YAdjust = (g_soft.GlobalTextAddrY << 10) + g_soft.GlobalTextAddrX;
 
 	difX = delta_right_u;
 	difX2 = difX << 1;
@@ -3192,20 +3193,20 @@ void drawPoly3TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16) - 1;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
 				posY = left_v;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
@@ -3218,7 +3219,7 @@ void drawPoly3TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
 					tC1
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
 					XAdjust = ((posX + difX) >> 16);
@@ -3228,13 +3229,13 @@ void drawPoly3TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
 					tC2
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16);
 
 					posX += difX2;
@@ -3248,11 +3249,11 @@ void drawPoly3TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
 					tC1
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
-					GetTextureTransColG_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]));
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 				}
 			}
 			if (NextRow_FT()) {
@@ -3267,16 +3268,16 @@ void drawPoly3TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
 			posY = left_v;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
@@ -3288,7 +3289,7 @@ void drawPoly3TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 				n_xi = ((XAdjust >> 2) & ~0x3c) + ((TXV << 2) & 0x3c);
 				n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
-				tC1 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC1 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
 				XAdjust = ((posX + difX) >> 16);
@@ -3297,13 +3298,13 @@ void drawPoly3TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 				n_xi = ((XAdjust >> 2) & ~0x3c) + ((TXV << 2) & 0x3c);
 				n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
-				tC2 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC2 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1])
-								| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+								| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 										<< 16);
 
 				posX += difX2;
@@ -3316,11 +3317,11 @@ void drawPoly3TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 				n_xi = ((XAdjust >> 2) & ~0x3c) + ((TXV << 2) & 0x3c);
 				n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
-				tC1 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC1 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
-				GetTextureTransColG(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				GetTextureTransColG(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 		}
 		if (NextRow_FT()) {
@@ -3340,32 +3341,32 @@ void drawPoly3TEx4_TW(short x1, short y1, short x2, short y2, short x3,
 	int32_t clutP;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
-	YAdjust += (TWin.Position.y0 << 11) + (TWin.Position.x0 >> 1);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
+	YAdjust += (g_prim.TWin.Position.y0 << 11) + (g_prim.TWin.Position.x0 >> 1);
 
 	difX = delta_right_u;
 	difX2 = difX << 1;
@@ -3374,56 +3375,56 @@ void drawPoly3TEx4_TW(short x1, short y1, short x2, short y2, short x3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);//-1; //!!!!!!!!!!!!!!!!
 			if (xmax > xmin)
 				xmax--;
 
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
 				posY = left_v;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 
 				for (j = xmin; j < xmax; j += 2) {
-					XAdjust = (posX >> 16) % TWin.Position.x1;
-					tC1 = psxVub[(((posY >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
+					XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+					tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
 							+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-					XAdjust = ((posX + difX) >> 16) % TWin.Position.x1;
-					tC2 = psxVub[((((posY + difY) >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
+					XAdjust = ((posX + difX) >> 16) % g_prim.TWin.Position.x1;
+					tC2 = g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
 							+ (XAdjust >> 1)];
 					tC2 = (tC2 >> ((XAdjust & 1) << 2)) & 0xf;
 
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16);
 
 					posX += difX2;
 					posY += difY2;
 				}
 				if (j == xmax) {
-					XAdjust = (posX >> 16) % TWin.Position.x1;
-					tC1 = psxVub[(((posY >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
+					XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+					tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
 							+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-					GetTextureTransColG_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]));
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 				}
 			}
 			if (NextRow_FT()) {
@@ -3438,49 +3439,49 @@ void drawPoly3TEx4_TW(short x1, short y1, short x2, short y2, short x3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
 			posY = left_v;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 
 			for (j = xmin; j < xmax; j += 2) {
-				XAdjust = (posX >> 16) % TWin.Position.x1;
-				tC1 = psxVub[(((posY >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + (XAdjust
+				XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+				tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + (XAdjust
 						>> 1)];
 				tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-				XAdjust = ((posX + difX) >> 16) % TWin.Position.x1;
-				tC2 = psxVub[((((posY + difY) >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + (XAdjust
+				XAdjust = ((posX + difX) >> 16) % g_prim.TWin.Position.x1;
+				tC2 = g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + (XAdjust
 						>> 1)];
 				tC2 = (tC2 >> ((XAdjust & 1) << 2)) & 0xf;
 
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1])
-								| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+								| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 										<< 16);
 
 				posX += difX2;
 				posY += difY2;
 			}
 			if (j == xmax) {
-				XAdjust = (posX >> 16) % TWin.Position.x1;
-				tC1 = psxVub[(((posY >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + (XAdjust
+				XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+				tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + (XAdjust
 						>> 1)];
 				tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-				GetTextureTransColG(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				GetTextureTransColG(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 		}
 		if (NextRow_FT()) {
@@ -3516,40 +3517,40 @@ void drawPoly4TEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 	int32_t posX, posY, YAdjust, clutP, XAdjust;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW && x4
-			> drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW && x4
+			> g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH && y4
-			> drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH && y4
+			> g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX && x4
-			< drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX && x4
+			< g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY && y4
-			< drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY && y4
+			< g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT4(x1, y1, x2, y2, x3, y3, x4, y4, tx1, ty1, tx2, ty2,
 			tx3, ty3, tx4, ty4))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT4())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);
@@ -3566,32 +3567,32 @@ void drawPoly4TEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 				difX2 = difX << 1;
 				difY2 = difY << 1;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 				xmax--;
-				if (drawW < xmax)
-					xmax = drawW;
+				if (g_prim.drawW < xmax)
+					xmax = g_prim.drawW;
 
 				for (j = xmin; j < xmax; j += 2) {
 					XAdjust = (posX >> 16);
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust
 									+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
 					XAdjust = ((posX + difX) >> 16);
-					tC2 = psxVub[(((posY + difY) >> 5)
+					tC2 = g_gpu.psx_vram.u8[(((posY + difY) >> 5)
 							& (int32_t) 0xFFFFF800) + YAdjust + (XAdjust >> 1)];
 					tC2 = (tC2 >> ((XAdjust & 1) << 2)) & 0xf;
 
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16);
 					posX += difX2;
 					posY += difY2;
@@ -3599,12 +3600,12 @@ void drawPoly4TEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 				if (j == xmax) {
 					XAdjust = (posX >> 16);
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust
 									+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-					GetTextureTransColG_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]));
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 				}
 
 			}
@@ -3632,41 +3633,41 @@ void drawPoly4TEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 			difX2 = difX << 1;
 			difY2 = difY << 1;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 			xmax--;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j < xmax; j += 2) {
 				XAdjust = (posX >> 16);
-				tC1 = psxVub[((posY >> 5) & (int32_t) 0xFFFFF800)
+				tC1 = g_gpu.psx_vram.u8[((posY >> 5) & (int32_t) 0xFFFFF800)
 						+ YAdjust + (XAdjust >> 1)];
 				tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
 				XAdjust = ((posX + difX) >> 16);
-				tC2 = psxVub[(((posY + difY) >> 5)
+				tC2 = g_gpu.psx_vram.u8[(((posY + difY) >> 5)
 						& (int32_t) 0xFFFFF800) + YAdjust + (XAdjust >> 1)];
 				tC2 = (tC2 >> ((XAdjust & 1) << 2)) & 0xf;
 
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1])
-								| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+								| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 										<< 16);
 				posX += difX2;
 				posY += difY2;
 			}
 			if (j == xmax) {
 				XAdjust = (posX >> 16);
-				tC1 = psxVub[((posY >> 5) & (int32_t) 0xFFFFF800)
+				tC1 = g_gpu.psx_vram.u8[((posY >> 5) & (int32_t) 0xFFFFF800)
 						+ YAdjust + (XAdjust >> 1)];
 				tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-				GetTextureTransColG(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				GetTextureTransColG(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 		}
 		if (NextRow_FT4())
@@ -3686,40 +3687,40 @@ void drawPoly4TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 	int32_t posX = 0, posY = 0, YAdjust, clutP, XAdjust;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW && x4
-			> drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW && x4
+			> g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH && y4
-			> drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH && y4
+			> g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX && x4
-			< drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX && x4
+			< g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY && y4
-			< drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY && y4
+			< g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT4(x1, y1, x2, y2, x3, y3, x4, y4, tx1, ty1, tx2, ty2,
 			tx3, ty3, tx4, ty4))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT4())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 10) + GlobalTextAddrX;
+	YAdjust = ((g_soft.GlobalTextAddrY) << 10) + g_soft.GlobalTextAddrX;
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);
@@ -3736,15 +3737,15 @@ void drawPoly4TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 				difX2 = difX << 1;
 				difY2 = difY << 1;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 				xmax--;
-				if (drawW < xmax)
-					xmax = drawW;
+				if (g_prim.drawW < xmax)
+					xmax = g_prim.drawW;
 
 				for (j = xmin; j < xmax; j += 2) {
 					XAdjust = (posX >> 16);
@@ -3754,7 +3755,7 @@ void drawPoly4TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
 					tC1
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
 					XAdjust = ((posX + difX) >> 16);
@@ -3764,13 +3765,13 @@ void drawPoly4TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
 					tC2
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16);
 					posX += difX2;
 					posY += difY2;
@@ -3785,11 +3786,11 @@ void drawPoly4TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 				n_xi = ((XAdjust >> 2) & ~0x3c) + ((TXV << 2) & 0x3c);
 				n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
-				tC1 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC1 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
-				GetTextureTransColG_S(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				GetTextureTransColG_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 
 		}
@@ -3814,15 +3815,15 @@ void drawPoly4TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 			difX2 = difX << 1;
 			difY2 = difY << 1;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 			xmax--;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j < xmax; j += 2) {
 				XAdjust = (posX >> 16);
@@ -3831,7 +3832,7 @@ void drawPoly4TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 				n_xi = ((XAdjust >> 2) & ~0x3c) + ((TXV << 2) & 0x3c);
 				n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
-				tC1 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC1 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
 				XAdjust = ((posX + difX) >> 16);
@@ -3840,13 +3841,13 @@ void drawPoly4TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 				n_xi = ((XAdjust >> 2) & ~0x3c) + ((TXV << 2) & 0x3c);
 				n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
-				tC2 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC2 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1])
-								| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+								| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 										<< 16);
 				posX += difX2;
 				posY += difY2;
@@ -3857,11 +3858,11 @@ void drawPoly4TEx4_IL(short x1, short y1, short x2, short y2, short x3,
 				n_xi = ((XAdjust >> 2) & ~0x3c) + ((TXV << 2) & 0x3c);
 				n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
-				tC1 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC1 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
-				GetTextureTransColG(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				GetTextureTransColG(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 		}
 		if (NextRow_FT4())
@@ -3881,41 +3882,41 @@ void drawPoly4TEx4_TW(short x1, short y1, short x2, short y2, short x3,
 	int32_t posX, posY, YAdjust, clutP, XAdjust;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW && x4
-			> drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW && x4
+			> g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH && y4
-			> drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH && y4
+			> g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX && x4
-			< drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX && x4
+			< g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY && y4
-			< drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY && y4
+			< g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT4(x1, y1, x2, y2, x3, y3, x4, y4, tx1, ty1, tx2, ty2,
 			tx3, ty3, tx4, ty4))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT4())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
-	YAdjust += (TWin.Position.y0 << 11) + (TWin.Position.x0 >> 1);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
+	YAdjust += (g_prim.TWin.Position.y0 << 11) + (g_prim.TWin.Position.x0 >> 1);
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);
@@ -3932,44 +3933,44 @@ void drawPoly4TEx4_TW(short x1, short y1, short x2, short y2, short x3,
 				difX2 = difX << 1;
 				difY2 = difY << 1;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 				xmax--;
-				if (drawW < xmax)
-					xmax = drawW;
+				if (g_prim.drawW < xmax)
+					xmax = g_prim.drawW;
 
 				for (j = xmin; j < xmax; j += 2) {
-					XAdjust = (posX >> 16) % TWin.Position.x1;
-					tC1 = psxVub[(((posY >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
+					XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+					tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
 							+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-					XAdjust = ((posX + difX) >> 16) % TWin.Position.x1;
-					tC2 = psxVub[((((posY + difY) >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
+					XAdjust = ((posX + difX) >> 16) % g_prim.TWin.Position.x1;
+					tC2 = g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
 							+ (XAdjust >> 1)];
 					tC2 = (tC2 >> ((XAdjust & 1) << 2)) & 0xf;
 
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16);
 					posX += difX2;
 					posY += difY2;
 				}
 				if (j == xmax) {
-					XAdjust = (posX >> 16) % TWin.Position.x1;
-					tC1 = psxVub[(((posY >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
+					XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+					tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
 							+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-					GetTextureTransColG_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]));
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 				}
 			}
 			if (NextRow_FT4())
@@ -3996,44 +3997,44 @@ void drawPoly4TEx4_TW(short x1, short y1, short x2, short y2, short x3,
 			difX2 = difX << 1;
 			difY2 = difY << 1;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 			xmax--;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j < xmax; j += 2) {
-				XAdjust = (posX >> 16) % TWin.Position.x1;
-				tC1 = psxVub[(((posY >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + (XAdjust
+				XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+				tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + (XAdjust
 						>> 1)];
 				tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-				XAdjust = ((posX + difX) >> 16) % TWin.Position.x1;
-				tC2 = psxVub[((((posY + difY) >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + (XAdjust
+				XAdjust = ((posX + difX) >> 16) % g_prim.TWin.Position.x1;
+				tC2 = g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + (XAdjust
 						>> 1)];
 				tC2 = (tC2 >> ((XAdjust & 1) << 2)) & 0xf;
 
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1])
-								| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+								| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 										<< 16);
 				posX += difX2;
 				posY += difY2;
 			}
 			if (j == xmax) {
-				XAdjust = (posX >> 16) % TWin.Position.x1;
-				tC1 = psxVub[(((posY >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + (XAdjust
+				XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+				tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + (XAdjust
 						>> 1)];
 				tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-				GetTextureTransColG(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				GetTextureTransColG(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 		}
 		if (NextRow_FT4())
@@ -4053,41 +4054,41 @@ void drawPoly4TEx4_TW_S(short x1, short y1, short x2, short y2, short x3,
 	int32_t posX, posY, YAdjust, clutP, XAdjust;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW && x4
-			> drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW && x4
+			> g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH && y4
-			> drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH && y4
+			> g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX && x4
-			< drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX && x4
+			< g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY && y4
-			< drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY && y4
+			< g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT4(x1, y1, x2, y2, x3, y3, x4, y4, tx1, ty1, tx2, ty2,
 			tx3, ty3, tx4, ty4))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT4())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
-	YAdjust += (TWin.Position.y0 << 11) + (TWin.Position.x0 >> 1);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
+	YAdjust += (g_prim.TWin.Position.y0 << 11) + (g_prim.TWin.Position.x0 >> 1);
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);
@@ -4104,44 +4105,44 @@ void drawPoly4TEx4_TW_S(short x1, short y1, short x2, short y2, short x3,
 				difX2 = difX << 1;
 				difY2 = difY << 1;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 				xmax--;
-				if (drawW < xmax)
-					xmax = drawW;
+				if (g_prim.drawW < xmax)
+					xmax = g_prim.drawW;
 
 				for (j = xmin; j < xmax; j += 2) {
-					XAdjust = (posX >> 16) % TWin.Position.x1;
-					tC1 = psxVub[(((posY >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
+					XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+					tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
 							+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-					XAdjust = ((posX + difX) >> 16) % TWin.Position.x1;
-					tC2 = psxVub[((((posY + difY) >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
+					XAdjust = ((posX + difX) >> 16) % g_prim.TWin.Position.x1;
+					tC2 = g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
 							+ (XAdjust >> 1)];
 					tC2 = (tC2 >> ((XAdjust & 1) << 2)) & 0xf;
 
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16);
 					posX += difX2;
 					posY += difY2;
 				}
 				if (j == xmax) {
-					XAdjust = (posX >> 16) % TWin.Position.x1;
-					tC1 = psxVub[(((posY >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
+					XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+					tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
 							+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-					GetTextureTransColG_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]));
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 				}
 			}
 			if (NextRow_FT4())
@@ -4168,50 +4169,49 @@ void drawPoly4TEx4_TW_S(short x1, short y1, short x2, short y2, short x3,
 			difX2 = difX << 1;
 			difY2 = difY << 1;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 			xmax--;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j < xmax; j += 2) {
-				XAdjust = (posX >> 16) % TWin.Position.x1;
-				tC1 = psxVub[(((posY >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + (XAdjust
+				XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+				tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + (XAdjust
 						>> 1)];
 				tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-				XAdjust = ((posX + difX) >> 16) % TWin.Position.x1;
-				tC2 = psxVub[((((posY + difY) >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + (XAdjust
+				XAdjust = ((posX + difX) >> 16) % g_prim.TWin.Position.x1;
+				tC2 = g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + (XAdjust
 						>> 1)];
 				tC2 = (tC2 >> ((XAdjust & 1) << 2)) & 0xf;
 
-				GetTextureTransColG32_SPR((uint32_t *) &psxVuw[(i
-						<< 10) + j], GETLE16(&psxVuw[clutP+tC1])
-						| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+				GetTextureTransColG32_SPR((uint32_t *) &g_gpu.psx_vram.u16[(i
+						<< 10) + j], GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+						| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 								<< 16);
 				posX += difX2;
 				posY += difY2;
 			}
 			if (j == xmax) {
-				XAdjust = (posX >> 16) % TWin.Position.x1;
-				tC1 = psxVub[(((posY >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + (XAdjust
+				XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+				tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + (XAdjust
 						>> 1)];
 				tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-				GetTextureTransColG_SPR(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				GetTextureTransColG_SPR(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 		}
 		if (NextRow_FT4())
 			return;
 	}
 }
-
 ////////////////////////////////////////////////////////////////////////
 // POLY 3 F-SHADED TEX PAL 8
 ////////////////////////////////////////////////////////////////////////
@@ -4224,31 +4224,31 @@ void drawPoly3TEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 	int32_t posX, posY, YAdjust, clutP;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
 
 	difX = delta_right_u;
 	difX2 = difX << 1;
@@ -4257,36 +4257,36 @@ void drawPoly3TEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
 				posY = left_v;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 
 				for (j = xmin; j < xmax; j += 2) {
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust + (posX
 									>> 16)];
-					tC2 = psxVub[(((posY + difY) >> 5)
+					tC2 = g_gpu.psx_vram.u8[(((posY + difY) >> 5)
 							& (int32_t) 0xFFFFF800) + YAdjust + ((posX + difX)
 							>> 16)];
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16);
 					posX += difX2;
 					posY += difY2;
@@ -4294,11 +4294,11 @@ void drawPoly3TEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 
 				if (j == xmax) {
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust + (posX
 									>> 16)];
-					GetTextureTransColG_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]));
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 				}
 			}
 			if (NextRow_FT()) {
@@ -4313,40 +4313,40 @@ void drawPoly3TEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
 			posY = left_v;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 
 			for (j = xmin; j < xmax; j += 2) {
-				tC1 = psxVub[((posY >> 5) & (int32_t) 0xFFFFF800)
+				tC1 = g_gpu.psx_vram.u8[((posY >> 5) & (int32_t) 0xFFFFF800)
 						+ YAdjust + (posX >> 16)];
-				tC2 = psxVub[(((posY + difY) >> 5)
+				tC2 = g_gpu.psx_vram.u8[(((posY + difY) >> 5)
 						& (int32_t) 0xFFFFF800) + YAdjust + ((posX + difX)
 						>> 16)];
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1])
-								| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+								| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 										<< 16);
 				posX += difX2;
 				posY += difY2;
 			}
 
 			if (j == xmax) {
-				tC1 = psxVub[((posY >> 5) & (int32_t) 0xFFFFF800)
+				tC1 = g_gpu.psx_vram.u8[((posY >> 5) & (int32_t) 0xFFFFF800)
 						+ YAdjust + (posX >> 16)];
-				GetTextureTransColG(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				GetTextureTransColG(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 
 		}
@@ -4366,31 +4366,31 @@ void drawPoly3TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 	int32_t posX, posY, YAdjust, clutP;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = (GlobalTextAddrY << 10) + GlobalTextAddrX;
+	YAdjust = (g_soft.GlobalTextAddrY << 10) + g_soft.GlobalTextAddrX;
 
 	difX = delta_right_u;
 	difX2 = difX << 1;
@@ -4399,20 +4399,20 @@ void drawPoly3TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
 				posY = left_v;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
@@ -4425,7 +4425,7 @@ void drawPoly3TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
 					tC1
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((TXU & 0x01) << 3)) & 0xff;
 
 					TXU = (posX + difX) >> 16;
@@ -4435,13 +4435,13 @@ void drawPoly3TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
 					tC2
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((TXU & 0x01) << 3)) & 0xff;
 
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16);
 					posX += difX2;
 					posY += difY2;
@@ -4455,11 +4455,11 @@ void drawPoly3TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
 					tC1
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((TXU & 0x01) << 3)) & 0xff;
 
-					GetTextureTransColG_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]));
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 				}
 			}
 			if (NextRow_FT()) {
@@ -4474,16 +4474,16 @@ void drawPoly3TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
 			posY = left_v;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
@@ -4495,7 +4495,7 @@ void drawPoly3TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 						& 0x38);
 				n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
-				tC1 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC1 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((TXU & 0x01) << 3)) & 0xff;
 
 				TXU = (posX + difX) >> 16;
@@ -4504,13 +4504,13 @@ void drawPoly3TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 						& 0x38);
 				n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
-				tC2 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC2 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((TXU & 0x01) << 3)) & 0xff;
 
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1])
-								| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+								| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 										<< 16);
 				posX += difX2;
 				posY += difY2;
@@ -4523,11 +4523,11 @@ void drawPoly3TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 						& 0x38);
 				n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
-				tC1 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC1 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((TXU & 0x01) << 3)) & 0xff;
 
-				GetTextureTransColG(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				GetTextureTransColG(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 
 		}
@@ -4547,32 +4547,32 @@ void drawPoly3TEx8_TW(short x1, short y1, short x2, short y2, short x3,
 	int32_t posX, posY, YAdjust, clutP;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
-	YAdjust += (TWin.Position.y0 << 11) + (TWin.Position.x0);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
+	YAdjust += (g_prim.TWin.Position.y0 << 11) + (g_prim.TWin.Position.x0);
 
 	difX = delta_right_u;
 	difX2 = difX << 1;
@@ -4581,51 +4581,51 @@ void drawPoly3TEx8_TW(short x1, short y1, short x2, short y2, short x3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);//-1; //!!!!!!!!!!!!!!!!
 			if (xmax > xmin)
 				xmax--;
 
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
 				posY = left_v;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 
 				for (j = xmin; j < xmax; j += 2) {
-					tC1 = psxVub[(((posY >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
-							+ ((posX >> 16) % TWin.Position.x1)];
+					tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
+							+ ((posX >> 16) % g_prim.TWin.Position.x1)];
 					tC2
-							= psxVub[((((posY + difY) >> 16)
-									% TWin.Position.y1) << 11) + YAdjust
+							= g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+									% g_prim.TWin.Position.y1) << 11) + YAdjust
 									+ (((posX + difX) >> 16)
-											% TWin.Position.x1)];
+											% g_prim.TWin.Position.x1)];
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16);
 					posX += difX2;
 					posY += difY2;
 				}
 
 				if (j == xmax) {
-					tC1 = psxVub[(((posY >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
-							+ ((posX >> 16) % TWin.Position.x1)];
-					GetTextureTransColG_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]));
+					tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
+							+ ((posX >> 16) % g_prim.TWin.Position.x1)];
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 				}
 			}
 			if (NextRow_FT()) {
@@ -4640,42 +4640,42 @@ void drawPoly3TEx8_TW(short x1, short y1, short x2, short y2, short x3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
 			posY = left_v;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 
 			for (j = xmin; j < xmax; j += 2) {
-				tC1 = psxVub[(((posY >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + ((posX
-						>> 16) % TWin.Position.x1)];
-				tC2 = psxVub[((((posY + difY) >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + (((posX
-						+ difX) >> 16) % TWin.Position.x1)];
+				tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + ((posX
+						>> 16) % g_prim.TWin.Position.x1)];
+				tC2 = g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + (((posX
+						+ difX) >> 16) % g_prim.TWin.Position.x1)];
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1])
-								| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+								| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 										<< 16);
 				posX += difX2;
 				posY += difY2;
 			}
 
 			if (j == xmax) {
-				tC1 = psxVub[(((posY >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + ((posX
-						>> 16) % TWin.Position.x1)];
-				GetTextureTransColG(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + ((posX
+						>> 16) % g_prim.TWin.Position.x1)];
+				GetTextureTransColG(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 
 		}
@@ -4713,40 +4713,40 @@ void drawPoly4TEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 	int32_t posX, posY, YAdjust, clutP;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW && x4
-			> drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW && x4
+			> g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH && y4
-			> drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH && y4
+			> g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX && x4
-			< drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX && x4
+			< g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY && y4
-			< drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY && y4
+			< g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT4(x1, y1, x2, y2, x3, y3, x4, y4, tx1, ty1, tx2, ty2,
 			tx3, ty3, tx4, ty4))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT4())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);
@@ -4763,39 +4763,39 @@ void drawPoly4TEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 				difX2 = difX << 1;
 				difY2 = difY << 1;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 				xmax--;
-				if (drawW < xmax)
-					xmax = drawW;
+				if (g_prim.drawW < xmax)
+					xmax = g_prim.drawW;
 
 				for (j = xmin; j < xmax; j += 2) {
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust + (posX
 									>> 16)];
-					tC2 = psxVub[(((posY + difY) >> 5)
+					tC2 = g_gpu.psx_vram.u8[(((posY + difY) >> 5)
 							& (int32_t) 0xFFFFF800) + YAdjust + ((posX + difX)
 							>> 16)];
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16);
 					posX += difX2;
 					posY += difY2;
 				}
 				if (j == xmax) {
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust + (posX
 									>> 16)];
-					GetTextureTransColG_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]));
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 				}
 			}
 			if (NextRow_FT4())
@@ -4822,35 +4822,35 @@ void drawPoly4TEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 			difX2 = difX << 1;
 			difY2 = difY << 1;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 			xmax--;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j < xmax; j += 2) {
-				tC1 = psxVub[((posY >> 5) & (int32_t) 0xFFFFF800)
+				tC1 = g_gpu.psx_vram.u8[((posY >> 5) & (int32_t) 0xFFFFF800)
 						+ YAdjust + (posX >> 16)];
-				tC2 = psxVub[(((posY + difY) >> 5)
+				tC2 = g_gpu.psx_vram.u8[(((posY + difY) >> 5)
 						& (int32_t) 0xFFFFF800) + YAdjust + ((posX + difX)
 						>> 16)];
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1])
-								| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+								| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 										<< 16);
 				posX += difX2;
 				posY += difY2;
 			}
 			if (j == xmax) {
-				tC1 = psxVub[((posY >> 5) & (int32_t) 0xFFFFF800)
+				tC1 = g_gpu.psx_vram.u8[((posY >> 5) & (int32_t) 0xFFFFF800)
 						+ YAdjust + (posX >> 16)];
-				GetTextureTransColG(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				GetTextureTransColG(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 		}
 		if (NextRow_FT4())
@@ -4870,40 +4870,40 @@ void drawPoly4TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 	int32_t posX, posY, YAdjust, clutP;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW && x4
-			> drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW && x4
+			> g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH && y4
-			> drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH && y4
+			> g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX && x4
-			< drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX && x4
+			< g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY && y4
-			< drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY && y4
+			< g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT4(x1, y1, x2, y2, x3, y3, x4, y4, tx1, ty1, tx2, ty2,
 			tx3, ty3, tx4, ty4))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT4())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = (GlobalTextAddrY << 10) + GlobalTextAddrX;
+	YAdjust = (g_soft.GlobalTextAddrY << 10) + g_soft.GlobalTextAddrX;
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);
@@ -4920,15 +4920,15 @@ void drawPoly4TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 				difX2 = difX << 1;
 				difY2 = difY << 1;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 				xmax--;
-				if (drawW < xmax)
-					xmax = drawW;
+				if (g_prim.drawW < xmax)
+					xmax = g_prim.drawW;
 
 				for (j = xmin; j < xmax; j += 2) {
 					TXU = posX >> 16;
@@ -4938,7 +4938,7 @@ void drawPoly4TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
 					tC1
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((TXU & 0x01) << 3)) & 0xff;
 
 					TXU = (posX + difX) >> 16;
@@ -4948,13 +4948,13 @@ void drawPoly4TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
 					tC2
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((TXU & 0x01) << 3)) & 0xff;
 
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16);
 					posX += difX2;
 					posY += difY2;
@@ -4967,11 +4967,11 @@ void drawPoly4TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
 					tC1
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((TXU & 0x01) << 3)) & 0xff;
 
-					GetTextureTransColG_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]));
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 				}
 			}
 			if (NextRow_FT4())
@@ -4998,15 +4998,15 @@ void drawPoly4TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 			difX2 = difX << 1;
 			difY2 = difY << 1;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 			xmax--;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j < xmax; j += 2) {
 				TXU = posX >> 16;
@@ -5015,7 +5015,7 @@ void drawPoly4TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 						& 0x38);
 				n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
-				tC1 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC1 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((TXU & 0x01) << 3)) & 0xff;
 
 				TXU = (posX + difX) >> 16;
@@ -5024,13 +5024,13 @@ void drawPoly4TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 						& 0x38);
 				n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
-				tC2 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC2 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((TXU & 0x01) << 3)) & 0xff;
 
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1])
-								| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+								| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 										<< 16);
 				posX += difX2;
 				posY += difY2;
@@ -5041,10 +5041,10 @@ void drawPoly4TEx8_IL(short x1, short y1, short x2, short y2, short x3,
 				n_xi = ((TXU >> 1) & ~0x78) + ((TXU << 2) & 0x40) + ((TXV << 3)
 						& 0x38);
 				n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
-				tC1 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC1 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((TXU & 0x01) << 3)) & 0xff;
-				GetTextureTransColG(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				GetTextureTransColG(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 		}
 		if (NextRow_FT4())
@@ -5064,41 +5064,41 @@ void drawPoly4TEx8_TW(short x1, short y1, short x2, short y2, short x3,
 	int32_t posX, posY, YAdjust, clutP;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW && x4
-			> drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW && x4
+			> g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH && y4
-			> drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH && y4
+			> g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX && x4
-			< drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX && x4
+			< g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY && y4
-			< drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY && y4
+			< g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT4(x1, y1, x2, y2, x3, y3, x4, y4, tx1, ty1, tx2, ty2,
 			tx3, ty3, tx4, ty4))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT4())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
-	YAdjust += (TWin.Position.y0 << 11) + (TWin.Position.x0);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
+	YAdjust += (g_prim.TWin.Position.y0 << 11) + (g_prim.TWin.Position.x0);
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);
@@ -5115,39 +5115,39 @@ void drawPoly4TEx8_TW(short x1, short y1, short x2, short y2, short x3,
 				difX2 = difX << 1;
 				difY2 = difY << 1;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 				xmax--;
-				if (drawW < xmax)
-					xmax = drawW;
+				if (g_prim.drawW < xmax)
+					xmax = g_prim.drawW;
 
 				for (j = xmin; j < xmax; j += 2) {
-					tC1 = psxVub[(((posY >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
-							+ ((posX >> 16) % TWin.Position.x1)];
+					tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
+							+ ((posX >> 16) % g_prim.TWin.Position.x1)];
 					tC2
-							= psxVub[((((posY + difY) >> 16)
-									% TWin.Position.y1) << 11) + YAdjust
+							= g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+									% g_prim.TWin.Position.y1) << 11) + YAdjust
 									+ (((posX + difX) >> 16)
-											% TWin.Position.x1)];
+											% g_prim.TWin.Position.x1)];
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16);
 					posX += difX2;
 					posY += difY2;
 				}
 				if (j == xmax) {
-					tC1 = psxVub[((((posY + difY) >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
-							+ ((posX >> 16) % TWin.Position.x1)];
-					GetTextureTransColG_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]));
+					tC1 = g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
+							+ ((posX >> 16) % g_prim.TWin.Position.x1)];
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 				}
 			}
 			if (NextRow_FT4())
@@ -5174,37 +5174,37 @@ void drawPoly4TEx8_TW(short x1, short y1, short x2, short y2, short x3,
 			difX2 = difX << 1;
 			difY2 = difY << 1;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 			xmax--;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j < xmax; j += 2) {
-				tC1 = psxVub[(((posY >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + ((posX
-						>> 16) % TWin.Position.x1)];
-				tC2 = psxVub[((((posY + difY) >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + (((posX
-						+ difX) >> 16) % TWin.Position.x1)];
+				tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + ((posX
+						>> 16) % g_prim.TWin.Position.x1)];
+				tC2 = g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + (((posX
+						+ difX) >> 16) % g_prim.TWin.Position.x1)];
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1])
-								| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+								| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 										<< 16);
 				posX += difX2;
 				posY += difY2;
 			}
 			if (j == xmax) {
-				tC1 = psxVub[((((posY + difY) >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + ((posX
-						>> 16) % TWin.Position.x1)];
-				GetTextureTransColG(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				tC1 = g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + ((posX
+						>> 16) % g_prim.TWin.Position.x1)];
+				GetTextureTransColG(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 		}
 		if (NextRow_FT4())
@@ -5224,41 +5224,41 @@ void drawPoly4TEx8_TW_S(short x1, short y1, short x2, short y2, short x3,
 	int32_t posX, posY, YAdjust, clutP;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW && x4
-			> drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW && x4
+			> g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH && y4
-			> drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH && y4
+			> g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX && x4
-			< drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX && x4
+			< g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY && y4
-			< drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY && y4
+			< g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT4(x1, y1, x2, y2, x3, y3, x4, y4, tx1, ty1, tx2, ty2,
 			tx3, ty3, tx4, ty4))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT4())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
-	YAdjust += (TWin.Position.y0 << 11) + (TWin.Position.x0);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
+	YAdjust += (g_prim.TWin.Position.y0 << 11) + (g_prim.TWin.Position.x0);
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);
@@ -5275,39 +5275,39 @@ void drawPoly4TEx8_TW_S(short x1, short y1, short x2, short y2, short x3,
 				difX2 = difX << 1;
 				difY2 = difY << 1;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 				xmax--;
-				if (drawW < xmax)
-					xmax = drawW;
+				if (g_prim.drawW < xmax)
+					xmax = g_prim.drawW;
 
 				for (j = xmin; j < xmax; j += 2) {
-					tC1 = psxVub[(((posY >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
-							+ ((posX >> 16) % TWin.Position.x1)];
+					tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
+							+ ((posX >> 16) % g_prim.TWin.Position.x1)];
 					tC2
-							= psxVub[((((posY + difY) >> 16)
-									% TWin.Position.y1) << 11) + YAdjust
+							= g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+									% g_prim.TWin.Position.y1) << 11) + YAdjust
 									+ (((posX + difX) >> 16)
-											% TWin.Position.x1)];
+											% g_prim.TWin.Position.x1)];
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16);
 					posX += difX2;
 					posY += difY2;
 				}
 				if (j == xmax) {
-					tC1 = psxVub[((((posY + difY) >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
-							+ ((posX >> 16) % TWin.Position.x1)];
-					GetTextureTransColG_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]));
+					tC1 = g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
+							+ ((posX >> 16) % g_prim.TWin.Position.x1)];
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 				}
 			}
 			if (NextRow_FT4())
@@ -5334,36 +5334,36 @@ void drawPoly4TEx8_TW_S(short x1, short y1, short x2, short y2, short x3,
 			difX2 = difX << 1;
 			difY2 = difY << 1;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 			xmax--;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j < xmax; j += 2) {
-				tC1 = psxVub[(((posY >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + ((posX
-						>> 16) % TWin.Position.x1)];
-				tC2 = psxVub[((((posY + difY) >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + (((posX
-						+ difX) >> 16) % TWin.Position.x1)];
-				GetTextureTransColG32_SPR((uint32_t *) &psxVuw[(i
-						<< 10) + j], GETLE16(&psxVuw[clutP+tC1])
-						| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+				tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + ((posX
+						>> 16) % g_prim.TWin.Position.x1)];
+				tC2 = g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + (((posX
+						+ difX) >> 16) % g_prim.TWin.Position.x1)];
+				GetTextureTransColG32_SPR((uint32_t *) &g_gpu.psx_vram.u16[(i
+						<< 10) + j], GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+						| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 								<< 16);
 				posX += difX2;
 				posY += difY2;
 			}
 			if (j == xmax) {
-				tC1 = psxVub[((((posY + difY) >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + ((posX
-						>> 16) % TWin.Position.x1)];
-				GetTextureTransColG_SPR(&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[clutP+tC1]));
+				tC1 = g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + ((posX
+						>> 16) % g_prim.TWin.Position.x1)];
+				GetTextureTransColG_SPR(&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]));
 			}
 		}
 		if (NextRow_FT4())
@@ -5381,25 +5381,25 @@ void drawPoly3TD(short x1, short y1, short x2, short y2, short x3, short y3,
 	int32_t difX, difY, difX2, difY2;
 	int32_t posX, posY;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT())
 			return;
 
@@ -5410,38 +5410,38 @@ void drawPoly3TD(short x1, short y1, short x2, short y2, short x3, short y3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
 				posY = left_v;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 
 				for (j = xmin; j < xmax; j += 2) {
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							(((int32_t) GETLE16(&psxVuw[((((posY+difY)>>16)+GlobalTextAddrY)<<10)+((posX+difX)>>16)+GlobalTextAddrX]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							(((int32_t) GETLE16(&g_gpu.psx_vram.u16[((((posY+difY)>>16)+g_soft.GlobalTextAddrY)<<10)+((posX+difX)>>16)+g_soft.GlobalTextAddrX]))
 									<< 16)
-									| GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+((posX)>>16)+GlobalTextAddrX]));
+									| GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+((posX)>>16)+g_soft.GlobalTextAddrX]));
 
 					posX += difX2;
 					posY += difY2;
 				}
 				if (j == xmax)
 					GetTextureTransColG_S(
-							&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+(posX>>16)+GlobalTextAddrX]));
+							&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+(posX>>16)+g_soft.GlobalTextAddrX]));
 			}
 			if (NextRow_FT()) {
 				return;
@@ -5455,34 +5455,34 @@ void drawPoly3TD(short x1, short y1, short x2, short y2, short x3, short y3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
 			posY = left_v;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 
 			for (j = xmin; j < xmax; j += 2) {
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						(((int32_t) GETLE16(&psxVuw[((((posY+difY)>>16)+GlobalTextAddrY)<<10)+((posX+difX)>>16)+GlobalTextAddrX]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						(((int32_t) GETLE16(&g_gpu.psx_vram.u16[((((posY+difY)>>16)+g_soft.GlobalTextAddrY)<<10)+((posX+difX)>>16)+g_soft.GlobalTextAddrX]))
 								<< 16)
-								| GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+((posX)>>16)+GlobalTextAddrX]));
+								| GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+((posX)>>16)+g_soft.GlobalTextAddrX]));
 
 				posX += difX2;
 				posY += difY2;
 			}
 			if (j == xmax)
 				GetTextureTransColG(
-						&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+(posX>>16)+GlobalTextAddrX]));
+						&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+(posX>>16)+g_soft.GlobalTextAddrX]));
 		}
 		if (NextRow_FT()) {
 			return;
@@ -5498,25 +5498,25 @@ void drawPoly3TD_TW(short x1, short y1, short x2, short y2, short x3, short y3,
 	int32_t difX, difY, difX2, difY2;
 	int32_t posX, posY;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT())
 			return;
 
@@ -5527,41 +5527,41 @@ void drawPoly3TD_TW(short x1, short y1, short x2, short y2, short x3, short y3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
 				posY = left_v;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 
 				for (j = xmin; j < xmax; j += 2) {
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							(((int32_t) GETLE16(&psxVuw[(((((posY+difY)>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-									(((posX+difX)>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							(((int32_t) GETLE16(&g_gpu.psx_vram.u16[(((((posY+difY)>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+									(((posX+difX)>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]))
 									<< 16)
-									| GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-											(((posX)>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]));
+									| GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+											(((posX)>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]));
 
 					posX += difX2;
 					posY += difY2;
 				}
 				if (j == xmax)
 					GetTextureTransColG_S(
-							&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-									((posX>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]));
+							&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+									((posX>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]));
 			}
 			if (NextRow_FT()) {
 				return;
@@ -5575,37 +5575,37 @@ void drawPoly3TD_TW(short x1, short y1, short x2, short y2, short x3, short y3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
 			posY = left_v;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 
 			for (j = xmin; j < xmax; j += 2) {
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						(((int32_t) GETLE16(&psxVuw[(((((posY+difY)>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-								(((posX+difX)>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						(((int32_t) GETLE16(&g_gpu.psx_vram.u16[(((((posY+difY)>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+								(((posX+difX)>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]))
 								<< 16)
-								| GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-										(((posX)>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]));
+								| GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+										(((posX)>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]));
 
 				posX += difX2;
 				posY += difY2;
 			}
 			if (j == xmax)
 				GetTextureTransColG(
-						&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-								((posX>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]));
+						&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+								((posX>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]));
 		}
 		if (NextRow_FT()) {
 			return;
@@ -5636,36 +5636,36 @@ void drawPoly4TD(short x1, short y1, short x2, short y2, short x3, short y3,
 	int32_t difX, difY, difX2, difY2;
 	int32_t posX, posY;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW && x4
-			> drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW && x4
+			> g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH && y4
-			> drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH && y4
+			> g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX && x4
-			< drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX && x4
+			< g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY && y4
-			< drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY && y4
+			< g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT4(x1, y1, x2, y2, x3, y3, x4, y4, tx1, ty1, tx2, ty2,
 			tx3, ty3, tx4, ty4))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT4())
 			return;
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);
@@ -5682,30 +5682,30 @@ void drawPoly4TD(short x1, short y1, short x2, short y2, short x3, short y3,
 				difX2 = difX << 1;
 				difY2 = difY << 1;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 				xmax--;
-				if (drawW < xmax)
-					xmax = drawW;
+				if (g_prim.drawW < xmax)
+					xmax = g_prim.drawW;
 
 				for (j = xmin; j < xmax; j += 2) {
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							(((int32_t) GETLE16(&psxVuw[((((posY+difY)>>16)+GlobalTextAddrY)<<10)+((posX+difX)>>16)+GlobalTextAddrX]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							(((int32_t) GETLE16(&g_gpu.psx_vram.u16[((((posY+difY)>>16)+g_soft.GlobalTextAddrY)<<10)+((posX+difX)>>16)+g_soft.GlobalTextAddrX]))
 									<< 16)
-									| GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+((posX)>>16)+GlobalTextAddrX]));
+									| GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+((posX)>>16)+g_soft.GlobalTextAddrX]));
 
 					posX += difX2;
 					posY += difY2;
 				}
 				if (j == xmax)
 					GetTextureTransColG_S(
-							&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+(posX>>16)+GlobalTextAddrX]));
+							&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+(posX>>16)+g_soft.GlobalTextAddrX]));
 			}
 			if (NextRow_FT4())
 				return;
@@ -5731,30 +5731,30 @@ void drawPoly4TD(short x1, short y1, short x2, short y2, short x3, short y3,
 			difX2 = difX << 1;
 			difY2 = difY << 1;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 			xmax--;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j < xmax; j += 2) {
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						(((int32_t) GETLE16(&psxVuw[((((posY+difY)>>16)+GlobalTextAddrY)<<10)+((posX+difX)>>16)+GlobalTextAddrX]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						(((int32_t) GETLE16(&g_gpu.psx_vram.u16[((((posY+difY)>>16)+g_soft.GlobalTextAddrY)<<10)+((posX+difX)>>16)+g_soft.GlobalTextAddrX]))
 								<< 16)
-								| GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+((posX)>>16)+GlobalTextAddrX]));
+								| GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+((posX)>>16)+g_soft.GlobalTextAddrX]));
 
 				posX += difX2;
 				posY += difY2;
 			}
 			if (j == xmax)
 				GetTextureTransColG(
-						&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+(posX>>16)+GlobalTextAddrX]));
+						&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+(posX>>16)+g_soft.GlobalTextAddrX]));
 		}
 		if (NextRow_FT4())
 			return;
@@ -5771,36 +5771,36 @@ void drawPoly4TD_TW(short x1, short y1, short x2, short y2, short x3, short y3,
 	int32_t difX, difY, difX2, difY2;
 	int32_t posX, posY;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW && x4
-			> drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW && x4
+			> g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH && y4
-			> drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH && y4
+			> g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX && x4
-			< drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX && x4
+			< g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY && y4
-			< drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY && y4
+			< g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT4(x1, y1, x2, y2, x3, y3, x4, y4, tx1, ty1, tx2, ty2,
 			tx3, ty3, tx4, ty4))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT4())
 			return;
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);
@@ -5817,33 +5817,33 @@ void drawPoly4TD_TW(short x1, short y1, short x2, short y2, short x3, short y3,
 				difX2 = difX << 1;
 				difY2 = difY << 1;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 				xmax--;
-				if (drawW < xmax)
-					xmax = drawW;
+				if (g_prim.drawW < xmax)
+					xmax = g_prim.drawW;
 
 				for (j = xmin; j < xmax; j += 2) {
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							(((int32_t) GETLE16(&psxVuw[(((((posY+difY)>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-									(((posX+difX)>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							(((int32_t) GETLE16(&g_gpu.psx_vram.u16[(((((posY+difY)>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+									(((posX+difX)>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]))
 									<< 16)
-									| GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY)<<10)+TWin.Position.y0+
-											((posX>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]));
+									| GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY)<<10)+g_prim.TWin.Position.y0+
+											((posX>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]));
 
 					posX += difX2;
 					posY += difY2;
 				}
 				if (j == xmax)
 					GetTextureTransColG_S(
-							&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-									((posX>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]));
+							&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+									((posX>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]));
 			}
 			if (NextRow_FT4())
 				return;
@@ -5869,33 +5869,33 @@ void drawPoly4TD_TW(short x1, short y1, short x2, short y2, short x3, short y3,
 			difX2 = difX << 1;
 			difY2 = difY << 1;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 			xmax--;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j < xmax; j += 2) {
 				GetTextureTransColG32(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						(((int32_t) GETLE16(&psxVuw[(((((posY+difY)>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-								(((posX+difX)>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						(((int32_t) GETLE16(&g_gpu.psx_vram.u16[(((((posY+difY)>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+								(((posX+difX)>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]))
 								<< 16)
-								| GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-										((posX>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]));
+								| GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+										((posX>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]));
 
 				posX += difX2;
 				posY += difY2;
 			}
 			if (j == xmax)
 				GetTextureTransColG(
-						&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-								((posX>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]));
+						&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+								((posX>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]));
 		}
 		if (NextRow_FT4())
 			return;
@@ -5912,36 +5912,36 @@ void drawPoly4TD_TW_S(short x1, short y1, short x2, short y2, short x3,
 	int32_t difX, difY, difX2, difY2;
 	int32_t posX, posY;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW && x4
-			> drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW && x4
+			> g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH && y4
-			> drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH && y4
+			> g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX && x4
-			< drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX && x4
+			< g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY && y4
-			< drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY && y4
+			< g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_FT4(x1, y1, x2, y2, x3, y3, x4, y4, tx1, ty1, tx2, ty2,
 			tx3, ty3, tx4, ty4))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_FT4())
 			return;
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);
@@ -5958,33 +5958,33 @@ void drawPoly4TD_TW_S(short x1, short y1, short x2, short y2, short x3,
 				difX2 = difX << 1;
 				difY2 = difY << 1;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 				}
 				xmax--;
-				if (drawW < xmax)
-					xmax = drawW;
+				if (g_prim.drawW < xmax)
+					xmax = g_prim.drawW;
 
 				for (j = xmin; j < xmax; j += 2) {
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							(((int32_t) GETLE16(&psxVuw[(((((posY+difY)>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-									(((posX+difX)>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							(((int32_t) GETLE16(&g_gpu.psx_vram.u16[(((((posY+difY)>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+									(((posX+difX)>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]))
 									<< 16)
-									| GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY)<<10)+TWin.Position.y0+
-											((posX>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]));
+									| GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY)<<10)+g_prim.TWin.Position.y0+
+											((posX>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]));
 
 					posX += difX2;
 					posY += difY2;
 				}
 				if (j == xmax)
 					GetTextureTransColG_S(
-							&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-									((posX>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]));
+							&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+									((posX>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]));
 			}
 			if (NextRow_FT4())
 				return;
@@ -6010,33 +6010,33 @@ void drawPoly4TD_TW_S(short x1, short y1, short x2, short y2, short x3,
 			difX2 = difX << 1;
 			difY2 = difY << 1;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 			}
 			xmax--;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j < xmax; j += 2) {
 				GetTextureTransColG32_SPR(
-						(uint32_t *) &psxVuw[(i << 10) + j],
-						(((int32_t) GETLE16(&psxVuw[(((((posY+difY)>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-								(((posX+difX)>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]))
+						(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+						(((int32_t) GETLE16(&g_gpu.psx_vram.u16[(((((posY+difY)>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+								(((posX+difX)>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]))
 								<< 16)
-								| GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-										((posX>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]));
+								| GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+										((posX>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]));
 
 				posX += difX2;
 				posY += difY2;
 			}
 			if (j == xmax)
 				GetTextureTransColG_SPR(
-						&psxVuw[(i << 10) + j],
-						GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-								((posX>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]));
+						&g_gpu.psx_vram.u16[(i << 10) + j],
+						GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+								((posX>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]));
 		}
 		if (NextRow_FT4())
 			return;
@@ -6053,25 +6053,25 @@ inline void drawPoly3Gi(short x1, short y1, short x2, short y2, short x3,
 	int32_t cR1, cG1, cB1;
 	int32_t difR, difB, difG, difR2, difB2, difG2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_G(x1, y1, x2, y2, x3, y3, rgb1, rgb2, rgb3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_G())
 			return;
 
@@ -6084,37 +6084,37 @@ inline void drawPoly3Gi(short x1, short y1, short x2, short y2, short x3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans && iDither != 2) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans && g_prim.iDither != 2) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16) - 1;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				cR1 = left_R;
 				cG1 = left_G;
 				cB1 = left_B;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					cR1 += j * difR;
 					cG1 += j * difG;
 					cB1 += j * difB;
 				}
 
 				for (j = xmin; j < xmax; j += 2) {
-					PUTLE32(((uint32_t *)&psxVuw[(i<<10)+j]),
+					PUTLE32(((uint32_t *)&g_gpu.psx_vram.u16[(i<<10)+j]),
 							((((cR1+difR) <<7)&0x7c000000)|(((cG1+difG) << 2)&0x03e00000)|(((cB1+difB)>>3)&0x001f0000)|
-									(((cR1) >> 9)&0x7c00)|(((cG1) >> 14)&0x03e0)|(((cB1) >> 19)&0x001f))|lSetMask);
+									(((cR1) >> 9)&0x7c00)|(((cG1) >> 14)&0x03e0)|(((cB1) >> 19)&0x001f))|g_draw.lSetMask);
 
 					cR1 += difR2;
 					cG1 += difG2;
 					cB1 += difB2;
 				}
 				if (j == xmax)
-					PUTLE16(&psxVuw[(i<<10)+j], (((cR1 >> 9)&0x7c00)|((cG1 >> 14)&0x03e0)|((cB1 >> 19)&0x001f))|sSetMask);
+					PUTLE16(&g_gpu.psx_vram.u16[(i<<10)+j], (((cR1 >> 9)&0x7c00)|((cG1 >> 14)&0x03e0)|((cB1 >> 19)&0x001f))|g_draw.sSetMask);
 			}
 			if (NextRow_G())
 				return;
@@ -6124,28 +6124,28 @@ inline void drawPoly3Gi(short x1, short y1, short x2, short y2, short x3,
 
 #endif
 
-	if (iDither == 2)
+	if (g_prim.iDither == 2)
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16) - 1;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				cR1 = left_R;
 				cG1 = left_G;
 				cB1 = left_B;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					cR1 += j * difR;
 					cG1 += j * difG;
 					cB1 += j * difB;
 				}
 
 				for (j = xmin; j <= xmax; j++) {
-					GetShadeTransCol_Dither(&psxVuw[(i << 10) + j],
+					GetShadeTransCol_Dither(&g_gpu.psx_vram.u16[(i << 10) + j],
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 
 					cR1 += difR;
@@ -6160,24 +6160,24 @@ inline void drawPoly3Gi(short x1, short y1, short x2, short y2, short x3,
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16) - 1;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				cR1 = left_R;
 				cG1 = left_G;
 				cB1 = left_B;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					cR1 += j * difR;
 					cG1 += j * difG;
 					cB1 += j * difB;
 				}
 
 				for (j = xmin; j <= xmax; j++) {
-					GetShadeTransCol(&psxVuw[(i << 10) + j], ((cR1
+					GetShadeTransCol(&g_gpu.psx_vram.u16[(i << 10) + j], ((cR1
 							>> 9) & 0x7c00) | ((cG1 >> 14) & 0x03e0) | ((cB1
 							>> 19) & 0x001f));
 
@@ -6195,17 +6195,17 @@ inline void drawPoly3Gi(short x1, short y1, short x2, short y2, short x3,
 ////////////////////////////////////////////////////////////////////////
 
 void drawPoly3G(int32_t rgb1, int32_t rgb2, int32_t rgb3) {
-	drawPoly3Gi(lx0, ly0, lx1, ly1, lx2,
-			ly2, rgb1, rgb2, rgb3);
+	drawPoly3Gi(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1, g_soft.lx2,
+			g_soft.ly2, rgb1, rgb2, rgb3);
 }
 
 // draw two g-shaded tris for right psx shading emulation
 
 void drawPoly4G(int32_t rgb1, int32_t rgb2, int32_t rgb3, int32_t rgb4) {
-	drawPoly3Gi(lx1, ly1, lx3, ly3, lx2,
-			ly2, rgb2, rgb4, rgb3);
-	drawPoly3Gi(lx0, ly0, lx1, ly1, lx2,
-			ly2, rgb1, rgb2, rgb3);
+	drawPoly3Gi(g_soft.lx1, g_soft.ly1, g_soft.lx3, g_soft.ly3, g_soft.lx2,
+			g_soft.ly2, rgb2, rgb4, rgb3);
+	drawPoly3Gi(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1, g_soft.lx2,
+			g_soft.ly2, rgb1, rgb2, rgb3);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -6222,32 +6222,32 @@ void drawPoly3TGEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 	int32_t posX, posY, YAdjust, clutP, XAdjust;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_GT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3,
 			col1, col2, col3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_GT())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
 
 	difR = delta_right_R;
 	difG = delta_right_G;
@@ -6263,12 +6263,12 @@ void drawPoly3TGEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans && !iDither) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans && !g_prim.iDither) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = ((left_x) >> 16);
 			xmax = ((right_x) >> 16) - 1; //!!!!!!!!!!!!!
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
@@ -6277,9 +6277,9 @@ void drawPoly3TGEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 				cG1 = left_G;
 				cB1 = left_B;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 					cR1 += j * difR;
@@ -6289,18 +6289,18 @@ void drawPoly3TGEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 
 				for (j = xmin; j < xmax; j += 2) {
 					XAdjust = (posX >> 16);
-					tC1 = psxVub[((posY >> 5) & 0xFFFFF800)
+					tC1 = g_gpu.psx_vram.u8[((posY >> 5) & 0xFFFFF800)
 							+ YAdjust + (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
 					XAdjust = ((posX + difX) >> 16);
-					tC2 = psxVub[(((posY + difY) >> 5)
+					tC2 = g_gpu.psx_vram.u8[(((posY + difY) >> 5)
 							& (int32_t) 0xFFFFF800) + YAdjust + (XAdjust >> 1)];
 					tC2 = (tC2 >> ((XAdjust & 1) << 2)) & 0xf;
 
 					GetTextureTransColGX32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16, (cB1 >> 16) | ((cB1 + difB)
 									& 0xff0000), (cG1 >> 16) | ((cG1 + difG)
 									& 0xff0000), (cR1 >> 16) | ((cR1 + difR)
@@ -6314,12 +6314,12 @@ void drawPoly3TGEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 				if (j == xmax) {
 					XAdjust = (posX >> 16);
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust
 									+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-					GetTextureTransColGX_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				}
 			}
@@ -6335,8 +6335,8 @@ void drawPoly3TGEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
@@ -6345,9 +6345,9 @@ void drawPoly3TGEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 			cG1 = left_G;
 			cB1 = left_B;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 				cR1 += j * difR;
@@ -6357,16 +6357,16 @@ void drawPoly3TGEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 
 			for (j = xmin; j <= xmax; j++) {
 				XAdjust = (posX >> 16);
-				tC1 = psxVub[((posY >> 5) & (int32_t) 0xFFFFF800)
+				tC1 = g_gpu.psx_vram.u8[((posY >> 5) & (int32_t) 0xFFFFF800)
 						+ YAdjust + (XAdjust >> 1)];
 				tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-				if (iDither)
-					GetTextureTransColGX_Dither(&psxVuw[(i << 10)
-							+ j], GETLE16(&psxVuw[clutP+tC1]), (cB1
+				if (g_prim.iDither)
+					GetTextureTransColGX_Dither(&g_gpu.psx_vram.u16[(i << 10)
+							+ j], GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]), (cB1
 							>> 16), (cG1 >> 16), (cR1 >> 16));
 				else
-					GetTextureTransColGX(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				posX += difX;
 				posY += difY;
@@ -6394,32 +6394,32 @@ void drawPoly3TGEx4_IL(short x1, short y1, short x2, short y2, short x3,
 	int32_t posX, posY, YAdjust, clutP, XAdjust;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_GT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3,
 			col1, col2, col3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_GT())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = (GlobalTextAddrY << 10) + GlobalTextAddrX;
+	YAdjust = (g_soft.GlobalTextAddrY << 10) + g_soft.GlobalTextAddrX;
 
 	difR = delta_right_R;
 	difG = delta_right_G;
@@ -6435,12 +6435,12 @@ void drawPoly3TGEx4_IL(short x1, short y1, short x2, short y2, short x3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans && !iDither) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans && !g_prim.iDither) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = ((left_x) >> 16);
 			xmax = ((right_x) >> 16) - 1; //!!!!!!!!!!!!!
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
@@ -6449,9 +6449,9 @@ void drawPoly3TGEx4_IL(short x1, short y1, short x2, short y2, short x3,
 				cG1 = left_G;
 				cB1 = left_B;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 					cR1 += j * difR;
@@ -6467,7 +6467,7 @@ void drawPoly3TGEx4_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
 					tC1
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
 					XAdjust = ((posX + difX) >> 16);
@@ -6477,13 +6477,13 @@ void drawPoly3TGEx4_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
 					tC2
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
 					GetTextureTransColGX32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16, (cB1 >> 16) | ((cB1 + difB)
 									& 0xff0000), (cG1 >> 16) | ((cG1 + difG)
 									& 0xff0000), (cR1 >> 16) | ((cR1 + difR)
@@ -6502,11 +6502,11 @@ void drawPoly3TGEx4_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
 					tC1
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
-					GetTextureTransColGX_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				}
 			}
@@ -6522,8 +6522,8 @@ void drawPoly3TGEx4_IL(short x1, short y1, short x2, short y2, short x3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
@@ -6532,9 +6532,9 @@ void drawPoly3TGEx4_IL(short x1, short y1, short x2, short y2, short x3,
 			cG1 = left_G;
 			cB1 = left_B;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 				cR1 += j * difR;
@@ -6549,16 +6549,16 @@ void drawPoly3TGEx4_IL(short x1, short y1, short x2, short y2, short x3,
 				n_xi = ((XAdjust >> 2) & ~0x3c) + ((TXV << 2) & 0x3c);
 				n_yi = (TXV & ~0xf) + ((XAdjust >> 4) & 0xf);
 
-				tC1 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC1 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((XAdjust & 0x03) << 2)) & 0x0f;
 
-				if (iDither)
-					GetTextureTransColGX_Dither(&psxVuw[(i << 10)
-							+ j], GETLE16(&psxVuw[clutP+tC1]), (cB1
+				if (g_prim.iDither)
+					GetTextureTransColGX_Dither(&g_gpu.psx_vram.u16[(i << 10)
+							+ j], GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]), (cB1
 							>> 16), (cG1 >> 16), (cR1 >> 16));
 				else
-					GetTextureTransColGX(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				posX += difX;
 				posY += difY;
@@ -6586,33 +6586,33 @@ void drawPoly3TGEx4_TW(short x1, short y1, short x2, short y2, short x3,
 	int32_t posX, posY, YAdjust, clutP, XAdjust;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_GT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3,
 			col1, col2, col3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_GT())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
-	YAdjust += (TWin.Position.y0 << 11) + (TWin.Position.x0 >> 1);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
+	YAdjust += (g_prim.TWin.Position.y0 << 11) + (g_prim.TWin.Position.x0 >> 1);
 
 	difR = delta_right_R;
 	difG = delta_right_G;
@@ -6628,12 +6628,12 @@ void drawPoly3TGEx4_TW(short x1, short y1, short x2, short y2, short x3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans && !iDither) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans && !g_prim.iDither) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = ((left_x) >> 16);
 			xmax = ((right_x) >> 16) - 1; //!!!!!!!!!!!!!
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
@@ -6642,9 +6642,9 @@ void drawPoly3TGEx4_TW(short x1, short y1, short x2, short y2, short x3,
 				cG1 = left_G;
 				cB1 = left_B;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 					cR1 += j * difR;
@@ -6653,20 +6653,20 @@ void drawPoly3TGEx4_TW(short x1, short y1, short x2, short y2, short x3,
 				}
 
 				for (j = xmin; j < xmax; j += 2) {
-					XAdjust = (posX >> 16) % TWin.Position.x1;
-					tC1 = psxVub[(((posY >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
+					XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+					tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
 							+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-					XAdjust = ((posX + difX) >> 16) % TWin.Position.x1;
-					tC2 = psxVub[((((posY + difY) >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
+					XAdjust = ((posX + difX) >> 16) % g_prim.TWin.Position.x1;
+					tC2 = g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
 							+ (XAdjust >> 1)];
 					tC2 = (tC2 >> ((XAdjust & 1) << 2)) & 0xf;
 					GetTextureTransColGX32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16, (cB1 >> 16) | ((cB1 + difB)
 									& 0xff0000), (cG1 >> 16) | ((cG1 + difG)
 									& 0xff0000), (cR1 >> 16) | ((cR1 + difR)
@@ -6678,13 +6678,13 @@ void drawPoly3TGEx4_TW(short x1, short y1, short x2, short y2, short x3,
 					cB1 += difB2;
 				}
 				if (j == xmax) {
-					XAdjust = (posX >> 16) % TWin.Position.x1;
-					tC1 = psxVub[(((posY >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
+					XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+					tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
 							+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-					GetTextureTransColGX_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				}
 			}
@@ -6700,8 +6700,8 @@ void drawPoly3TGEx4_TW(short x1, short y1, short x2, short y2, short x3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
@@ -6710,9 +6710,9 @@ void drawPoly3TGEx4_TW(short x1, short y1, short x2, short y2, short x3,
 			cG1 = left_G;
 			cB1 = left_B;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 				cR1 += j * difR;
@@ -6721,18 +6721,18 @@ void drawPoly3TGEx4_TW(short x1, short y1, short x2, short y2, short x3,
 			}
 
 			for (j = xmin; j <= xmax; j++) {
-				XAdjust = (posX >> 16) % TWin.Position.x1;
-				tC1 = psxVub[(((posY >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + (XAdjust
+				XAdjust = (posX >> 16) % g_prim.TWin.Position.x1;
+				tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + (XAdjust
 						>> 1)];
 				tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-				if (iDither)
-					GetTextureTransColGX_Dither(&psxVuw[(i << 10)
-							+ j], GETLE16(&psxVuw[clutP+tC1]), (cB1
+				if (g_prim.iDither)
+					GetTextureTransColGX_Dither(&g_gpu.psx_vram.u16[(i << 10)
+							+ j], GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]), (cB1
 							>> 16), (cG1 >> 16), (cR1 >> 16));
 				else
-					GetTextureTransColGX(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				posX += difX;
 				posY += difY;
@@ -6792,40 +6792,40 @@ void drawPoly4TGEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 	int32_t posX, posY, YAdjust, clutP, XAdjust;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW && x4
-			> drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW && x4
+			> g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH && y4
-			> drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH && y4
+			> g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX && x4
-			< drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX && x4
+			< g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY && y4
-			< drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY && y4
+			< g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_GT4(x1, y1, x2, y2, x3, y3, x4, y4, tx1, ty1, tx2, ty2,
 			tx3, ty3, tx4, ty4, col1, col2, col3, col4))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_GT4())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans && !iDither) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans && !g_prim.iDither) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);
@@ -6852,9 +6852,9 @@ void drawPoly4TGEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 				difG2 = difG << 1;
 				difB2 = difB << 1;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 					cR1 += j * difR;
@@ -6862,25 +6862,25 @@ void drawPoly4TGEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 					cB1 += j * difB;
 				}
 				xmax--;
-				if (drawW < xmax)
-					xmax = drawW;
+				if (g_prim.drawW < xmax)
+					xmax = g_prim.drawW;
 
 				for (j = xmin; j < xmax; j += 2) {
 					XAdjust = (posX >> 16);
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust
 									+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
 					XAdjust = ((posX + difX) >> 16);
-					tC2 = psxVub[(((posY + difY) >> 5)
+					tC2 = g_gpu.psx_vram.u8[(((posY + difY) >> 5)
 							& (int32_t) 0xFFFFF800) + YAdjust + (XAdjust >> 1)];
 					tC2 = (tC2 >> ((XAdjust & 1) << 2)) & 0xf;
 
 					GetTextureTransColGX32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16, (cB1 >> 16) | ((cB1 + difB)
 									& 0xff0000), (cG1 >> 16) | ((cG1 + difG)
 									& 0xff0000), (cR1 >> 16) | ((cR1 + difR)
@@ -6894,13 +6894,13 @@ void drawPoly4TGEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 				if (j == xmax) {
 					XAdjust = (posX >> 16);
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust
 									+ (XAdjust >> 1)];
 					tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
 
-					GetTextureTransColGX_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				}
 			}
@@ -6938,9 +6938,9 @@ void drawPoly4TGEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 			difG2 = difG << 1;
 			difB2 = difB << 1;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 				cR1 += j * difR;
@@ -6948,21 +6948,21 @@ void drawPoly4TGEx4(short x1, short y1, short x2, short y2, short x3, short y3,
 				cB1 += j * difB;
 			}
 			xmax--;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j <= xmax; j++) {
 				XAdjust = (posX >> 16);
-				tC1 = psxVub[((posY >> 5) & (int32_t) 0xFFFFF800)
+				tC1 = g_gpu.psx_vram.u8[((posY >> 5) & (int32_t) 0xFFFFF800)
 						+ YAdjust + (XAdjust >> 1)];
 				tC1 = (tC1 >> ((XAdjust & 1) << 2)) & 0xf;
-				if (iDither)
-					GetTextureTransColGX_Dither(&psxVuw[(i << 10)
-							+ j], GETLE16(&psxVuw[clutP+tC1]), (cB1
+				if (g_prim.iDither)
+					GetTextureTransColGX_Dither(&g_gpu.psx_vram.u16[(i << 10)
+							+ j], GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]), (cB1
 							>> 16), (cG1 >> 16), (cR1 >> 16));
 				else
-					GetTextureTransColGX(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				posX += difX;
 				posY += difY;
@@ -7003,32 +7003,32 @@ void drawPoly3TGEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 	int32_t posX, posY, YAdjust, clutP;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_GT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3,
 			col1, col2, col3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_GT())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
 
 	difR = delta_right_R;
 	difG = delta_right_G;
@@ -7043,12 +7043,12 @@ void drawPoly3TGEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans && !iDither) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans && !g_prim.iDither) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16) - 1; // !!!!!!!!!!!!!
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
@@ -7057,9 +7057,9 @@ void drawPoly3TGEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 				cG1 = left_G;
 				cB1 = left_B;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 					cR1 += j * difR;
@@ -7069,16 +7069,16 @@ void drawPoly3TGEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 
 				for (j = xmin; j < xmax; j += 2) {
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust + ((posX
 									>> 16))];
-					tC2 = psxVub[(((posY + difY) >> 5)
+					tC2 = g_gpu.psx_vram.u8[(((posY + difY) >> 5)
 							& (int32_t) 0xFFFFF800) + YAdjust + (((posX + difX)
 							>> 16))];
 					GetTextureTransColGX32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16, (cB1 >> 16) | ((cB1 + difB)
 									& 0xff0000), (cG1 >> 16) | ((cG1 + difG)
 									& 0xff0000), (cR1 >> 16) | ((cR1 + difR)
@@ -7091,11 +7091,11 @@ void drawPoly3TGEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 				}
 				if (j == xmax) {
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust + ((posX
 									>> 16))];
-					GetTextureTransColGX_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				}
 			}
@@ -7111,8 +7111,8 @@ void drawPoly3TGEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
@@ -7121,9 +7121,9 @@ void drawPoly3TGEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 			cG1 = left_G;
 			cB1 = left_B;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 				cR1 += j * difR;
@@ -7132,15 +7132,15 @@ void drawPoly3TGEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 			}
 
 			for (j = xmin; j <= xmax; j++) {
-				tC1 = psxVub[((posY >> 5) & (int32_t) 0xFFFFF800)
+				tC1 = g_gpu.psx_vram.u8[((posY >> 5) & (int32_t) 0xFFFFF800)
 						+ YAdjust + ((posX >> 16))];
-				if (iDither)
-					GetTextureTransColGX_Dither(&psxVuw[(i << 10)
-							+ j], GETLE16(&psxVuw[clutP+tC1]), (cB1
+				if (g_prim.iDither)
+					GetTextureTransColGX_Dither(&g_gpu.psx_vram.u16[(i << 10)
+							+ j], GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]), (cB1
 							>> 16), (cG1 >> 16), (cR1 >> 16));
 				else
-					GetTextureTransColGX(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				posX += difX;
 				posY += difY;
@@ -7168,32 +7168,32 @@ void drawPoly3TGEx8_IL(short x1, short y1, short x2, short y2, short x3,
 	int32_t posX, posY, YAdjust, clutP;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_GT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3,
 			col1, col2, col3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_GT())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = (GlobalTextAddrY << 10) + GlobalTextAddrX;
+	YAdjust = (g_soft.GlobalTextAddrY << 10) + g_soft.GlobalTextAddrX;
 
 	difR = delta_right_R;
 	difG = delta_right_G;
@@ -7208,12 +7208,12 @@ void drawPoly3TGEx8_IL(short x1, short y1, short x2, short y2, short x3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans && !iDither) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans && !g_prim.iDither) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16) - 1; // !!!!!!!!!!!!!
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
@@ -7222,9 +7222,9 @@ void drawPoly3TGEx8_IL(short x1, short y1, short x2, short y2, short x3,
 				cG1 = left_G;
 				cB1 = left_B;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 					cR1 += j * difR;
@@ -7240,7 +7240,7 @@ void drawPoly3TGEx8_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
 					tC1
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((TXU & 0x01) << 3)) & 0xff;
 
 					TXU = (posX + difX) >> 16;
@@ -7250,13 +7250,13 @@ void drawPoly3TGEx8_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
 					tC2
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((TXU & 0x01) << 3)) & 0xff;
 
 					GetTextureTransColGX32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16, (cB1 >> 16) | ((cB1 + difB)
 									& 0xff0000), (cG1 >> 16) | ((cG1 + difG)
 									& 0xff0000), (cR1 >> 16) | ((cR1 + difR)
@@ -7275,11 +7275,11 @@ void drawPoly3TGEx8_IL(short x1, short y1, short x2, short y2, short x3,
 					n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
 					tC1
-							= (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+							= (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 									>> ((TXU & 0x01) << 3)) & 0xff;
 
-					GetTextureTransColGX_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				}
 			}
@@ -7295,8 +7295,8 @@ void drawPoly3TGEx8_IL(short x1, short y1, short x2, short y2, short x3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
@@ -7305,9 +7305,9 @@ void drawPoly3TGEx8_IL(short x1, short y1, short x2, short y2, short x3,
 			cG1 = left_G;
 			cB1 = left_B;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 				cR1 += j * difR;
@@ -7322,16 +7322,16 @@ void drawPoly3TGEx8_IL(short x1, short y1, short x2, short y2, short x3,
 						& 0x38);
 				n_yi = (TXV & ~0x7) + ((TXU >> 5) & 0x7);
 
-				tC1 = (GETLE16(&psxVuw[(n_yi<<10)+YAdjust+n_xi])
+				tC1 = (GETLE16(&g_gpu.psx_vram.u16[(n_yi<<10)+YAdjust+n_xi])
 						>> ((TXU & 0x01) << 3)) & 0xff;
 
-				if (iDither)
-					GetTextureTransColGX_Dither(&psxVuw[(i << 10)
-							+ j], GETLE16(&psxVuw[clutP+tC1]), (cB1
+				if (g_prim.iDither)
+					GetTextureTransColGX_Dither(&g_gpu.psx_vram.u16[(i << 10)
+							+ j], GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]), (cB1
 							>> 16), (cG1 >> 16), (cR1 >> 16));
 				else
-					GetTextureTransColGX(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				posX += difX;
 				posY += difY;
@@ -7359,33 +7359,33 @@ void drawPoly3TGEx8_TW(short x1, short y1, short x2, short y2, short x3,
 	int32_t posX, posY, YAdjust, clutP;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_GT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3,
 			col1, col2, col3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_GT())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
-	YAdjust += (TWin.Position.y0 << 11) + (TWin.Position.x0);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
+	YAdjust += (g_prim.TWin.Position.y0 << 11) + (g_prim.TWin.Position.x0);
 
 	difR = delta_right_R;
 	difG = delta_right_G;
@@ -7400,12 +7400,12 @@ void drawPoly3TGEx8_TW(short x1, short y1, short x2, short y2, short x3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans && !iDither) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans && !g_prim.iDither) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16) - 1; // !!!!!!!!!!!!!
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
@@ -7414,9 +7414,9 @@ void drawPoly3TGEx8_TW(short x1, short y1, short x2, short y2, short x3,
 				cG1 = left_G;
 				cB1 = left_B;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 					cR1 += j * difR;
@@ -7425,19 +7425,19 @@ void drawPoly3TGEx8_TW(short x1, short y1, short x2, short y2, short x3,
 				}
 
 				for (j = xmin; j < xmax; j += 2) {
-					tC1 = psxVub[(((posY >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
-							+ ((posX >> 16) % TWin.Position.x1)];
+					tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
+							+ ((posX >> 16) % g_prim.TWin.Position.x1)];
 					tC2
-							= psxVub[((((posY + difY) >> 16)
-									% TWin.Position.y1) << 11) + YAdjust
+							= g_gpu.psx_vram.u8[((((posY + difY) >> 16)
+									% g_prim.TWin.Position.y1) << 11) + YAdjust
 									+ (((posX + difX) >> 16)
-											% TWin.Position.x1)];
+											% g_prim.TWin.Position.x1)];
 
 					GetTextureTransColGX32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16, (cB1 >> 16) | ((cB1 + difB)
 									& 0xff0000), (cG1 >> 16) | ((cG1 + difG)
 									& 0xff0000), (cR1 >> 16) | ((cR1 + difR)
@@ -7449,11 +7449,11 @@ void drawPoly3TGEx8_TW(short x1, short y1, short x2, short y2, short x3,
 					cB1 += difB2;
 				}
 				if (j == xmax) {
-					tC1 = psxVub[(((posY >> 16)
-							% TWin.Position.y1) << 11) + YAdjust
-							+ ((posX >> 16) % TWin.Position.x1)];
-					GetTextureTransColGX_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+							% g_prim.TWin.Position.y1) << 11) + YAdjust
+							+ ((posX >> 16) % g_prim.TWin.Position.x1)];
+					GetTextureTransColGX_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				}
 			}
@@ -7469,8 +7469,8 @@ void drawPoly3TGEx8_TW(short x1, short y1, short x2, short y2, short x3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
@@ -7479,9 +7479,9 @@ void drawPoly3TGEx8_TW(short x1, short y1, short x2, short y2, short x3,
 			cG1 = left_G;
 			cB1 = left_B;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 				cR1 += j * difR;
@@ -7490,16 +7490,16 @@ void drawPoly3TGEx8_TW(short x1, short y1, short x2, short y2, short x3,
 			}
 
 			for (j = xmin; j <= xmax; j++) {
-				tC1 = psxVub[(((posY >> 16)
-						% TWin.Position.y1) << 11) + YAdjust + ((posX
-						>> 16) % TWin.Position.x1)];
-				if (iDither)
-					GetTextureTransColGX_Dither(&psxVuw[(i << 10)
-							+ j], GETLE16(&psxVuw[clutP+tC1]), (cB1
+				tC1 = g_gpu.psx_vram.u8[(((posY >> 16)
+						% g_prim.TWin.Position.y1) << 11) + YAdjust + ((posX
+						>> 16) % g_prim.TWin.Position.x1)];
+				if (g_prim.iDither)
+					GetTextureTransColGX_Dither(&g_gpu.psx_vram.u16[(i << 10)
+							+ j], GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]), (cB1
 							>> 16), (cG1 >> 16), (cR1 >> 16));
 				else
-					GetTextureTransColGX(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				posX += difX;
 				posY += difY;
@@ -7554,40 +7554,40 @@ void drawPoly4TGEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 	int32_t posX, posY, YAdjust, clutP;
 	short tC1, tC2;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW && x4
-			> drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW && x4
+			> g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH && y4
-			> drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH && y4
+			> g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX && x4
-			< drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX && x4
+			< g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY && y4
-			< drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY && y4
+			< g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_GT4(x1, y1, x2, y2, x3, y3, x4, y4, tx1, ty1, tx2, ty2,
 			tx3, ty3, tx4, ty4, col1, col2, col3, col4))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_GT4())
 			return;
 
 	clutP = (clY << 10) + clX;
 
-	YAdjust = ((GlobalTextAddrY) << 11) + (GlobalTextAddrX << 1);
+	YAdjust = ((g_soft.GlobalTextAddrY) << 11) + (g_soft.GlobalTextAddrX << 1);
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans && !iDither) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans && !g_prim.iDither) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);
@@ -7614,9 +7614,9 @@ void drawPoly4TGEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 				difG2 = difG << 1;
 				difB2 = difB << 1;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 					cR1 += j * difR;
@@ -7624,22 +7624,22 @@ void drawPoly4TGEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 					cB1 += j * difB;
 				}
 				xmax--;
-				if (drawW < xmax)
-					xmax = drawW;
+				if (g_prim.drawW < xmax)
+					xmax = g_prim.drawW;
 
 				for (j = xmin; j < xmax; j += 2) {
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust + (posX
 									>> 16)];
-					tC2 = psxVub[(((posY + difY) >> 5)
+					tC2 = g_gpu.psx_vram.u8[(((posY + difY) >> 5)
 							& (int32_t) 0xFFFFF800) + YAdjust + ((posX + difX)
 							>> 16)];
 
 					GetTextureTransColGX32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1])
-									| ((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1])
+									| ((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 											<< 16, (cB1 >> 16) | ((cB1 + difB)
 									& 0xff0000), (cG1 >> 16) | ((cG1 + difG)
 									& 0xff0000), (cR1 >> 16) | ((cR1 + difR)
@@ -7652,11 +7652,11 @@ void drawPoly4TGEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 				}
 				if (j == xmax) {
 					tC1
-							= psxVub[((posY >> 5)
+							= g_gpu.psx_vram.u8[((posY >> 5)
 									& (int32_t) 0xFFFFF800) + YAdjust + (posX
 									>> 16)];
-					GetTextureTransColGX_S(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX_S(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				}
 			}
@@ -7694,9 +7694,9 @@ void drawPoly4TGEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 			difG2 = difG << 1;
 			difB2 = difB << 1;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 				cR1 += j * difR;
@@ -7704,19 +7704,19 @@ void drawPoly4TGEx8(short x1, short y1, short x2, short y2, short x3, short y3,
 				cB1 += j * difB;
 			}
 			xmax--;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j <= xmax; j++) {
-				tC1 = psxVub[((posY >> 5) & (int32_t) 0xFFFFF800)
+				tC1 = g_gpu.psx_vram.u8[((posY >> 5) & (int32_t) 0xFFFFF800)
 						+ YAdjust + (posX >> 16)];
-				if (iDither)
-					GetTextureTransColGX_Dither(&psxVuw[(i << 10)
-							+ j], GETLE16(&psxVuw[clutP+tC1]), (cB1
+				if (g_prim.iDither)
+					GetTextureTransColGX_Dither(&g_gpu.psx_vram.u16[(i << 10)
+							+ j], GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]), (cB1
 							>> 16), (cG1 >> 16), (cR1 >> 16));
 				else
-					GetTextureTransColGX(&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[clutP+tC1]),
+					GetTextureTransColGX(&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+tC1]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				posX += difX;
 				posY += difY;
@@ -7755,26 +7755,26 @@ void drawPoly3TGD(short x1, short y1, short x2, short y2, short x3, short y3,
 	int32_t difX, difY, difX2, difY2;
 	int32_t posX, posY;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_GT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3,
 			col1, col2, col3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_GT())
 			return;
 
@@ -7791,12 +7791,12 @@ void drawPoly3TGD(short x1, short y1, short x2, short y2, short x3, short y3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans && !iDither) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans && !g_prim.iDither) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!!!!!
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
@@ -7805,9 +7805,9 @@ void drawPoly3TGD(short x1, short y1, short x2, short y2, short x3, short y3,
 				cG1 = left_G;
 				cB1 = left_B;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 					cR1 += j * difR;
@@ -7817,10 +7817,10 @@ void drawPoly3TGD(short x1, short y1, short x2, short y2, short x3, short y3,
 
 				for (j = xmin; j < xmax; j += 2) {
 					GetTextureTransColGX32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							(((int32_t) GETLE16(&psxVuw[((((posY+difY)>>16)+GlobalTextAddrY)<<10)+((posX+difX)>>16)+GlobalTextAddrX]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							(((int32_t) GETLE16(&g_gpu.psx_vram.u16[((((posY+difY)>>16)+g_soft.GlobalTextAddrY)<<10)+((posX+difX)>>16)+g_soft.GlobalTextAddrX]))
 									<< 16)
-									| GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+((posX)>>16)+GlobalTextAddrX]),
+									| GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+((posX)>>16)+g_soft.GlobalTextAddrX]),
 							(cB1 >> 16) | ((cB1 + difB) & 0xff0000),
 							(cG1 >> 16) | ((cG1 + difG) & 0xff0000),
 							(cR1 >> 16) | ((cR1 + difR) & 0xff0000));
@@ -7832,8 +7832,8 @@ void drawPoly3TGD(short x1, short y1, short x2, short y2, short x3, short y3,
 				}
 				if (j == xmax)
 					GetTextureTransColGX_S(
-							&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+(posX>>16)+GlobalTextAddrX]),
+							&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+(posX>>16)+g_soft.GlobalTextAddrX]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 			}
 			if (NextRow_GT()) {
@@ -7848,8 +7848,8 @@ void drawPoly3TGD(short x1, short y1, short x2, short y2, short x3, short y3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
@@ -7858,9 +7858,9 @@ void drawPoly3TGD(short x1, short y1, short x2, short y2, short x3, short y3,
 			cG1 = left_G;
 			cB1 = left_B;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 				cR1 += j * difR;
@@ -7869,15 +7869,15 @@ void drawPoly3TGD(short x1, short y1, short x2, short y2, short x3, short y3,
 			}
 
 			for (j = xmin; j <= xmax; j++) {
-				if (iDither)
+				if (g_prim.iDither)
 					GetTextureTransColGX_Dither(
-							&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+(posX>>16)+GlobalTextAddrX]),
+							&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+(posX>>16)+g_soft.GlobalTextAddrX]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				else
 					GetTextureTransColGX(
-							&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+(posX>>16)+GlobalTextAddrX]),
+							&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+(posX>>16)+g_soft.GlobalTextAddrX]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				posX += difX;
 				posY += difY;
@@ -7903,26 +7903,26 @@ void drawPoly3TGD_TW(short x1, short y1, short x2, short y2, short x3,
 	int32_t difX, difY, difX2, difY2;
 	int32_t posX, posY;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_GT(x1, y1, x2, y2, x3, y3, tx1, ty1, tx2, ty2, tx3, ty3,
 			col1, col2, col3))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_GT())
 			return;
 
@@ -7939,12 +7939,12 @@ void drawPoly3TGD_TW(short x1, short y1, short x2, short y2, short x3,
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans && !iDither) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans && !g_prim.iDither) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!!!!!
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			if (xmax >= xmin) {
 				posX = left_u;
@@ -7953,9 +7953,9 @@ void drawPoly3TGD_TW(short x1, short y1, short x2, short y2, short x3,
 				cG1 = left_G;
 				cB1 = left_B;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 					cR1 += j * difR;
@@ -7965,12 +7965,12 @@ void drawPoly3TGD_TW(short x1, short y1, short x2, short y2, short x3,
 
 				for (j = xmin; j < xmax; j += 2) {
 					GetTextureTransColGX32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							(((int32_t) GETLE16(&psxVuw[(((((posY+difY)>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-									(((posX+difX)>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							(((int32_t) GETLE16(&g_gpu.psx_vram.u16[(((((posY+difY)>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+									(((posX+difX)>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]))
 									<< 16)
-									| GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-											(((posX)>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]),
+									| GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+											(((posX)>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]),
 							(cB1 >> 16) | ((cB1 + difB) & 0xff0000),
 							(cG1 >> 16) | ((cG1 + difG) & 0xff0000),
 							(cR1 >> 16) | ((cR1 + difR) & 0xff0000));
@@ -7982,9 +7982,9 @@ void drawPoly3TGD_TW(short x1, short y1, short x2, short y2, short x3,
 				}
 				if (j == xmax)
 					GetTextureTransColGX_S(
-							&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-									((posX>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]),
+							&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+									((posX>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 			}
 			if (NextRow_GT()) {
@@ -7999,8 +7999,8 @@ void drawPoly3TGD_TW(short x1, short y1, short x2, short y2, short x3,
 	for (i = ymin; i <= ymax; i++) {
 		xmin = (left_x >> 16);
 		xmax = (right_x >> 16) - 1; //!!!!!!!!!!!!!!!!!!
-		if (drawW < xmax)
-			xmax = drawW;
+		if (g_prim.drawW < xmax)
+			xmax = g_prim.drawW;
 
 		if (xmax >= xmin) {
 			posX = left_u;
@@ -8009,9 +8009,9 @@ void drawPoly3TGD_TW(short x1, short y1, short x2, short y2, short x3,
 			cG1 = left_G;
 			cB1 = left_B;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 				cR1 += j * difR;
@@ -8020,17 +8020,17 @@ void drawPoly3TGD_TW(short x1, short y1, short x2, short y2, short x3,
 			}
 
 			for (j = xmin; j <= xmax; j++) {
-				if (iDither)
+				if (g_prim.iDither)
 					GetTextureTransColGX_Dither(
-							&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-									((posX>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]),
+							&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+									((posX>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				else
 					GetTextureTransColGX(
-							&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[((((posY>>16)%TWin.Position.y1)+GlobalTextAddrY+TWin.Position.y0)<<10)+
-									((posX>>16)%TWin.Position.x1)+GlobalTextAddrX+TWin.Position.x0]),
+							&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[((((posY>>16)%g_prim.TWin.Position.y1)+g_soft.GlobalTextAddrY+g_prim.TWin.Position.y0)<<10)+
+									((posX>>16)%g_prim.TWin.Position.x1)+g_soft.GlobalTextAddrX+g_prim.TWin.Position.x0]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				posX += difX;
 				posY += difY;
@@ -8074,36 +8074,36 @@ void drawPoly4TGD(short x1, short y1, short x2, short y2, short x3, short y3,
 	int32_t difX, difY, difX2, difY2;
 	int32_t posX, posY;
 
-	if (x1 > drawW && x2 > drawW && x3 > drawW && x4
-			> drawW)
+	if (x1 > g_prim.drawW && x2 > g_prim.drawW && x3 > g_prim.drawW && x4
+			> g_prim.drawW)
 		return;
-	if (y1 > drawH && y2 > drawH && y3 > drawH && y4
-			> drawH)
+	if (y1 > g_prim.drawH && y2 > g_prim.drawH && y3 > g_prim.drawH && y4
+			> g_prim.drawH)
 		return;
-	if (x1 < drawX && x2 < drawX && x3 < drawX && x4
-			< drawX)
+	if (x1 < g_prim.drawX && x2 < g_prim.drawX && x3 < g_prim.drawX && x4
+			< g_prim.drawX)
 		return;
-	if (y1 < drawY && y2 < drawY && y3 < drawY && y4
-			< drawY)
+	if (y1 < g_prim.drawY && y2 < g_prim.drawY && y3 < g_prim.drawY && y4
+			< g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	if (!SetupSections_GT4(x1, y1, x2, y2, x3, y3, x4, y4, tx1, ty1, tx2, ty2,
 			tx3, ty3, tx4, ty4, col1, col2, col3, col4))
 		return;
 
-	ymax = Ymax;
+	ymax = g_soft.Ymax;
 
-	for (ymin = Ymin; ymin < drawY; ymin++)
+	for (ymin = g_soft.Ymin; ymin < g_prim.drawY; ymin++)
 		if (NextRow_GT4())
 			return;
 
 #ifdef FASTSOLID
 
-	if (!bCheckMask && !DrawSemiTrans && !iDither) {
+	if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans && !g_prim.iDither) {
 		for (i = ymin; i <= ymax; i++) {
 			xmin = (left_x >> 16);
 			xmax = (right_x >> 16);
@@ -8130,9 +8130,9 @@ void drawPoly4TGD(short x1, short y1, short x2, short y2, short x3, short y3,
 				difG2 = difG << 1;
 				difB2 = difB << 1;
 
-				if (xmin < drawX) {
-					j = drawX - xmin;
-					xmin = drawX;
+				if (xmin < g_prim.drawX) {
+					j = g_prim.drawX - xmin;
+					xmin = g_prim.drawX;
 					posX += j * difX;
 					posY += j * difY;
 					cR1 += j * difR;
@@ -8140,15 +8140,15 @@ void drawPoly4TGD(short x1, short y1, short x2, short y2, short x3, short y3,
 					cB1 += j * difB;
 				}
 				xmax--;
-				if (drawW < xmax)
-					xmax = drawW;
+				if (g_prim.drawW < xmax)
+					xmax = g_prim.drawW;
 
 				for (j = xmin; j < xmax; j += 2) {
 					GetTextureTransColGX32_S(
-							(uint32_t *) &psxVuw[(i << 10) + j],
-							(((int32_t) GETLE16(&psxVuw[((((posY+difY)>>16)+GlobalTextAddrY)<<10)+((posX+difX)>>16)+GlobalTextAddrX]))
+							(uint32_t *) &g_gpu.psx_vram.u16[(i << 10) + j],
+							(((int32_t) GETLE16(&g_gpu.psx_vram.u16[((((posY+difY)>>16)+g_soft.GlobalTextAddrY)<<10)+((posX+difX)>>16)+g_soft.GlobalTextAddrX]))
 									<< 16)
-									| GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+((posX)>>16)+GlobalTextAddrX]),
+									| GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+((posX)>>16)+g_soft.GlobalTextAddrX]),
 							(cB1 >> 16) | ((cB1 + difB) & 0xff0000),
 							(cG1 >> 16) | ((cG1 + difG) & 0xff0000),
 							(cR1 >> 16) | ((cR1 + difR) & 0xff0000));
@@ -8160,8 +8160,8 @@ void drawPoly4TGD(short x1, short y1, short x2, short y2, short x3, short y3,
 				}
 				if (j == xmax)
 					GetTextureTransColGX_S(
-							&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+(posX>>16)+GlobalTextAddrX]),
+							&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+(posX>>16)+g_soft.GlobalTextAddrX]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 			}
 			if (NextRow_GT4())
@@ -8198,9 +8198,9 @@ void drawPoly4TGD(short x1, short y1, short x2, short y2, short x3, short y3,
 			difG2 = difG << 1;
 			difB2 = difB << 1;
 
-			if (xmin < drawX) {
-				j = drawX - xmin;
-				xmin = drawX;
+			if (xmin < g_prim.drawX) {
+				j = g_prim.drawX - xmin;
+				xmin = g_prim.drawX;
 				posX += j * difX;
 				posY += j * difY;
 				cR1 += j * difR;
@@ -8208,19 +8208,19 @@ void drawPoly4TGD(short x1, short y1, short x2, short y2, short x3, short y3,
 				cB1 += j * difB;
 			}
 			xmax--;
-			if (drawW < xmax)
-				xmax = drawW;
+			if (g_prim.drawW < xmax)
+				xmax = g_prim.drawW;
 
 			for (j = xmin; j <= xmax; j++) {
-				if (iDither)
+				if (g_prim.iDither)
 					GetTextureTransColGX(
-							&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+(posX>>16)+GlobalTextAddrX]),
+							&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+(posX>>16)+g_soft.GlobalTextAddrX]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				else
 					GetTextureTransColGX(
-							&psxVuw[(i << 10) + j],
-							GETLE16(&psxVuw[(((posY>>16)+GlobalTextAddrY)<<10)+(posX>>16)+GlobalTextAddrX]),
+							&g_gpu.psx_vram.u16[(i << 10) + j],
+							GETLE16(&g_gpu.psx_vram.u16[(((posY>>16)+g_soft.GlobalTextAddrY)<<10)+(posX>>16)+g_soft.GlobalTextAddrX]),
 							(cB1 >> 16), (cG1 >> 16), (cR1 >> 16));
 				posX += difX;
 				posY += difY;
@@ -8258,44 +8258,44 @@ void drawPoly4TGD_TW(short x1, short y1, short x2, short y2, short x3,
  // no real rect test, but it does its job the way I need it
  inline char IsNoRect(void)
  {
- if(lx0==lx1 && lx2==lx3) return 0;
- if(lx0==lx2 && lx1==lx3) return 0;
- if(lx0==lx3 && lx1==lx2) return 0;
+ if(g_soft.lx0==g_soft.lx1 && g_soft.lx2==g_soft.lx3) return 0;
+ if(g_soft.lx0==g_soft.lx2 && g_soft.lx1==g_soft.lx3) return 0;
+ if(g_soft.lx0==g_soft.lx3 && g_soft.lx1==g_soft.lx2) return 0;
  return 1;
  }
  */
 
 // real rect test
 inline char IsNoRect(void) {
-	if (!(dwActFixes & 0x200))
+	if (!(g_prim.dwActFixes & 0x200))
 		return 0;
 
-	if (ly0 == ly1) {
-		if (lx1 == lx3 && ly3 == ly2 && lx2
-				== lx0)
+	if (g_soft.ly0 == g_soft.ly1) {
+		if (g_soft.lx1 == g_soft.lx3 && g_soft.ly3 == g_soft.ly2 && g_soft.lx2
+				== g_soft.lx0)
 			return 0;
-		if (lx1 == lx2 && ly2 == ly3 && lx3
-				== lx0)
-			return 0;
-		return 1;
-	}
-
-	if (ly0 == ly2) {
-		if (lx2 == lx3 && ly3 == ly1 && lx1
-				== lx0)
-			return 0;
-		if (lx2 == lx1 && ly1 == ly3 && lx3
-				== lx0)
+		if (g_soft.lx1 == g_soft.lx2 && g_soft.ly2 == g_soft.ly3 && g_soft.lx3
+				== g_soft.lx0)
 			return 0;
 		return 1;
 	}
 
-	if (ly0 == ly3) {
-		if (lx3 == lx2 && ly2 == ly1 && lx1
-				== lx0)
+	if (g_soft.ly0 == g_soft.ly2) {
+		if (g_soft.lx2 == g_soft.lx3 && g_soft.ly3 == g_soft.ly1 && g_soft.lx1
+				== g_soft.lx0)
 			return 0;
-		if (lx3 == lx1 && ly1 == ly2 && lx2
-				== lx0)
+		if (g_soft.lx2 == g_soft.lx1 && g_soft.ly1 == g_soft.ly3 && g_soft.lx3
+				== g_soft.lx0)
+			return 0;
+		return 1;
+	}
+
+	if (g_soft.ly0 == g_soft.ly3) {
+		if (g_soft.lx3 == g_soft.lx2 && g_soft.ly2 == g_soft.ly1 && g_soft.lx1
+				== g_soft.lx0)
+			return 0;
+		if (g_soft.lx3 == g_soft.lx1 && g_soft.ly1 == g_soft.ly2 && g_soft.lx2
+				== g_soft.lx0)
 			return 0;
 		return 1;
 	}
@@ -8307,10 +8307,10 @@ inline char IsNoRect(void) {
 void drawPoly3FT(unsigned char * baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 
-	if (0 && GlobalTextTP < 2) {
-		if (GlobalTextTP == 0)
-			drawPoly3TEx4_IL(lx0, ly0, lx1, ly1,
-					lx2, ly2,
+	if (0 && g_soft.GlobalTextTP < 2) {
+		if (g_soft.GlobalTextTP == 0)
+			drawPoly3TEx4_IL(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[4])
 							& 0x000000ff), ((GETLE32(&gpuData[4]) >> 8)
@@ -8319,8 +8319,8 @@ void drawPoly3FT(unsigned char * baseAddr) {
 					((GETLE32(&gpuData[2]) >> 12) & 0x3f0),
 					((GETLE32(&gpuData[2]) >> 22) & 0x01ff));
 		else
-			drawPoly3TEx8_IL(lx0, ly0, lx1, ly1,
-					lx2, ly2,
+			drawPoly3TEx8_IL(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[4])
 							& 0x000000ff), ((GETLE32(&gpuData[4]) >> 8)
@@ -8331,12 +8331,12 @@ void drawPoly3FT(unsigned char * baseAddr) {
 		return;
 	}
 
-	if (!bUsingTWin && !(dwActFixes & 0x100)) {
-		switch (GlobalTextTP) // depending on texture mode
+	if (!g_prim.bUsingTWin && !(g_prim.dwActFixes & 0x100)) {
+		switch (g_soft.GlobalTextTP) // depending on texture mode
 		{
 		case 0:
-			drawPoly3TEx4(lx0, ly0, lx1, ly1,
-					lx2, ly2,
+			drawPoly3TEx4(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[4])
 							& 0x000000ff), ((GETLE32(&gpuData[4]) >> 8)
@@ -8346,8 +8346,8 @@ void drawPoly3FT(unsigned char * baseAddr) {
 					((GETLE32(&gpuData[2]) >> 22) & 0x01ff));
 			return;
 		case 1:
-			drawPoly3TEx8(lx0, ly0, lx1, ly1,
-					lx2, ly2,
+			drawPoly3TEx8(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[4])
 							& 0x000000ff), ((GETLE32(&gpuData[4]) >> 8)
@@ -8357,8 +8357,8 @@ void drawPoly3FT(unsigned char * baseAddr) {
 					((GETLE32(&gpuData[2]) >> 22) & 0x01ff));
 			return;
 		case 2:
-			drawPoly3TD(lx0, ly0, lx1, ly1,
-					lx2, ly2,
+			drawPoly3TD(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[4])
 							& 0x000000ff), ((GETLE32(&gpuData[4]) >> 8)
@@ -8369,11 +8369,11 @@ void drawPoly3FT(unsigned char * baseAddr) {
 		return;
 	}
 
-	switch (GlobalTextTP) // depending on texture mode
+	switch (g_soft.GlobalTextTP) // depending on texture mode
 	{
 	case 0:
-		drawPoly3TEx4_TW(lx0, ly0, lx1, ly1,
-				lx2, ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
+		drawPoly3TEx4_TW(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+				g_soft.lx2, g_soft.ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
 				((GETLE32(&gpuData[2]) >> 8) & 0x000000ff),
 				(GETLE32(&gpuData[4]) & 0x000000ff), ((GETLE32(&gpuData[4])
 						>> 8) & 0x000000ff),
@@ -8382,8 +8382,8 @@ void drawPoly3FT(unsigned char * baseAddr) {
 						& 0x3f0), ((GETLE32(&gpuData[2]) >> 22) & 0x01ff));
 		return;
 	case 1:
-		drawPoly3TEx8_TW(lx0, ly0, lx1, ly1,
-				lx2, ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
+		drawPoly3TEx8_TW(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+				g_soft.lx2, g_soft.ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
 				((GETLE32(&gpuData[2]) >> 8) & 0x000000ff),
 				(GETLE32(&gpuData[4]) & 0x000000ff), ((GETLE32(&gpuData[4])
 						>> 8) & 0x000000ff),
@@ -8392,8 +8392,8 @@ void drawPoly3FT(unsigned char * baseAddr) {
 						& 0x3f0), ((GETLE32(&gpuData[2]) >> 22) & 0x01ff));
 		return;
 	case 2:
-		drawPoly3TD_TW(lx0, ly0, lx1, ly1,
-				lx2, ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
+		drawPoly3TD_TW(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+				g_soft.lx2, g_soft.ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
 				((GETLE32(&gpuData[2]) >> 8) & 0x000000ff),
 				(GETLE32(&gpuData[4]) & 0x000000ff), ((GETLE32(&gpuData[4])
 						>> 8) & 0x000000ff),
@@ -8408,10 +8408,10 @@ void drawPoly3FT(unsigned char * baseAddr) {
 void drawPoly4FT(unsigned char * baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 
-	if (0 && GlobalTextTP < 2) {
-		if (GlobalTextTP == 0)
-			drawPoly4TEx4_IL(lx0, ly0, lx1, ly1,
-					lx3, ly3, lx2, ly2,
+	if (0 && g_soft.GlobalTextTP < 2) {
+		if (g_soft.GlobalTextTP == 0)
+			drawPoly4TEx4_IL(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[4])
 							& 0x000000ff), ((GETLE32(&gpuData[4]) >> 8)
@@ -8421,8 +8421,8 @@ void drawPoly4FT(unsigned char * baseAddr) {
 							>> 8) & 0x000000ff), ((GETLE32(&gpuData[2]) >> 12)
 							& 0x3f0), ((GETLE32(&gpuData[2]) >> 22) & 0x01ff));
 		else
-			drawPoly4TEx8_IL(lx0, ly0, lx1, ly1,
-					lx3, ly3, lx2, ly2,
+			drawPoly4TEx8_IL(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[4])
 							& 0x000000ff), ((GETLE32(&gpuData[4]) >> 8)
@@ -8434,14 +8434,14 @@ void drawPoly4FT(unsigned char * baseAddr) {
 		return;
 	}
 
-	if (!bUsingTWin) {
+	if (!g_prim.bUsingTWin) {
 #ifdef POLYQUAD3GT
 		if (IsNoRect()) {
-			switch (GlobalTextTP) {
+			switch (g_soft.GlobalTextTP) {
 			case 0:
-				drawPoly4TEx4_TRI(lx0, ly0, lx1,
-						ly1, lx3, ly3, lx2,
-						ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
+				drawPoly4TEx4_TRI(g_soft.lx0, g_soft.ly0, g_soft.lx1,
+						g_soft.ly1, g_soft.lx3, g_soft.ly3, g_soft.lx2,
+						g_soft.ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
 						((GETLE32(&gpuData[2]) >> 8) & 0x000000ff),
 						(GETLE32(&gpuData[4]) & 0x000000ff),
 						((GETLE32(&gpuData[4]) >> 8) & 0x000000ff),
@@ -8453,9 +8453,9 @@ void drawPoly4FT(unsigned char * baseAddr) {
 						((GETLE32(&gpuData[2]) >> 22) & 0x01ff));
 				return;
 			case 1:
-				drawPoly4TEx8_TRI(lx0, ly0, lx1,
-						ly1, lx3, ly3, lx2,
-						ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
+				drawPoly4TEx8_TRI(g_soft.lx0, g_soft.ly0, g_soft.lx1,
+						g_soft.ly1, g_soft.lx3, g_soft.ly3, g_soft.lx2,
+						g_soft.ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
 						((GETLE32(&gpuData[2]) >> 8) & 0x000000ff),
 						(GETLE32(&gpuData[4]) & 0x000000ff),
 						((GETLE32(&gpuData[4]) >> 8) & 0x000000ff),
@@ -8467,8 +8467,8 @@ void drawPoly4FT(unsigned char * baseAddr) {
 						((GETLE32(&gpuData[2]) >> 22) & 0x01ff));
 				return;
 			case 2:
-				drawPoly4TD_TRI(lx0, ly0, lx1, ly1,
-						lx3, ly3, lx2, ly2,
+				drawPoly4TD_TRI(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+						g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 						(GETLE32(&gpuData[2]) & 0x000000ff),
 						((GETLE32(&gpuData[2]) >> 8) & 0x000000ff),
 						(GETLE32(&gpuData[4]) & 0x000000ff),
@@ -8483,10 +8483,10 @@ void drawPoly4FT(unsigned char * baseAddr) {
 		}
 #endif
 
-		switch (GlobalTextTP) {
+		switch (g_soft.GlobalTextTP) {
 		case 0: // grandia investigations needed
-			drawPoly4TEx4(lx0, ly0, lx1, ly1,
-					lx3, ly3, lx2, ly2,
+			drawPoly4TEx4(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[4])
 							& 0x000000ff), ((GETLE32(&gpuData[4]) >> 8)
@@ -8497,8 +8497,8 @@ void drawPoly4FT(unsigned char * baseAddr) {
 							& 0x3f0), ((GETLE32(&gpuData[2]) >> 22) & 0x01ff));
 			return;
 		case 1:
-			drawPoly4TEx8(lx0, ly0, lx1, ly1,
-					lx3, ly3, lx2, ly2,
+			drawPoly4TEx8(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[4])
 							& 0x000000ff), ((GETLE32(&gpuData[4]) >> 8)
@@ -8509,8 +8509,8 @@ void drawPoly4FT(unsigned char * baseAddr) {
 							& 0x3f0), ((GETLE32(&gpuData[2]) >> 22) & 0x01ff));
 			return;
 		case 2:
-			drawPoly4TD(lx0, ly0, lx1, ly1,
-					lx3, ly3, lx2, ly2,
+			drawPoly4TD(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[4])
 							& 0x000000ff), ((GETLE32(&gpuData[4]) >> 8)
@@ -8523,10 +8523,10 @@ void drawPoly4FT(unsigned char * baseAddr) {
 		return;
 	}
 
-	switch (GlobalTextTP) {
+	switch (g_soft.GlobalTextTP) {
 	case 0:
-		drawPoly4TEx4_TW(lx0, ly0, lx1, ly1,
-				lx3, ly3, lx2, ly2,
+		drawPoly4TEx4_TW(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+				g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 				(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 						>> 8) & 0x000000ff),
 				(GETLE32(&gpuData[4]) & 0x000000ff), ((GETLE32(&gpuData[4])
@@ -8538,8 +8538,8 @@ void drawPoly4FT(unsigned char * baseAddr) {
 						& 0x3f0), ((GETLE32(&gpuData[2]) >> 22) & 0x01ff));
 		return;
 	case 1:
-		drawPoly4TEx8_TW(lx0, ly0, lx1, ly1,
-				lx3, ly3, lx2, ly2,
+		drawPoly4TEx8_TW(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+				g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 				(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 						>> 8) & 0x000000ff),
 				(GETLE32(&gpuData[4]) & 0x000000ff), ((GETLE32(&gpuData[4])
@@ -8551,8 +8551,8 @@ void drawPoly4FT(unsigned char * baseAddr) {
 						& 0x3f0), ((GETLE32(&gpuData[2]) >> 22) & 0x01ff));
 		return;
 	case 2:
-		drawPoly4TD_TW(lx0, ly0, lx1, ly1,
-				lx3, ly3, lx2, ly2,
+		drawPoly4TD_TW(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+				g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 				(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 						>> 8) & 0x000000ff),
 				(GETLE32(&gpuData[4]) & 0x000000ff), ((GETLE32(&gpuData[4])
@@ -8570,10 +8570,10 @@ void drawPoly4FT(unsigned char * baseAddr) {
 void drawPoly3GT(unsigned char * baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 
-	if (0 && GlobalTextTP < 2) {
-		if (GlobalTextTP == 0)
-			drawPoly3TGEx4_IL(lx0, ly0, lx1, ly1,
-					lx2, ly2,
+	if (0 && g_soft.GlobalTextTP < 2) {
+		if (g_soft.GlobalTextTP == 0)
+			drawPoly3TGEx4_IL(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[5])
 							& 0x000000ff), ((GETLE32(&gpuData[5]) >> 8)
@@ -8584,8 +8584,8 @@ void drawPoly3GT(unsigned char * baseAddr) {
 					GETLE32(&gpuData[0]), GETLE32(&gpuData[3]),
 					GETLE32(&gpuData[6]));
 		else
-			drawPoly3TGEx8_IL(lx0, ly0, lx1, ly1,
-					lx2, ly2,
+			drawPoly3TGEx8_IL(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[5])
 							& 0x000000ff), ((GETLE32(&gpuData[5]) >> 8)
@@ -8598,11 +8598,11 @@ void drawPoly3GT(unsigned char * baseAddr) {
 		return;
 	}
 
-	if (!bUsingTWin) {
-		switch (GlobalTextTP) {
+	if (!g_prim.bUsingTWin) {
+		switch (g_soft.GlobalTextTP) {
 		case 0:
-			drawPoly3TGEx4(lx0, ly0, lx1, ly1,
-					lx2, ly2,
+			drawPoly3TGEx4(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[5])
 							& 0x000000ff), ((GETLE32(&gpuData[5]) >> 8)
@@ -8614,8 +8614,8 @@ void drawPoly3GT(unsigned char * baseAddr) {
 					GETLE32(&gpuData[6]));
 			return;
 		case 1:
-			drawPoly3TGEx8(lx0, ly0, lx1, ly1,
-					lx2, ly2,
+			drawPoly3TGEx8(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[5])
 							& 0x000000ff), ((GETLE32(&gpuData[5]) >> 8)
@@ -8627,8 +8627,8 @@ void drawPoly3GT(unsigned char * baseAddr) {
 					GETLE32(&gpuData[6]));
 			return;
 		case 2:
-			drawPoly3TGD(lx0, ly0, lx1, ly1,
-					lx2, ly2,
+			drawPoly3TGD(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[5])
 							& 0x000000ff), ((GETLE32(&gpuData[5]) >> 8)
@@ -8641,10 +8641,10 @@ void drawPoly3GT(unsigned char * baseAddr) {
 		return;
 	}
 
-	switch (GlobalTextTP) {
+	switch (g_soft.GlobalTextTP) {
 	case 0:
-		drawPoly3TGEx4_TW(lx0, ly0, lx1, ly1,
-				lx2, ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
+		drawPoly3TGEx4_TW(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+				g_soft.lx2, g_soft.ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
 				((GETLE32(&gpuData[2]) >> 8) & 0x000000ff),
 				(GETLE32(&gpuData[5]) & 0x000000ff), ((GETLE32(&gpuData[5])
 						>> 8) & 0x000000ff),
@@ -8655,8 +8655,8 @@ void drawPoly3GT(unsigned char * baseAddr) {
 				GETLE32(&gpuData[6]));
 		return;
 	case 1:
-		drawPoly3TGEx8_TW(lx0, ly0, lx1, ly1,
-				lx2, ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
+		drawPoly3TGEx8_TW(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+				g_soft.lx2, g_soft.ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
 				((GETLE32(&gpuData[2]) >> 8) & 0x000000ff),
 				(GETLE32(&gpuData[5]) & 0x000000ff), ((GETLE32(&gpuData[5])
 						>> 8) & 0x000000ff),
@@ -8667,8 +8667,8 @@ void drawPoly3GT(unsigned char * baseAddr) {
 				GETLE32(&gpuData[6]));
 		return;
 	case 2:
-		drawPoly3TGD_TW(lx0, ly0, lx1, ly1,
-				lx2, ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
+		drawPoly3TGD_TW(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+				g_soft.lx2, g_soft.ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
 				((GETLE32(&gpuData[2]) >> 8) & 0x000000ff),
 				(GETLE32(&gpuData[5]) & 0x000000ff), ((GETLE32(&gpuData[5])
 						>> 8) & 0x000000ff),
@@ -8684,10 +8684,10 @@ void drawPoly3GT(unsigned char * baseAddr) {
 void drawPoly4GT(unsigned char *baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 
-	if (0 && GlobalTextTP < 2) {
-		if (GlobalTextTP == 0)
-			drawPoly4TGEx4_TRI_IL(lx0, ly0, lx1,
-					ly1, lx3, ly3, lx2, ly2,
+	if (0 && g_soft.GlobalTextTP < 2) {
+		if (g_soft.GlobalTextTP == 0)
+			drawPoly4TGEx4_TRI_IL(g_soft.lx0, g_soft.ly0, g_soft.lx1,
+					g_soft.ly1, g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[5])
 							& 0x000000ff), ((GETLE32(&gpuData[5]) >> 8)
@@ -8700,8 +8700,8 @@ void drawPoly4GT(unsigned char *baseAddr) {
 					GETLE32(&gpuData[0]), GETLE32(&gpuData[3]),
 					GETLE32(&gpuData[6]), GETLE32(&gpuData[9]));
 		else
-			drawPoly4TGEx8_TRI_IL(lx0, ly0, lx1,
-					ly1, lx3, ly3, lx2, ly2,
+			drawPoly4TGEx8_TRI_IL(g_soft.lx0, g_soft.ly0, g_soft.lx1,
+					g_soft.ly1, g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[5])
 							& 0x000000ff), ((GETLE32(&gpuData[5]) >> 8)
@@ -8716,14 +8716,14 @@ void drawPoly4GT(unsigned char *baseAddr) {
 		return;
 	}
 
-	if (!bUsingTWin) {
+	if (!g_prim.bUsingTWin) {
 #ifdef POLYQUAD3GT
 		if (IsNoRect()) {
-			switch (GlobalTextTP) {
+			switch (g_soft.GlobalTextTP) {
 			case 0:
-				drawPoly4TGEx4_TRI(lx0, ly0, lx1,
-						ly1, lx3, ly3, lx2,
-						ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
+				drawPoly4TGEx4_TRI(g_soft.lx0, g_soft.ly0, g_soft.lx1,
+						g_soft.ly1, g_soft.lx3, g_soft.ly3, g_soft.lx2,
+						g_soft.ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
 						((GETLE32(&gpuData[2]) >> 8) & 0x000000ff),
 						(GETLE32(&gpuData[5]) & 0x000000ff),
 						((GETLE32(&gpuData[5]) >> 8) & 0x000000ff),
@@ -8738,9 +8738,9 @@ void drawPoly4GT(unsigned char *baseAddr) {
 
 				return;
 			case 1:
-				drawPoly4TGEx8_TRI(lx0, ly0, lx1,
-						ly1, lx3, ly3, lx2,
-						ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
+				drawPoly4TGEx8_TRI(g_soft.lx0, g_soft.ly0, g_soft.lx1,
+						g_soft.ly1, g_soft.lx3, g_soft.ly3, g_soft.lx2,
+						g_soft.ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
 						((GETLE32(&gpuData[2]) >> 8) & 0x000000ff),
 						(GETLE32(&gpuData[5]) & 0x000000ff),
 						((GETLE32(&gpuData[5]) >> 8) & 0x000000ff),
@@ -8754,9 +8754,9 @@ void drawPoly4GT(unsigned char *baseAddr) {
 						GETLE32(&gpuData[6]), GETLE32(&gpuData[9]));
 				return;
 			case 2:
-				drawPoly4TGD_TRI(lx0, ly0, lx1,
-						ly1, lx3, ly3, lx2,
-						ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
+				drawPoly4TGD_TRI(g_soft.lx0, g_soft.ly0, g_soft.lx1,
+						g_soft.ly1, g_soft.lx3, g_soft.ly3, g_soft.lx2,
+						g_soft.ly2, (GETLE32(&gpuData[2]) & 0x000000ff),
 						((GETLE32(&gpuData[2]) >> 8) & 0x000000ff),
 						(GETLE32(&gpuData[5]) & 0x000000ff),
 						((GETLE32(&gpuData[5]) >> 8) & 0x000000ff),
@@ -8772,10 +8772,10 @@ void drawPoly4GT(unsigned char *baseAddr) {
 		}
 #endif
 
-		switch (GlobalTextTP) {
+		switch (g_soft.GlobalTextTP) {
 		case 0:
-			drawPoly4TGEx4(lx0, ly0, lx1, ly1,
-					lx3, ly3, lx2, ly2,
+			drawPoly4TGEx4(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[5])
 							& 0x000000ff), ((GETLE32(&gpuData[5]) >> 8)
@@ -8790,8 +8790,8 @@ void drawPoly4GT(unsigned char *baseAddr) {
 
 			return;
 		case 1:
-			drawPoly4TGEx8(lx0, ly0, lx1, ly1,
-					lx3, ly3, lx2, ly2,
+			drawPoly4TGEx8(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[5])
 							& 0x000000ff), ((GETLE32(&gpuData[5]) >> 8)
@@ -8805,8 +8805,8 @@ void drawPoly4GT(unsigned char *baseAddr) {
 					GETLE32(&gpuData[6]), GETLE32(&gpuData[9]));
 			return;
 		case 2:
-			drawPoly4TGD(lx0, ly0, lx1, ly1,
-					lx3, ly3, lx2, ly2,
+			drawPoly4TGD(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+					g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 					(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 							>> 8) & 0x000000ff), (GETLE32(&gpuData[5])
 							& 0x000000ff), ((GETLE32(&gpuData[5]) >> 8)
@@ -8822,10 +8822,10 @@ void drawPoly4GT(unsigned char *baseAddr) {
 		return;
 	}
 
-	switch (GlobalTextTP) {
+	switch (g_soft.GlobalTextTP) {
 	case 0:
-		drawPoly4TGEx4_TW(lx0, ly0, lx1, ly1,
-				lx3, ly3, lx2, ly2,
+		drawPoly4TGEx4_TW(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+				g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 				(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 						>> 8) & 0x000000ff),
 				(GETLE32(&gpuData[5]) & 0x000000ff), ((GETLE32(&gpuData[5])
@@ -8839,8 +8839,8 @@ void drawPoly4GT(unsigned char *baseAddr) {
 				GETLE32(&gpuData[9]));
 		return;
 	case 1:
-		drawPoly4TGEx8_TW(lx0, ly0, lx1, ly1,
-				lx3, ly3, lx2, ly2,
+		drawPoly4TGEx8_TW(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+				g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 				(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 						>> 8) & 0x000000ff),
 				(GETLE32(&gpuData[5]) & 0x000000ff), ((GETLE32(&gpuData[5])
@@ -8854,8 +8854,8 @@ void drawPoly4GT(unsigned char *baseAddr) {
 				GETLE32(&gpuData[9]));
 		return;
 	case 2:
-		drawPoly4TGD_TW(lx0, ly0, lx1, ly1,
-				lx3, ly3, lx2, ly2,
+		drawPoly4TGD_TW(g_soft.lx0, g_soft.ly0, g_soft.lx1, g_soft.ly1,
+				g_soft.lx3, g_soft.ly3, g_soft.lx2, g_soft.ly2,
 				(GETLE32(&gpuData[2]) & 0x000000ff), ((GETLE32(&gpuData[2])
 						>> 8) & 0x000000ff),
 				(GETLE32(&gpuData[5]) & 0x000000ff), ((GETLE32(&gpuData[5])
@@ -8878,12 +8878,12 @@ void DrawSoftwareSpriteTWin(unsigned char * baseAddr, int32_t w, int32_t h) {
 	short sx0, sy0, sx1, sy1, sx2, sy2, sx3, sy3;
 	short tx0, ty0, tx1, ty1, tx2, ty2, tx3, ty3;
 
-	sx0 = lx0;
-	sy0 = ly0;
+	sx0 = g_soft.lx0;
+	sy0 = g_soft.ly0;
 
-	sx0 = sx3 = sx0 + g_gpu.DrawOffset.x;
+	sx0 = sx3 = sx0 + g_gpu.dsp.DrawOffset.x;
 	sx1 = sx2 = sx0 + w;
-	sy0 = sy1 = sy0 + g_gpu.DrawOffset.y;
+	sy0 = sy1 = sy0 + g_gpu.dsp.DrawOffset.y;
 	sy2 = sy3 = sy0 + h;
 
 	tx0 = tx3 = GETLE32(&gpuData[2]) & 0xff;
@@ -8891,7 +8891,7 @@ void DrawSoftwareSpriteTWin(unsigned char * baseAddr, int32_t w, int32_t h) {
 	ty0 = ty1 = (GETLE32(&gpuData[2]) >> 8) & 0xff;
 	ty2 = ty3 = ty0 + h;
 
-	switch (GlobalTextTP) {
+	switch (g_soft.GlobalTextTP) {
 	case 0:
 		drawPoly4TEx4_TW_S(sx0, sy0, sx1, sy1, sx2, sy2, sx3, sy3, tx0, ty0,
 				tx1, ty1, tx2, ty2, tx3, ty3, ((GETLE32(&gpuData[2]) >> 12)
@@ -8916,81 +8916,81 @@ void DrawSoftwareSpriteMirror(unsigned char * baseAddr, int32_t w, int32_t h) {
 	int32_t clutY0, clutX0, clutP, textX0, textY0, sprtYa, sprCY, sprCX, sprA;
 	short tC;
 	uint32_t *gpuData = (uint32_t *) baseAddr;
-	sprtY = ly0;
-	sprtX = lx0;
+	sprtY = g_soft.ly0;
+	sprtX = g_soft.lx0;
 	sprtH = h;
 	sprtW = w;
 	clutY0 = (GETLE32(&gpuData[2]) >> 22) & 0x01ff;
 	clutX0 = (GETLE32(&gpuData[2]) >> 12) & 0x3f0;
 	clutP = (clutY0 << 11) + (clutX0 << 1);
 	textY0 = ((GETLE32(&gpuData[2]) >> 8) & 0x000000ff)
-			+ GlobalTextAddrY;
+			+ g_soft.GlobalTextAddrY;
 	textX0 = (GETLE32(&gpuData[2]) & 0x000000ff);
 
-	sprtX += g_gpu.DrawOffset.x;
-	sprtY += g_gpu.DrawOffset.y;
+	sprtX += g_gpu.dsp.DrawOffset.x;
+	sprtY += g_gpu.dsp.DrawOffset.y;
 
 	// while (sprtX>1023)             sprtX-=1024;
 	// while (sprtY>MAXYLINESMIN1)    sprtY-=MAXYLINES;
 
-	if (sprtX > drawW) {
+	if (sprtX > g_prim.drawW) {
 		//   if((sprtX+sprtW)>1023) sprtX-=1024;
 		//   else return;
 		return;
 	}
 
-	if (sprtY > drawH) {
+	if (sprtY > g_prim.drawH) {
 		//   if ((sprtY+sprtH)>MAXYLINESMIN1) sprtY-=MAXYLINES;
 		//   else return;
 		return;
 	}
 
-	if (sprtY < drawY) {
-		if ((sprtY + sprtH) < drawY)
+	if (sprtY < g_prim.drawY) {
+		if ((sprtY + sprtH) < g_prim.drawY)
 			return;
-		sprtH -= (drawY - sprtY);
-		textY0 += (drawY - sprtY);
-		sprtY = drawY;
+		sprtH -= (g_prim.drawY - sprtY);
+		textY0 += (g_prim.drawY - sprtY);
+		sprtY = g_prim.drawY;
 	}
 
-	if (sprtX < drawX) {
-		if ((sprtX + sprtW) < drawX)
+	if (sprtX < g_prim.drawX) {
+		if ((sprtX + sprtW) < g_prim.drawX)
 			return;
-		sprtW -= (drawX - sprtX);
-		textX0 += (drawX - sprtX);
-		sprtX = drawX;
+		sprtW -= (g_prim.drawX - sprtX);
+		textX0 += (g_prim.drawX - sprtX);
+		sprtX = g_prim.drawX;
 	}
 
-	if ((sprtY + sprtH) > drawH)
-		sprtH = drawH - sprtY + 1;
-	if ((sprtX + sprtW) > drawW)
-		sprtW = drawW - sprtX + 1;
+	if ((sprtY + sprtH) > g_prim.drawH)
+		sprtH = g_prim.drawH - sprtY + 1;
+	if ((sprtX + sprtW) > g_prim.drawW)
+		sprtW = g_prim.drawW - sprtX + 1;
 
-	if (usMirror & 0x1000)
+	if (g_prim.usMirror & 0x1000)
 		lXDir = -1;
 	else
 		lXDir = 1;
-	if (usMirror & 0x2000)
+	if (g_prim.usMirror & 0x2000)
 		lYDir = -1;
 	else
 		lYDir = 1;
 
-	switch (GlobalTextTP) {
+	switch (g_soft.GlobalTextTP) {
 	case 0: // texture is 4-bit
 
 		sprtW = sprtW / 2;
-		textX0 = (GlobalTextAddrX << 1) + (textX0 >> 1);
+		textX0 = (g_soft.GlobalTextAddrX << 1) + (textX0 >> 1);
 		sprtYa = (sprtY << 10);
 		clutP = (clutY0 << 10) + clutX0;
 		for (sprCY = 0; sprCY < sprtH; sprCY++)
 			for (sprCX = 0; sprCX < sprtW; sprCX++) {
-				tC = psxVub[((textY0 + (sprCY * lYDir)) << 11)
+				tC = g_gpu.psx_vram.u8[((textY0 + (sprCY * lYDir)) << 11)
 						+ textX0 + (sprCX * lXDir)];
 				sprA = sprtYa + (sprCY << 10) + sprtX + (sprCX << 1);
-				GetTextureTransColG_SPR(&psxVuw[sprA],
-						GETLE16(&psxVuw[clutP+((tC>>4)&0xf)]));
-				GetTextureTransColG_SPR(&psxVuw[sprA + 1],
-						GETLE16(&psxVuw[clutP+(tC&0xf)]));
+				GetTextureTransColG_SPR(&g_gpu.psx_vram.u16[sprA],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+((tC>>4)&0xf)]));
+				GetTextureTransColG_SPR(&g_gpu.psx_vram.u16[sprA + 1],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+(tC&0xf)]));
 			}
 		return;
 
@@ -8999,11 +8999,11 @@ void DrawSoftwareSpriteMirror(unsigned char * baseAddr, int32_t w, int32_t h) {
 		clutP >>= 1;
 		for (sprCY = 0; sprCY < sprtH; sprCY++)
 			for (sprCX = 0; sprCX < sprtW; sprCX++) {
-				tC = psxVub[((textY0 + (sprCY * lYDir)) << 11)
-						+ (GlobalTextAddrX << 1) + textX0 + (sprCX
+				tC = g_gpu.psx_vram.u8[((textY0 + (sprCY * lYDir)) << 11)
+						+ (g_soft.GlobalTextAddrX << 1) + textX0 + (sprCX
 						* lXDir)] & 0xff;
-				GetTextureTransColG_SPR(&psxVuw[((sprtY + sprCY)
-						<< 10) + sprtX + sprCX], psxVuw[clutP + tC]);
+				GetTextureTransColG_SPR(&g_gpu.psx_vram.u16[((sprtY + sprCY)
+						<< 10) + sprtX + sprCX], g_gpu.psx_vram.u16[clutP + tC]);
 			}
 		return;
 
@@ -9012,9 +9012,9 @@ void DrawSoftwareSpriteMirror(unsigned char * baseAddr, int32_t w, int32_t h) {
 		for (sprCY = 0; sprCY < sprtH; sprCY++)
 			for (sprCX = 0; sprCX < sprtW; sprCX++) {
 				GetTextureTransColG_SPR(
-						&psxVuw[((sprtY + sprCY) << 10) + sprtX
+						&g_gpu.psx_vram.u16[((sprtY + sprCY) << 10) + sprtX
 								+ sprCX],
-						GETLE16(&psxVuw[((textY0+(sprCY*lYDir))<<10)+GlobalTextAddrX + textX0 +(sprCX*lXDir)]));
+						GETLE16(&g_gpu.psx_vram.u16[((textY0+(sprCY*lYDir))<<10)+g_soft.GlobalTextAddrX + textX0 +(sprCX*lXDir)]));
 			}
 		return;
 	}
@@ -9027,17 +9027,17 @@ void DrawSoftwareSprite_IL(unsigned char * baseAddr, short w, short h,
 	int32_t sprtY, sprtX, sprtW, sprtH, tdx, tdy;
 	uint32_t *gpuData = (uint32_t *) baseAddr;
 
-	sprtY = ly0;
-	sprtX = lx0;
+	sprtY = g_soft.ly0;
+	sprtX = g_soft.lx0;
 	sprtH = h;
 	sprtW = w;
 
-	sprtX += g_gpu.DrawOffset.x;
-	sprtY += g_gpu.DrawOffset.y;
+	sprtX += g_gpu.dsp.DrawOffset.x;
+	sprtY += g_gpu.dsp.DrawOffset.y;
 
-	if (sprtX > drawW)
+	if (sprtX > g_prim.drawW)
 		return;
-	if (sprtY > drawH)
+	if (sprtY > g_prim.drawH)
 		return;
 
 	tdx = tx + sprtW;
@@ -9048,7 +9048,7 @@ void DrawSoftwareSprite_IL(unsigned char * baseAddr, short w, short h,
 
 	// Pete is too lazy to make a faster version ;)
 
-	if (GlobalTextTP == 0)
+	if (g_soft.GlobalTextTP == 0)
 		drawPoly4TEx4_IL(sprtX, sprtY, sprtX, sprtH, sprtW, sprtH, sprtW,
 				sprtY, tx, ty, tx, tdy, tdx, tdy, tdx, ty,
 				(GETLE32(&gpuData[2]) >> 12) & 0x3f0, ((GETLE32(&gpuData[2])
@@ -9072,13 +9072,13 @@ void DrawSoftwareSprite(unsigned char * baseAddr, short w, short h, int32_t tx,
 	unsigned char * pV;
 	char bWT, bWS;
 
-	if (0 && GlobalTextTP < 2) {
+	if (0 && g_soft.GlobalTextTP < 2) {
 		DrawSoftwareSprite_IL(baseAddr, w, h, tx, ty);
 		return;
 	}
 
-	sprtY = ly0;
-	sprtX = lx0;
+	sprtY = g_soft.ly0;
+	sprtX = g_soft.lx0;
 	sprtH = h;
 	sprtW = w;
 	clutY0 = (GETLE32(&gpuData[2]) >> 22) & 0x01ff;
@@ -9086,53 +9086,53 @@ void DrawSoftwareSprite(unsigned char * baseAddr, short w, short h, int32_t tx,
 
 	clutP = (clutY0 << 11) + (clutX0 << 1);
 
-	textY0 = ty + GlobalTextAddrY;
+	textY0 = ty + g_soft.GlobalTextAddrY;
 	textX0 = tx;
 
-	sprtX += g_gpu.DrawOffset.x;
-	sprtY += g_gpu.DrawOffset.y;
+	sprtX += g_gpu.dsp.DrawOffset.x;
+	sprtY += g_gpu.dsp.DrawOffset.y;
 
 	//while (sprtX>1023)             sprtX-=1024;
 	//while (sprtY>MAXYLINESMIN1)    sprtY-=MAXYLINES;
 
-	if (sprtX > drawW) {
+	if (sprtX > g_prim.drawW) {
 		//   if((sprtX+sprtW)>1023) sprtX-=1024;
 		//   else return;
 		return;
 	}
 
-	if (sprtY > drawH) {
+	if (sprtY > g_prim.drawH) {
 		//   if ((sprtY+sprtH)>MAXYLINESMIN1) sprtY-=MAXYLINES;
 		//   else return;
 		return;
 	}
 
-	if (sprtY < drawY) {
-		if ((sprtY + sprtH) < drawY)
+	if (sprtY < g_prim.drawY) {
+		if ((sprtY + sprtH) < g_prim.drawY)
 			return;
-		sprtH -= (drawY - sprtY);
-		textY0 += (drawY - sprtY);
-		sprtY = drawY;
+		sprtH -= (g_prim.drawY - sprtY);
+		textY0 += (g_prim.drawY - sprtY);
+		sprtY = g_prim.drawY;
 	}
 
-	if (sprtX < drawX) {
-		if ((sprtX + sprtW) < drawX)
+	if (sprtX < g_prim.drawX) {
+		if ((sprtX + sprtW) < g_prim.drawX)
 			return;
 
-		sprtW -= (drawX - sprtX);
-		textX0 += (drawX - sprtX);
-		sprtX = drawX;
+		sprtW -= (g_prim.drawX - sprtX);
+		textX0 += (g_prim.drawX - sprtX);
+		sprtX = g_prim.drawX;
 	}
 
-	if ((sprtY + sprtH) > drawH)
-		sprtH = drawH - sprtY + 1;
-	if ((sprtX + sprtW) > drawW)
-		sprtW = drawW - sprtX + 1;
+	if ((sprtY + sprtH) > g_prim.drawH)
+		sprtH = g_prim.drawH - sprtY + 1;
+	if ((sprtX + sprtW) > g_prim.drawW)
+		sprtW = g_prim.drawW - sprtX + 1;
 
 	bWT = 0;
 	bWS = 0;
 
-	switch (GlobalTextTP) {
+	switch (g_soft.GlobalTextTP) {
 	case 0:
 
 		if (textX0 & 1) {
@@ -9143,37 +9143,37 @@ void DrawSoftwareSprite(unsigned char * baseAddr, short w, short h, int32_t tx,
 			bWT = 1;
 
 		sprtW = sprtW >> 1;
-		textX0 = (GlobalTextAddrX << 1) + (textX0 >> 1) + (textY0 << 11);
+		textX0 = (g_soft.GlobalTextAddrX << 1) + (textX0 >> 1) + (textY0 << 11);
 		sprtYa = (sprtY << 10) + sprtX;
 		clutP = (clutY0 << 10) + clutX0;
 
 #ifdef FASTSOLID
 
-		if (!bCheckMask && !DrawSemiTrans) {
+		if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 			for (sprCY = 0; sprCY < sprtH; sprCY++) {
 				sprA = sprtYa + (sprCY << 10);
-				pV = &psxVub[(sprCY << 11) + textX0];
+				pV = &g_gpu.psx_vram.u8[(sprCY << 11) + textX0];
 
 				if (bWS) {
 					tC = *pV++;
-					GetTextureTransColG_S(&psxVuw[sprA++],
-							GETLE16(&psxVuw[clutP+((tC>>4)&0xf)]));
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[sprA++],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+((tC>>4)&0xf)]));
 				}
 
 				for (sprCX = 0; sprCX < sprtW; sprCX++, sprA += 2) {
 					tC = *pV++;
 
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[sprA],
-							(((int32_t) GETLE16(&psxVuw[clutP+((tC>>4)&0xf)]))
+							(uint32_t *) &g_gpu.psx_vram.u16[sprA],
+							(((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+((tC>>4)&0xf)]))
 									<< 16)
-									| GETLE16(&psxVuw[clutP+(tC&0x0f)]));
+									| GETLE16(&g_gpu.psx_vram.u16[clutP+(tC&0x0f)]));
 				}
 
 				if (bWT) {
 					tC = *pV;
-					GetTextureTransColG_S(&psxVuw[sprA],
-							GETLE16(&psxVuw[clutP+(tC&0x0f)]));
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[sprA],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+(tC&0x0f)]));
 				}
 			}
 			return;
@@ -9183,28 +9183,28 @@ void DrawSoftwareSprite(unsigned char * baseAddr, short w, short h, int32_t tx,
 
 		for (sprCY = 0; sprCY < sprtH; sprCY++) {
 			sprA = sprtYa + (sprCY << 10);
-			pV = &psxVub[(sprCY << 11) + textX0];
+			pV = &g_gpu.psx_vram.u8[(sprCY << 11) + textX0];
 
 			if (bWS) {
 				tC = *pV++;
-				GetTextureTransColG_SPR(&psxVuw[sprA++],
-						GETLE16(&psxVuw[clutP+((tC>>4)&0xf)]));
+				GetTextureTransColG_SPR(&g_gpu.psx_vram.u16[sprA++],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+((tC>>4)&0xf)]));
 			}
 
 			for (sprCX = 0; sprCX < sprtW; sprCX++, sprA += 2) {
 				tC = *pV++;
 
 				GetTextureTransColG32_SPR(
-						(uint32_t *) &psxVuw[sprA],
-						(((int32_t) GETLE16(&psxVuw[clutP+((tC>>4)&0xf)])
+						(uint32_t *) &g_gpu.psx_vram.u16[sprA],
+						(((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+((tC>>4)&0xf)])
 								<< 16))
-								| GETLE16(&psxVuw[clutP+(tC&0x0f)]));
+								| GETLE16(&g_gpu.psx_vram.u16[clutP+(tC&0x0f)]));
 			}
 
 			if (bWT) {
 				tC = *pV;
-				GetTextureTransColG_SPR(&psxVuw[sprA],
-						GETLE16(&psxVuw[clutP+(tC&0x0f)]));
+				GetTextureTransColG_SPR(&g_gpu.psx_vram.u16[sprA],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+(tC&0x0f)]));
 			}
 		}
 		return;
@@ -9212,26 +9212,26 @@ void DrawSoftwareSprite(unsigned char * baseAddr, short w, short h, int32_t tx,
 	case 1:
 		clutP >>= 1;
 		sprtW--;
-		textX0 += (GlobalTextAddrX << 1) + (textY0 << 11);
+		textX0 += (g_soft.GlobalTextAddrX << 1) + (textY0 << 11);
 
 #ifdef FASTSOLID
 
-		if (!bCheckMask && !DrawSemiTrans) {
+		if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 			for (sprCY = 0; sprCY < sprtH; sprCY++) {
 				sprA = ((sprtY + sprCY) << 10) + sprtX;
-				pV = &psxVub[(sprCY << 11) + textX0];
+				pV = &g_gpu.psx_vram.u8[(sprCY << 11) + textX0];
 				for (sprCX = 0; sprCX < sprtW; sprCX += 2, sprA += 2) {
 					tC = *pV++;
 					tC2 = *pV++;
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[sprA],
-							(((int32_t) GETLE16(&psxVuw[clutP+tC2]))
+							(uint32_t *) &g_gpu.psx_vram.u16[sprA],
+							(((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
 									<< 16)
-									| GETLE16(&psxVuw[clutP+tC]));
+									| GETLE16(&g_gpu.psx_vram.u16[clutP+tC]));
 				}
 				if (sprCX == sprtW)
-					GetTextureTransColG_S(&psxVuw[sprA],
-							GETLE16(&psxVuw[clutP+(*pV)]));
+					GetTextureTransColG_S(&g_gpu.psx_vram.u16[sprA],
+							GETLE16(&g_gpu.psx_vram.u16[clutP+(*pV)]));
 			}
 			return;
 		}
@@ -9240,43 +9240,43 @@ void DrawSoftwareSprite(unsigned char * baseAddr, short w, short h, int32_t tx,
 
 		for (sprCY = 0; sprCY < sprtH; sprCY++) {
 			sprA = ((sprtY + sprCY) << 10) + sprtX;
-			pV = &psxVub[(sprCY << 11) + textX0];
+			pV = &g_gpu.psx_vram.u8[(sprCY << 11) + textX0];
 			for (sprCX = 0; sprCX < sprtW; sprCX += 2, sprA += 2) {
 				tC = *pV++;
 				tC2 = *pV++;
 				GetTextureTransColG32_SPR(
-						(uint32_t *) &psxVuw[sprA],
-						(((int32_t) GETLE16(&psxVuw[clutP+tC2]))
-								<< 16) | GETLE16(&psxVuw[clutP+tC]));
+						(uint32_t *) &g_gpu.psx_vram.u16[sprA],
+						(((int32_t) GETLE16(&g_gpu.psx_vram.u16[clutP+tC2]))
+								<< 16) | GETLE16(&g_gpu.psx_vram.u16[clutP+tC]));
 			}
 			if (sprCX == sprtW)
-				GetTextureTransColG_SPR(&psxVuw[sprA],
-						GETLE16(&psxVuw[clutP+(*pV)]));
+				GetTextureTransColG_SPR(&g_gpu.psx_vram.u16[sprA],
+						GETLE16(&g_gpu.psx_vram.u16[clutP+(*pV)]));
 		}
 		return;
 
 	case 2:
 
-		textX0 += (GlobalTextAddrX) + (textY0 << 10);
+		textX0 += (g_soft.GlobalTextAddrX) + (textY0 << 10);
 		sprtW--;
 
 #ifdef FASTSOLID
 
-		if (!bCheckMask && !DrawSemiTrans) {
+		if (!g_draw.bCheckMask && !g_soft.DrawSemiTrans) {
 			for (sprCY = 0; sprCY < sprtH; sprCY++) {
 				sprA = ((sprtY + sprCY) << 10) + sprtX;
 
 				for (sprCX = 0; sprCX < sprtW; sprCX += 2, sprA += 2) {
 					GetTextureTransColG32_S(
-							(uint32_t *) &psxVuw[sprA],
-							(((int32_t) GETLE16(&psxVuw[(sprCY<<10) + textX0 + sprCX +1]))
+							(uint32_t *) &g_gpu.psx_vram.u16[sprA],
+							(((int32_t) GETLE16(&g_gpu.psx_vram.u16[(sprCY<<10) + textX0 + sprCX +1]))
 									<< 16)
-									| GETLE16(&psxVuw[(sprCY<<10) + textX0 + sprCX]));
+									| GETLE16(&g_gpu.psx_vram.u16[(sprCY<<10) + textX0 + sprCX]));
 				}
 				if (sprCX == sprtW)
 					GetTextureTransColG_S(
-							&psxVuw[sprA],
-							GETLE16(&psxVuw[(sprCY<<10) + textX0 + sprCX]));
+							&g_gpu.psx_vram.u16[sprA],
+							GETLE16(&g_gpu.psx_vram.u16[(sprCY<<10) + textX0 + sprCX]));
 
 			}
 			return;
@@ -9289,15 +9289,15 @@ void DrawSoftwareSprite(unsigned char * baseAddr, short w, short h, int32_t tx,
 
 			for (sprCX = 0; sprCX < sprtW; sprCX += 2, sprA += 2) {
 				GetTextureTransColG32_SPR(
-						(uint32_t *) &psxVuw[sprA],
-						(((int32_t) GETLE16(&psxVuw[(sprCY<<10) + textX0 + sprCX +1]))
+						(uint32_t *) &g_gpu.psx_vram.u16[sprA],
+						(((int32_t) GETLE16(&g_gpu.psx_vram.u16[(sprCY<<10) + textX0 + sprCX +1]))
 								<< 16)
-								| GETLE16(&psxVuw[(sprCY<<10) + textX0 + sprCX]));
+								| GETLE16(&g_gpu.psx_vram.u16[(sprCY<<10) + textX0 + sprCX]));
 			}
 			if (sprCX == sprtW)
 				GetTextureTransColG_SPR(
-						&psxVuw[sprA],
-						GETLE16(&psxVuw[(sprCY<<10) + textX0 + sprCX]));
+						&g_gpu.psx_vram.u16[sprA],
+						GETLE16(&g_gpu.psx_vram.u16[(sprCY<<10) + textX0 + sprCX]));
 
 		}
 		return;
@@ -9347,9 +9347,9 @@ void Line_E_SE_Shade(int x0, int y0, int x1, int y1, uint32_t rgb0,
 	incrE = 2 * dy; /* incr. used for move to E */
 	incrSE = 2 * (dy - dx); /* incr. used for move to SE */
 
-	if ((x0 >= drawX) && (x0 < drawW) && (y0 >= drawY)
-			&& (y0 < drawH))
-		GetShadeTransCol(&psxVuw[(y0 << 10) + x0],
+	if ((x0 >= g_prim.drawX) && (x0 < g_prim.drawW) && (y0 >= g_prim.drawY)
+			&& (y0 < g_prim.drawH))
+		GetShadeTransCol(&g_gpu.psx_vram.u16[(y0 << 10) + x0],
 				(unsigned short) (((r0 >> 9) & 0x7c00) | ((g0 >> 14) & 0x03e0)
 						| ((b0 >> 19) & 0x001f)));
 	while (x0 < x1) {
@@ -9365,9 +9365,9 @@ void Line_E_SE_Shade(int x0, int y0, int x1, int y1, uint32_t rgb0,
 		g0 += dg;
 		b0 += db;
 
-		if ((x0 >= drawX) && (x0 < drawW) && (y0 >= drawY)
-				&& (y0 < drawH))
-			GetShadeTransCol(&psxVuw[(y0 << 10) + x0],
+		if ((x0 >= g_prim.drawX) && (x0 < g_prim.drawW) && (y0 >= g_prim.drawY)
+				&& (y0 < g_prim.drawH))
+			GetShadeTransCol(&g_gpu.psx_vram.u16[(y0 << 10) + x0],
 					(unsigned short) (((r0 >> 9) & 0x7c00) | ((g0 >> 14)
 							& 0x03e0) | ((b0 >> 19) & 0x001f)));
 	}
@@ -9405,9 +9405,9 @@ void Line_S_SE_Shade(int x0, int y0, int x1, int y1, uint32_t rgb0,
 	incrS = 2 * dx; /* incr. used for move to S */
 	incrSE = 2 * (dx - dy); /* incr. used for move to SE */
 
-	if ((x0 >= drawX) && (x0 < drawW) && (y0 >= drawY)
-			&& (y0 < drawH))
-		GetShadeTransCol(&psxVuw[(y0 << 10) + x0],
+	if ((x0 >= g_prim.drawX) && (x0 < g_prim.drawW) && (y0 >= g_prim.drawY)
+			&& (y0 < g_prim.drawH))
+		GetShadeTransCol(&g_gpu.psx_vram.u16[(y0 << 10) + x0],
 				(unsigned short) (((r0 >> 9) & 0x7c00) | ((g0 >> 14) & 0x03e0)
 						| ((b0 >> 19) & 0x001f)));
 	while (y0 < y1) {
@@ -9423,9 +9423,9 @@ void Line_S_SE_Shade(int x0, int y0, int x1, int y1, uint32_t rgb0,
 		g0 += dg;
 		b0 += db;
 
-		if ((x0 >= drawX) && (x0 < drawW) && (y0 >= drawY)
-				&& (y0 < drawH))
-			GetShadeTransCol(&psxVuw[(y0 << 10) + x0],
+		if ((x0 >= g_prim.drawX) && (x0 < g_prim.drawW) && (y0 >= g_prim.drawY)
+				&& (y0 < g_prim.drawH))
+			GetShadeTransCol(&g_gpu.psx_vram.u16[(y0 << 10) + x0],
 					(unsigned short) (((r0 >> 9) & 0x7c00) | ((g0 >> 14)
 							& 0x03e0) | ((b0 >> 19) & 0x001f)));
 	}
@@ -9463,9 +9463,9 @@ void Line_N_NE_Shade(int x0, int y0, int x1, int y1, uint32_t rgb0,
 	incrN = 2 * dx; /* incr. used for move to N */
 	incrNE = 2 * (dx - dy); /* incr. used for move to NE */
 
-	if ((x0 >= drawX) && (x0 < drawW) && (y0 >= drawY)
-			&& (y0 < drawH))
-		GetShadeTransCol(&psxVuw[(y0 << 10) + x0],
+	if ((x0 >= g_prim.drawX) && (x0 < g_prim.drawW) && (y0 >= g_prim.drawY)
+			&& (y0 < g_prim.drawH))
+		GetShadeTransCol(&g_gpu.psx_vram.u16[(y0 << 10) + x0],
 				(unsigned short) (((r0 >> 9) & 0x7c00) | ((g0 >> 14) & 0x03e0)
 						| ((b0 >> 19) & 0x001f)));
 	while (y0 > y1) {
@@ -9481,9 +9481,9 @@ void Line_N_NE_Shade(int x0, int y0, int x1, int y1, uint32_t rgb0,
 		g0 += dg;
 		b0 += db;
 
-		if ((x0 >= drawX) && (x0 < drawW) && (y0 >= drawY)
-				&& (y0 < drawH))
-			GetShadeTransCol(&psxVuw[(y0 << 10) + x0],
+		if ((x0 >= g_prim.drawX) && (x0 < g_prim.drawW) && (y0 >= g_prim.drawY)
+				&& (y0 < g_prim.drawH))
+			GetShadeTransCol(&g_gpu.psx_vram.u16[(y0 << 10) + x0],
 					(unsigned short) (((r0 >> 9) & 0x7c00) | ((g0 >> 14)
 							& 0x03e0) | ((b0 >> 19) & 0x001f)));
 	}
@@ -9521,9 +9521,9 @@ void Line_E_NE_Shade(int x0, int y0, int x1, int y1, uint32_t rgb0,
 	incrE = 2 * dy; /* incr. used for move to E */
 	incrNE = 2 * (dy - dx); /* incr. used for move to NE */
 
-	if ((x0 >= drawX) && (x0 < drawW) && (y0 >= drawY)
-			&& (y0 < drawH))
-		GetShadeTransCol(&psxVuw[(y0 << 10) + x0],
+	if ((x0 >= g_prim.drawX) && (x0 < g_prim.drawW) && (y0 >= g_prim.drawY)
+			&& (y0 < g_prim.drawH))
+		GetShadeTransCol(&g_gpu.psx_vram.u16[(y0 << 10) + x0],
 				(unsigned short) (((r0 >> 9) & 0x7c00) | ((g0 >> 14) & 0x03e0)
 						| ((b0 >> 19) & 0x001f)));
 	while (x0 < x1) {
@@ -9539,9 +9539,9 @@ void Line_E_NE_Shade(int x0, int y0, int x1, int y1, uint32_t rgb0,
 		g0 += dg;
 		b0 += db;
 
-		if ((x0 >= drawX) && (x0 < drawW) && (y0 >= drawY)
-				&& (y0 < drawH))
-			GetShadeTransCol(&psxVuw[(y0 << 10) + x0],
+		if ((x0 >= g_prim.drawX) && (x0 < g_prim.drawW) && (y0 >= g_prim.drawY)
+				&& (y0 < g_prim.drawH))
+			GetShadeTransCol(&g_gpu.psx_vram.u16[(y0 << 10) + x0],
 					(unsigned short) (((r0 >> 9) & 0x7c00) | ((g0 >> 14)
 							& 0x03e0) | ((b0 >> 19) & 0x001f)));
 	}
@@ -9573,18 +9573,18 @@ void VertLineShade(int x, int y0, int y1, uint32_t rgb0, uint32_t rgb1) {
 		db = ((int32_t) b1 - (int32_t) b0);
 	}
 
-	if (y0 < drawY) {
-		r0 += dr * (drawY - y0);
-		g0 += dg * (drawY - y0);
-		b0 += db * (drawY - y0);
-		y0 = drawY;
+	if (y0 < g_prim.drawY) {
+		r0 += dr * (g_prim.drawY - y0);
+		g0 += dg * (g_prim.drawY - y0);
+		b0 += db * (g_prim.drawY - y0);
+		y0 = g_prim.drawY;
 	}
 
-	if (y1 > drawH)
-		y1 = drawH;
+	if (y1 > g_prim.drawH)
+		y1 = g_prim.drawH;
 
 	for (y = y0; y <= y1; y++) {
-		GetShadeTransCol(&psxVuw[(y << 10) + x],
+		GetShadeTransCol(&g_gpu.psx_vram.u16[(y << 10) + x],
 				(unsigned short) (((r0 >> 9) & 0x7c00) | ((g0 >> 14) & 0x03e0)
 						| ((b0 >> 19) & 0x001f)));
 		r0 += dr;
@@ -9619,18 +9619,18 @@ void HorzLineShade(int y, int x0, int x1, uint32_t rgb0, uint32_t rgb1) {
 		db = ((int32_t) b1 - (int32_t) b0);
 	}
 
-	if (x0 < drawX) {
-		r0 += dr * (drawX - x0);
-		g0 += dg * (drawX - x0);
-		b0 += db * (drawX - x0);
-		x0 = drawX;
+	if (x0 < g_prim.drawX) {
+		r0 += dr * (g_prim.drawX - x0);
+		g0 += dg * (g_prim.drawX - x0);
+		b0 += db * (g_prim.drawX - x0);
+		x0 = g_prim.drawX;
 	}
 
-	if (x1 > drawW)
-		x1 = drawW;
+	if (x1 > g_prim.drawW)
+		x1 = g_prim.drawW;
 
 	for (x = x0; x <= x1; x++) {
-		GetShadeTransCol(&psxVuw[(y << 10) + x],
+		GetShadeTransCol(&g_gpu.psx_vram.u16[(y << 10) + x],
 				(unsigned short) (((r0 >> 9) & 0x7c00) | ((g0 >> 14) & 0x03e0)
 						| ((b0 >> 19) & 0x001f)));
 		r0 += dr;
@@ -9651,9 +9651,9 @@ void Line_E_SE_Flat(int x0, int y0, int x1, int y1, unsigned short colour) {
 	incrSE = 2 * (dy - dx); /* incr. used for move to SE */
 	x = x0;
 	y = y0;
-	if ((x >= drawX) && (x < drawW) && (y >= drawY) && (y
-			< drawH))
-		GetShadeTransCol(&psxVuw[(y << 10) + x], colour);
+	if ((x >= g_prim.drawX) && (x < g_prim.drawW) && (y >= g_prim.drawY) && (y
+			< g_prim.drawH))
+		GetShadeTransCol(&g_gpu.psx_vram.u16[(y << 10) + x], colour);
 	while (x < x1) {
 		if (d <= 0) {
 			d = d + incrE; /* Choose E */
@@ -9663,9 +9663,9 @@ void Line_E_SE_Flat(int x0, int y0, int x1, int y1, unsigned short colour) {
 			x++;
 			y++;
 		}
-		if ((x >= drawX) && (x < drawW) && (y >= drawY)
-				&& (y < drawH))
-			GetShadeTransCol(&psxVuw[(y << 10) + x], colour);
+		if ((x >= g_prim.drawX) && (x < g_prim.drawW) && (y >= g_prim.drawY)
+				&& (y < g_prim.drawH))
+			GetShadeTransCol(&g_gpu.psx_vram.u16[(y << 10) + x], colour);
 	}
 }
 
@@ -9681,9 +9681,9 @@ void Line_S_SE_Flat(int x0, int y0, int x1, int y1, unsigned short colour) {
 	incrSE = 2 * (dx - dy); /* incr. used for move to SE */
 	x = x0;
 	y = y0;
-	if ((x >= drawX) && (x < drawW) && (y >= drawY) && (y
-			< drawH))
-		GetShadeTransCol(&psxVuw[(y << 10) + x], colour);
+	if ((x >= g_prim.drawX) && (x < g_prim.drawW) && (y >= g_prim.drawY) && (y
+			< g_prim.drawH))
+		GetShadeTransCol(&g_gpu.psx_vram.u16[(y << 10) + x], colour);
 	while (y < y1) {
 		if (d <= 0) {
 			d = d + incrS; /* Choose S */
@@ -9693,9 +9693,9 @@ void Line_S_SE_Flat(int x0, int y0, int x1, int y1, unsigned short colour) {
 			x++;
 			y++;
 		}
-		if ((x >= drawX) && (x < drawW) && (y >= drawY)
-				&& (y < drawH))
-			GetShadeTransCol(&psxVuw[(y << 10) + x], colour);
+		if ((x >= g_prim.drawX) && (x < g_prim.drawW) && (y >= g_prim.drawY)
+				&& (y < g_prim.drawH))
+			GetShadeTransCol(&g_gpu.psx_vram.u16[(y << 10) + x], colour);
 	}
 }
 
@@ -9711,9 +9711,9 @@ void Line_N_NE_Flat(int x0, int y0, int x1, int y1, unsigned short colour) {
 	incrNE = 2 * (dx - dy); /* incr. used for move to NE */
 	x = x0;
 	y = y0;
-	if ((x >= drawX) && (x < drawW) && (y >= drawY) && (y
-			< drawH))
-		GetShadeTransCol(&psxVuw[(y << 10) + x], colour);
+	if ((x >= g_prim.drawX) && (x < g_prim.drawW) && (y >= g_prim.drawY) && (y
+			< g_prim.drawH))
+		GetShadeTransCol(&g_gpu.psx_vram.u16[(y << 10) + x], colour);
 	while (y > y1) {
 		if (d <= 0) {
 			d = d + incrN; /* Choose N */
@@ -9723,9 +9723,9 @@ void Line_N_NE_Flat(int x0, int y0, int x1, int y1, unsigned short colour) {
 			x++;
 			y--;
 		}
-		if ((x >= drawX) && (x < drawW) && (y >= drawY)
-				&& (y < drawH))
-			GetShadeTransCol(&psxVuw[(y << 10) + x], colour);
+		if ((x >= g_prim.drawX) && (x < g_prim.drawW) && (y >= g_prim.drawY)
+				&& (y < g_prim.drawH))
+			GetShadeTransCol(&g_gpu.psx_vram.u16[(y << 10) + x], colour);
 	}
 }
 
@@ -9741,9 +9741,9 @@ void Line_E_NE_Flat(int x0, int y0, int x1, int y1, unsigned short colour) {
 	incrNE = 2 * (dy - dx); /* incr. used for move to NE */
 	x = x0;
 	y = y0;
-	if ((x >= drawX) && (x < drawW) && (y >= drawY) && (y
-			< drawH))
-		GetShadeTransCol(&psxVuw[(y << 10) + x], colour);
+	if ((x >= g_prim.drawX) && (x < g_prim.drawW) && (y >= g_prim.drawY) && (y
+			< g_prim.drawH))
+		GetShadeTransCol(&g_gpu.psx_vram.u16[(y << 10) + x], colour);
 	while (x < x1) {
 		if (d <= 0) {
 			d = d + incrE; /* Choose E */
@@ -9753,9 +9753,9 @@ void Line_E_NE_Flat(int x0, int y0, int x1, int y1, unsigned short colour) {
 			x++;
 			y--;
 		}
-		if ((x >= drawX) && (x < drawW) && (y >= drawY)
-				&& (y < drawH))
-			GetShadeTransCol(&psxVuw[(y << 10) + x], colour);
+		if ((x >= g_prim.drawX) && (x < g_prim.drawW) && (y >= g_prim.drawY)
+				&& (y < g_prim.drawH))
+			GetShadeTransCol(&g_gpu.psx_vram.u16[(y << 10) + x], colour);
 	}
 }
 
@@ -9764,14 +9764,14 @@ void Line_E_NE_Flat(int x0, int y0, int x1, int y1, unsigned short colour) {
 void VertLineFlat(int x, int y0, int y1, unsigned short colour) {
 	int y;
 
-	if (y0 < drawY)
-		y0 = drawY;
+	if (y0 < g_prim.drawY)
+		y0 = g_prim.drawY;
 
-	if (y1 > drawH)
-		y1 = drawH;
+	if (y1 > g_prim.drawH)
+		y1 = g_prim.drawH;
 
 	for (y = y0; y <= y1; y++)
-		GetShadeTransCol(&psxVuw[(y << 10) + x], colour);
+		GetShadeTransCol(&g_gpu.psx_vram.u16[(y << 10) + x], colour);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -9779,14 +9779,14 @@ void VertLineFlat(int x, int y0, int y1, unsigned short colour) {
 void HorzLineFlat(int y, int x0, int x1, unsigned short colour) {
 	int x;
 
-	if (x0 < drawX)
-		x0 = drawX;
+	if (x0 < g_prim.drawX)
+		x0 = g_prim.drawX;
 
-	if (x1 > drawW)
-		x1 = drawW;
+	if (x1 > g_prim.drawW)
+		x1 = g_prim.drawW;
 
 	for (x = x0; x <= x1; x++)
-		GetShadeTransCol(&psxVuw[(y << 10) + x], colour);
+		GetShadeTransCol(&g_gpu.psx_vram.u16[(y << 10) + x], colour);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -9797,23 +9797,23 @@ void DrawSoftwareLineShade(int32_t rgb0, int32_t rgb1) {
 	int32_t rgbt;
 	double m, dy, dx;
 
-	if (lx0 > drawW && lx1 > drawW)
+	if (g_soft.lx0 > g_prim.drawW && g_soft.lx1 > g_prim.drawW)
 		return;
-	if (ly0 > drawH && ly1 > drawH)
+	if (g_soft.ly0 > g_prim.drawH && g_soft.ly1 > g_prim.drawH)
 		return;
-	if (lx0 < drawX && lx1 < drawX)
+	if (g_soft.lx0 < g_prim.drawX && g_soft.lx1 < g_prim.drawX)
 		return;
-	if (ly0 < drawY && ly1 < drawY)
+	if (g_soft.ly0 < g_prim.drawY && g_soft.ly1 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
-	x0 = lx0;
-	y0 = ly0;
-	x1 = lx1;
-	y1 = ly1;
+	x0 = g_soft.lx0;
+	y0 = g_soft.ly0;
+	x1 = g_soft.lx1;
+	y1 = g_soft.ly1;
 
 	dx = x1 - x0;
 	dy = y1 - y0;
@@ -9865,26 +9865,26 @@ void DrawSoftwareLineFlat(int32_t rgb) {
 	double m, dy, dx;
 	unsigned short colour = 0;
 
-	if (lx0 > drawW && lx1 > drawW)
+	if (g_soft.lx0 > g_prim.drawW && g_soft.lx1 > g_prim.drawW)
 		return;
-	if (ly0 > drawH && ly1 > drawH)
+	if (g_soft.ly0 > g_prim.drawH && g_soft.ly1 > g_prim.drawH)
 		return;
-	if (lx0 < drawX && lx1 < drawX)
+	if (g_soft.lx0 < g_prim.drawX && g_soft.lx1 < g_prim.drawX)
 		return;
-	if (ly0 < drawY && ly1 < drawY)
+	if (g_soft.ly0 < g_prim.drawY && g_soft.ly1 < g_prim.drawY)
 		return;
-	if (drawY >= drawH)
+	if (g_prim.drawY >= g_prim.drawH)
 		return;
-	if (drawX >= drawW)
+	if (g_prim.drawX >= g_prim.drawW)
 		return;
 
 	colour = ((rgb & 0x00f80000) >> 9) | ((rgb & 0x0000f800) >> 6) | ((rgb
 			& 0x000000f8) >> 3);
 
-	x0 = lx0;
-	y0 = ly0;
-	x1 = lx1;
-	y1 = ly1;
+	x0 = g_soft.lx0;
+	y0 = g_soft.ly0;
+	x1 = g_soft.lx1;
+	y1 = g_soft.ly1;
 
 	dx = x1 - x0;
 	dy = y1 - y0;

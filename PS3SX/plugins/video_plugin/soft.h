@@ -20,16 +20,18 @@
 
 #include <stdint.h>
 
-short g_m1;
-short g_m2;
-short g_m3;
-short DrawSemiTrans;
-short Ymin;
-short Ymax;
+typedef struct {
+	short g_m1;
+	short g_m2;
+	short g_m3;
+	short DrawSemiTrans;
+	short Ymin;
+	short Ymax;
 
-short ly0, lx0, ly1, lx1, ly2, lx2, ly3, lx3; // global psx vertex coords
-int32_t GlobalTextAddrX, GlobalTextAddrY, GlobalTextTP;
-int32_t GlobalTextREST, GlobalTextABR, GlobalTextPAGE;
+	short ly0, lx0, ly1, lx1, ly2, lx2, ly3, lx3; // global psx vertex coords
+	int32_t GlobalTextAddrX, GlobalTextAddrY, GlobalTextTP;
+	int32_t GlobalTextREST, GlobalTextABR, GlobalTextPAGE;
+} gxv_soft_t;
 
 void offsetPSXLine(void);
 void offsetPSX2(void);

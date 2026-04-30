@@ -1,9 +1,9 @@
 /***************************************************************************
-                          prim.c  -  description
-                             -------------------
-    begin                : Sun Oct 28 2001
-    copyright            : (C) 2001 by Pete Bernert
-    email                : BlackDove@addcom.de
+ prim.c  -  description
+ -------------------
+ begin                : Sun Oct 28 2001
+ copyright            : (C) 2001 by Pete Bernert
+ email                : BlackDove@addcom.de
  ***************************************************************************/
 /***************************************************************************
  *                                                                         *
@@ -14,34 +14,19 @@
  *   additional informations.                                              *
  *                                                                         *
  ***************************************************************************/
+#include <stdio.h>
 
-#define _IN_PRIMDRAW
-
-#include "externals.h"
-#include "gpu.h"
-#include "draw.h"
-#include "soft.h"
+#include "globals.h"
 #include "swap.h"
+
+#define INFO_TW        0
+#define INFO_DRAWSTART 1
+#define INFO_DRAWEND   2
+#define INFO_DRAWOFF   3
 
 ////////////////////////////////////////////////////////////////////////
 // globals
 ////////////////////////////////////////////////////////////////////////
-
-BOOL           bUsingTWin=FALSE;
-TWin_t         TWin;
-//unsigned long  clutid;                                 // global clut
-unsigned short usMirror=0;                             // sprite mirror
-int            iDither=0;
-int32_t        drawX;
-int32_t        drawY;
-int32_t        drawW;
-int32_t        drawH;
-uint32_t       dwCfgFixes;
-uint32_t       dwActFixes=0;
-uint32_t       dwEmuFixes=0;
-int            iUseFixes;
-int            iUseDither=0;
-BOOL           bDoVSyncUpdate=FALSE;
 
 ////////////////////////////////////////////////////////////////////////
 // Some ASM color convertion by LEWPY
@@ -66,47 +51,47 @@ inline unsigned short BGR24to16(uint32_t BGR) {
 ////////////////////////////////////////////////////////////////////////
 
 inline void UpdateGlobalTP(unsigned short gdata) {
-	GlobalTextAddrX = (gdata << 6) & 0x3c0; // texture addr
+	g_soft.GlobalTextAddrX = (gdata << 6) & 0x3c0; // texture addr
 
 	if (512 == 1024) {
 		if (1 == 2) {
-			GlobalTextAddrY = ((gdata & 0x60) << 3);
+			g_soft.GlobalTextAddrY = ((gdata & 0x60) << 3);
 			//g_zn.GlobalTextIL = (gdata & 0x2000) >> 13;
-			GlobalTextABR = (unsigned short) ((gdata >> 7) & 0x3);
-			GlobalTextTP = (gdata >> 9) & 0x3;
-			if (GlobalTextTP == 3)
-				GlobalTextTP = 2;
-			usMirror = 0;
-			lGPUstatusRet = (lGPUstatusRet & 0xffffe000) | (gdata
+			g_soft.GlobalTextABR = (unsigned short) ((gdata >> 7) & 0x3);
+			g_soft.GlobalTextTP = (gdata >> 9) & 0x3;
+			if (g_soft.GlobalTextTP == 3)
+				g_soft.GlobalTextTP = 2;
+			g_prim.usMirror = 0;
+			g_gpu.status_reg = (g_gpu.status_reg & 0xffffe000) | (gdata
 					& 0x1fff);
 
 			// tekken dithering? right now only if dithering is forced by user
 //			if (g_cfg.Dithering == 2)
 //				g_prim.iDither = 2;
 //			else
-				iDither = 0;
+				g_prim.iDither = 0;
 
 			return;
 		} else {
-			GlobalTextAddrY = (unsigned short) (((gdata << 4) & 0x100)
+			g_soft.GlobalTextAddrY = (unsigned short) (((gdata << 4) & 0x100)
 					| ((gdata >> 2) & 0x200));
 		}
 	} else
-		GlobalTextAddrY = (gdata << 4) & 0x100;
+		g_soft.GlobalTextAddrY = (gdata << 4) & 0x100;
 
-	GlobalTextTP = (gdata >> 7) & 0x3; // tex mode (4,8,15)
+	g_soft.GlobalTextTP = (gdata >> 7) & 0x3; // tex mode (4,8,15)
 
-	if (GlobalTextTP == 3)
-		GlobalTextTP = 2; // seen in Wild9 :(
+	if (g_soft.GlobalTextTP == 3)
+		g_soft.GlobalTextTP = 2; // seen in Wild9 :(
 
-	GlobalTextABR = (gdata >> 5) & 0x3; // blend mode
+	g_soft.GlobalTextABR = (gdata >> 5) & 0x3; // blend mode
 
-	lGPUstatusRet &= ~0x000001ff; // Clear the necessary bits
-	lGPUstatusRet |= (gdata & 0x01ff); // set the necessary bits
+	g_gpu.status_reg &= ~0x000001ff; // Clear the necessary bits
+	g_gpu.status_reg |= (gdata & 0x01ff); // set the necessary bits
 
 //	switch (g_cfg.Dithering) {
 //	case 0:
-		iDither = 0;
+		g_prim.iDither = 0;
 //		break;
 //	case 1:
 //		if (g_gpu.status_reg & 0x0200)
@@ -123,17 +108,17 @@ inline void UpdateGlobalTP(unsigned short gdata) {
 ////////////////////////////////////////////////////////////////////////
 
 inline void SetRenderMode(uint32_t DrawAttributes) {
-	DrawSemiTrans = (SEMITRANSBIT(DrawAttributes)) ? 1 : 0;
+	g_soft.DrawSemiTrans = (SEMITRANSBIT(DrawAttributes)) ? 1 : 0;
 
 	if (SHADETEXBIT(DrawAttributes)) {
-		g_m1 = g_m2 = g_m3 = 128;
+		g_soft.g_m1 = g_soft.g_m2 = g_soft.g_m3 = 128;
 	} else {
-		if ((dwActFixes & 4) && ((DrawAttributes & 0x00ffffff) == 0))
+		if ((g_prim.dwActFixes & 4) && ((DrawAttributes & 0x00ffffff) == 0))
 			DrawAttributes |= 0x007f7f7f;
 
-		g_m1 = (short) (DrawAttributes & 0xff);
-		g_m2 = (short) ((DrawAttributes >> 8) & 0xff);
-		g_m3 = (short) ((DrawAttributes >> 16) & 0xff);
+		g_soft.g_m1 = (short) (DrawAttributes & 0xff);
+		g_soft.g_m2 = (short) ((DrawAttributes >> 8) & 0xff);
+		g_soft.g_m3 = (short) ((DrawAttributes >> 16) & 0xff);
 	}
 }
 
@@ -157,41 +142,41 @@ inline void SetRenderMode(uint32_t DrawAttributes) {
 #define CHKMAX_Y 512
 
 void AdjustCoord4() {
-	lx0 = (short) (((int) lx0 << SIGNSHIFT) >> SIGNSHIFT);
-	lx1 = (short) (((int) lx1 << SIGNSHIFT) >> SIGNSHIFT);
-	lx2 = (short) (((int) lx2 << SIGNSHIFT) >> SIGNSHIFT);
-	lx3 = (short) (((int) lx3 << SIGNSHIFT) >> SIGNSHIFT);
-	ly0 = (short) (((int) ly0 << SIGNSHIFT) >> SIGNSHIFT);
-	ly1 = (short) (((int) ly1 << SIGNSHIFT) >> SIGNSHIFT);
-	ly2 = (short) (((int) ly2 << SIGNSHIFT) >> SIGNSHIFT);
-	ly3 = (short) (((int) ly3 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.lx0 = (short) (((int) g_soft.lx0 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.lx1 = (short) (((int) g_soft.lx1 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.lx2 = (short) (((int) g_soft.lx2 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.lx3 = (short) (((int) g_soft.lx3 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.ly0 = (short) (((int) g_soft.ly0 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.ly1 = (short) (((int) g_soft.ly1 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.ly2 = (short) (((int) g_soft.ly2 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.ly3 = (short) (((int) g_soft.ly3 << SIGNSHIFT) >> SIGNSHIFT);
 }
 
 void AdjustCoord3() {
-	lx0 = (short) (((int) lx0 << SIGNSHIFT) >> SIGNSHIFT);
-	lx1 = (short) (((int) lx1 << SIGNSHIFT) >> SIGNSHIFT);
-	lx2 = (short) (((int) lx2 << SIGNSHIFT) >> SIGNSHIFT);
-	ly0 = (short) (((int) ly0 << SIGNSHIFT) >> SIGNSHIFT);
-	ly1 = (short) (((int) ly1 << SIGNSHIFT) >> SIGNSHIFT);
-	ly2 = (short) (((int) ly2 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.lx0 = (short) (((int) g_soft.lx0 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.lx1 = (short) (((int) g_soft.lx1 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.lx2 = (short) (((int) g_soft.lx2 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.ly0 = (short) (((int) g_soft.ly0 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.ly1 = (short) (((int) g_soft.ly1 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.ly2 = (short) (((int) g_soft.ly2 << SIGNSHIFT) >> SIGNSHIFT);
 }
 
 void AdjustCoord2() {
-	lx0 = (short) (((int) lx0 << SIGNSHIFT) >> SIGNSHIFT);
-	lx1 = (short) (((int) lx1 << SIGNSHIFT) >> SIGNSHIFT);
-	ly0 = (short) (((int) ly0 << SIGNSHIFT) >> SIGNSHIFT);
-	ly1 = (short) (((int) ly1 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.lx0 = (short) (((int) g_soft.lx0 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.lx1 = (short) (((int) g_soft.lx1 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.ly0 = (short) (((int) g_soft.ly0 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.ly1 = (short) (((int) g_soft.ly1 << SIGNSHIFT) >> SIGNSHIFT);
 }
 
 void AdjustCoord1() {
-	lx0 = (short) (((int) lx0 << SIGNSHIFT) >> SIGNSHIFT);
-	ly0 = (short) (((int) ly0 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.lx0 = (short) (((int) g_soft.lx0 << SIGNSHIFT) >> SIGNSHIFT);
+	g_soft.ly0 = (short) (((int) g_soft.ly0 << SIGNSHIFT) >> SIGNSHIFT);
 
-	if (lx0 < -512 && g_gpu.DrawOffset.x <= -512)
-		lx0 += 2048;
+	if (g_soft.lx0 < -512 && g_gpu.dsp.DrawOffset.x <= -512)
+		g_soft.lx0 += 2048;
 
-	if (ly0 < -512 && g_gpu.DrawOffset.y <= -512)
-		ly0 += 2048;
+	if (g_soft.ly0 < -512 && g_gpu.dsp.DrawOffset.y <= -512)
+		g_soft.ly0 += 2048;
 }
 
 /*
@@ -210,71 +195,71 @@ void AdjustCoord1() {
  //   2___3
  */
 inline char CheckCoord4() {
-	if (lx0 < 0) {
-		if (((lx1 - lx0) > CHKMAX_X)
-				|| ((lx2 - lx0) > CHKMAX_X)) {
-			if (lx3 < 0) {
-				if ((lx1 - lx3) > CHKMAX_X)
+	if (g_soft.lx0 < 0) {
+		if (((g_soft.lx1 - g_soft.lx0) > CHKMAX_X)
+				|| ((g_soft.lx2 - g_soft.lx0) > CHKMAX_X)) {
+			if (g_soft.lx3 < 0) {
+				if ((g_soft.lx1 - g_soft.lx3) > CHKMAX_X)
 					return 1;
-				if ((lx2 - lx3) > CHKMAX_X)
+				if ((g_soft.lx2 - g_soft.lx3) > CHKMAX_X)
 					return 1;
 			}
 		}
 	}
-	if (lx1 < 0) {
-		if ((lx0 - lx1) > CHKMAX_X)
+	if (g_soft.lx1 < 0) {
+		if ((g_soft.lx0 - g_soft.lx1) > CHKMAX_X)
 			return 1;
-		if ((lx2 - lx1) > CHKMAX_X)
+		if ((g_soft.lx2 - g_soft.lx1) > CHKMAX_X)
 			return 1;
-		if ((lx3 - lx1) > CHKMAX_X)
-			return 1;
-	}
-	if (lx2 < 0) {
-		if ((lx0 - lx2) > CHKMAX_X)
-			return 1;
-		if ((lx1 - lx2) > CHKMAX_X)
-			return 1;
-		if ((lx3 - lx2) > CHKMAX_X)
+		if ((g_soft.lx3 - g_soft.lx1) > CHKMAX_X)
 			return 1;
 	}
-	if (lx3 < 0) {
-		if (((lx1 - lx3) > CHKMAX_X)
-				|| ((lx2 - lx3) > CHKMAX_X)) {
-			if (lx0 < 0) {
-				if ((lx1 - lx0) > CHKMAX_X)
+	if (g_soft.lx2 < 0) {
+		if ((g_soft.lx0 - g_soft.lx2) > CHKMAX_X)
+			return 1;
+		if ((g_soft.lx1 - g_soft.lx2) > CHKMAX_X)
+			return 1;
+		if ((g_soft.lx3 - g_soft.lx2) > CHKMAX_X)
+			return 1;
+	}
+	if (g_soft.lx3 < 0) {
+		if (((g_soft.lx1 - g_soft.lx3) > CHKMAX_X)
+				|| ((g_soft.lx2 - g_soft.lx3) > CHKMAX_X)) {
+			if (g_soft.lx0 < 0) {
+				if ((g_soft.lx1 - g_soft.lx0) > CHKMAX_X)
 					return 1;
-				if ((lx2 - lx0) > CHKMAX_X)
+				if ((g_soft.lx2 - g_soft.lx0) > CHKMAX_X)
 					return 1;
 			}
 		}
 	}
 
-	if (ly0 < 0) {
-		if ((ly1 - ly0) > CHKMAX_Y)
+	if (g_soft.ly0 < 0) {
+		if ((g_soft.ly1 - g_soft.ly0) > CHKMAX_Y)
 			return 1;
-		if ((ly2 - ly0) > CHKMAX_Y)
-			return 1;
-	}
-	if (ly1 < 0) {
-		if ((ly0 - ly1) > CHKMAX_Y)
-			return 1;
-		if ((ly2 - ly1) > CHKMAX_Y)
-			return 1;
-		if ((ly3 - ly1) > CHKMAX_Y)
+		if ((g_soft.ly2 - g_soft.ly0) > CHKMAX_Y)
 			return 1;
 	}
-	if (ly2 < 0) {
-		if ((ly0 - ly2) > CHKMAX_Y)
+	if (g_soft.ly1 < 0) {
+		if ((g_soft.ly0 - g_soft.ly1) > CHKMAX_Y)
 			return 1;
-		if ((ly1 - ly2) > CHKMAX_Y)
+		if ((g_soft.ly2 - g_soft.ly1) > CHKMAX_Y)
 			return 1;
-		if ((ly3 - ly2) > CHKMAX_Y)
+		if ((g_soft.ly3 - g_soft.ly1) > CHKMAX_Y)
 			return 1;
 	}
-	if (ly3 < 0) {
-		if ((ly1 - ly3) > CHKMAX_Y)
+	if (g_soft.ly2 < 0) {
+		if ((g_soft.ly0 - g_soft.ly2) > CHKMAX_Y)
 			return 1;
-		if ((ly2 - ly3) > CHKMAX_Y)
+		if ((g_soft.ly1 - g_soft.ly2) > CHKMAX_Y)
+			return 1;
+		if ((g_soft.ly3 - g_soft.ly2) > CHKMAX_Y)
+			return 1;
+	}
+	if (g_soft.ly3 < 0) {
+		if ((g_soft.ly1 - g_soft.ly3) > CHKMAX_Y)
+			return 1;
+		if ((g_soft.ly2 - g_soft.ly3) > CHKMAX_Y)
 			return 1;
 	}
 
@@ -282,40 +267,40 @@ inline char CheckCoord4() {
 }
 
 inline char CheckCoord3() {
-	if (lx0 < 0) {
-		if ((lx1 - lx0) > CHKMAX_X)
+	if (g_soft.lx0 < 0) {
+		if ((g_soft.lx1 - g_soft.lx0) > CHKMAX_X)
 			return 1;
-		if ((lx2 - lx0) > CHKMAX_X)
-			return 1;
-	}
-	if (lx1 < 0) {
-		if ((lx0 - lx1) > CHKMAX_X)
-			return 1;
-		if ((lx2 - lx1) > CHKMAX_X)
+		if ((g_soft.lx2 - g_soft.lx0) > CHKMAX_X)
 			return 1;
 	}
-	if (lx2 < 0) {
-		if ((lx0 - lx2) > CHKMAX_X)
+	if (g_soft.lx1 < 0) {
+		if ((g_soft.lx0 - g_soft.lx1) > CHKMAX_X)
 			return 1;
-		if ((lx1 - lx2) > CHKMAX_X)
-			return 1;
-	}
-	if (ly0 < 0) {
-		if ((ly1 - ly0) > CHKMAX_Y)
-			return 1;
-		if ((ly2 - ly0) > CHKMAX_Y)
+		if ((g_soft.lx2 - g_soft.lx1) > CHKMAX_X)
 			return 1;
 	}
-	if (ly1 < 0) {
-		if ((ly0 - ly1) > CHKMAX_Y)
+	if (g_soft.lx2 < 0) {
+		if ((g_soft.lx0 - g_soft.lx2) > CHKMAX_X)
 			return 1;
-		if ((ly2 - ly1) > CHKMAX_Y)
+		if ((g_soft.lx1 - g_soft.lx2) > CHKMAX_X)
 			return 1;
 	}
-	if (ly2 < 0) {
-		if ((ly0 - ly2) > CHKMAX_Y)
+	if (g_soft.ly0 < 0) {
+		if ((g_soft.ly1 - g_soft.ly0) > CHKMAX_Y)
 			return 1;
-		if ((ly1 - ly2) > CHKMAX_Y)
+		if ((g_soft.ly2 - g_soft.ly0) > CHKMAX_Y)
+			return 1;
+	}
+	if (g_soft.ly1 < 0) {
+		if ((g_soft.ly0 - g_soft.ly1) > CHKMAX_Y)
+			return 1;
+		if ((g_soft.ly2 - g_soft.ly1) > CHKMAX_Y)
+			return 1;
+	}
+	if (g_soft.ly2 < 0) {
+		if ((g_soft.ly0 - g_soft.ly2) > CHKMAX_Y)
+			return 1;
+		if ((g_soft.ly1 - g_soft.ly2) > CHKMAX_Y)
 			return 1;
 	}
 
@@ -323,20 +308,20 @@ inline char CheckCoord3() {
 }
 
 inline char CheckCoord2() {
-	if (lx0 < 0) {
-		if ((lx1 - lx0) > CHKMAX_X)
+	if (g_soft.lx0 < 0) {
+		if ((g_soft.lx1 - g_soft.lx0) > CHKMAX_X)
 			return 1;
 	}
-	if (lx1 < 0) {
-		if ((lx0 - lx1) > CHKMAX_X)
+	if (g_soft.lx1 < 0) {
+		if ((g_soft.lx0 - g_soft.lx1) > CHKMAX_X)
 			return 1;
 	}
-	if (ly0 < 0) {
-		if ((ly1 - ly0) > CHKMAX_Y)
+	if (g_soft.ly0 < 0) {
+		if ((g_soft.ly1 - g_soft.ly0) > CHKMAX_Y)
 			return 1;
 	}
-	if (ly1 < 0) {
-		if ((ly0 - ly1) > CHKMAX_Y)
+	if (g_soft.ly1 < 0) {
+		if ((g_soft.ly0 - g_soft.ly1) > CHKMAX_Y)
 			return 1;
 	}
 
@@ -371,23 +356,21 @@ inline char CheckCoordL(short slx0, short sly0, short slx1, short sly1) {
 void cmdSTP(unsigned char * baseAddr) {
 	uint32_t gdata = GETLE32(&((uint32_t*)baseAddr)[0]);
 
-	lGPUstatusRet &= ~0x1800; // Clear the necessary bits
-	lGPUstatusRet |= ((gdata & 0x03) << 11); // Set the necessary bits
+	g_gpu.status_reg &= ~0x1800; // Clear the necessary bits
+	g_gpu.status_reg |= ((gdata & 0x03) << 11); // Set the necessary bits
 
 	if (gdata & 1) {
-		sSetMask = 0x8000;
-		lSetMask = 0x80008000;
+		g_draw.sSetMask = 0x8000;
+		g_draw.lSetMask = 0x80008000;
 	} else {
-		sSetMask = 0;
-		lSetMask = 0;
+		g_draw.sSetMask = 0;
+		g_draw.lSetMask = 0;
 	}
 
 	if (gdata & 2)
-		bCheckMask = 1;
+		g_draw.bCheckMask = 1;
 	else
-		bCheckMask = 0;
-
-	bDoVSyncUpdate=TRUE;
+		g_draw.bCheckMask = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -397,15 +380,13 @@ void cmdSTP(unsigned char * baseAddr) {
 void cmdTexturePage(unsigned char * baseAddr) {
 	uint32_t gdata = GETLE32(&((uint32_t*)baseAddr)[0]);
 
-	lGPUstatusRet &= ~0x000007ff;
-	lGPUstatusRet |= (gdata & 0x07ff);
+	g_gpu.status_reg &= ~0x000007ff;
+	g_gpu.status_reg |= (gdata & 0x07ff);
 
-	usMirror = (unsigned short) (gdata & 0x3000);
+	g_prim.usMirror = (unsigned short) (gdata & 0x3000);
 
 	UpdateGlobalTP((unsigned short) gdata);
-	GlobalTextREST = (gdata & 0x00ffffff) >> 9;
-
-	bDoVSyncUpdate=TRUE;
+	g_soft.GlobalTextREST = (gdata & 0x00ffffff) >> 9;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -417,58 +398,56 @@ void cmdTextureWindow(unsigned char *baseAddr) {
 
 	uint32_t YAlign, XAlign;
 
-	lGPUInfoVals[INFO_TW] = gdata & 0xFFFFF;
+	g_gpu.lGPUInfoVals[INFO_TW] = gdata & 0xFFFFF;
 
 	if (gdata & 0x020)
-		TWin.Position.y1 = 8; // xxxx1
+		g_prim.TWin.Position.y1 = 8; // xxxx1
 	else if (gdata & 0x040)
-		TWin.Position.y1 = 16; // xxx10
+		g_prim.TWin.Position.y1 = 16; // xxx10
 	else if (gdata & 0x080)
-		TWin.Position.y1 = 32; // xx100
+		g_prim.TWin.Position.y1 = 32; // xx100
 	else if (gdata & 0x100)
-		TWin.Position.y1 = 64; // x1000
+		g_prim.TWin.Position.y1 = 64; // x1000
 	else if (gdata & 0x200)
-		TWin.Position.y1 = 128; // 10000
+		g_prim.TWin.Position.y1 = 128; // 10000
 	else
-		TWin.Position.y1 = 256; // 00000
+		g_prim.TWin.Position.y1 = 256; // 00000
 
 	// Texture window size is determined by the least bit set of the relevant 5 bits
 
 	if (gdata & 0x001)
-		TWin.Position.x1 = 8; // xxxx1
+		g_prim.TWin.Position.x1 = 8; // xxxx1
 	else if (gdata & 0x002)
-		TWin.Position.x1 = 16; // xxx10
+		g_prim.TWin.Position.x1 = 16; // xxx10
 	else if (gdata & 0x004)
-		TWin.Position.x1 = 32; // xx100
+		g_prim.TWin.Position.x1 = 32; // xx100
 	else if (gdata & 0x008)
-		TWin.Position.x1 = 64; // x1000
+		g_prim.TWin.Position.x1 = 64; // x1000
 	else if (gdata & 0x010)
-		TWin.Position.x1 = 128; // 10000
+		g_prim.TWin.Position.x1 = 128; // 10000
 	else
-		TWin.Position.x1 = 256; // 00000
+		g_prim.TWin.Position.x1 = 256; // 00000
 
 	// Re-calculate the bit field, because we can't trust what is passed in the data
 
 
-	YAlign = (uint32_t) (32 - (TWin.Position.y1 >> 3));
-	XAlign = (uint32_t) (32 - (TWin.Position.x1 >> 3));
+	YAlign = (uint32_t) (32 - (g_prim.TWin.Position.y1 >> 3));
+	XAlign = (uint32_t) (32 - (g_prim.TWin.Position.x1 >> 3));
 
 	// Absolute position of the start of the texture window
 
-	TWin.Position.y0 = (short) (((gdata >> 15) & YAlign) << 3);
-	TWin.Position.x0 = (short) (((gdata >> 10) & XAlign) << 3);
+	g_prim.TWin.Position.y0 = (short) (((gdata >> 15) & YAlign) << 3);
+	g_prim.TWin.Position.x0 = (short) (((gdata >> 10) & XAlign) << 3);
 
-	if ((TWin.Position.x0 == 0 && // tw turned off
-			TWin.Position.y0 == 0 && TWin.Position.x1 == 0
-			&& TWin.Position.y1 == 0) || (TWin.Position.x1 == 256
-			&& TWin.Position.y1 == 256)) {
-		bUsingTWin = 0; // -> just do it
+	if ((g_prim.TWin.Position.x0 == 0 && // tw turned off
+			g_prim.TWin.Position.y0 == 0 && g_prim.TWin.Position.x1 == 0
+			&& g_prim.TWin.Position.y1 == 0) || (g_prim.TWin.Position.x1 == 256
+			&& g_prim.TWin.Position.y1 == 256)) {
+		g_prim.bUsingTWin = 0; // -> just do it
 	} else // otherwise
 	{
-		bUsingTWin = 1; // -> tw turned on
+		g_prim.bUsingTWin = 1; // -> tw turned on
 	}
-
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -478,13 +457,11 @@ void cmdTextureWindow(unsigned char *baseAddr) {
 
 void cmdDrawAreaStart(unsigned char * baseAddr) {
 	uint32_t gdata = GETLE32(&((uint32_t*)baseAddr)[0]);
-	drawX = gdata & 0x3ff; // for soft drawing
-	lGPUInfoVals[INFO_DRAWSTART] = gdata & 0xFFFFF;
-	drawY = (gdata >> 10) & 0x3ff;
-	if (drawY >= 512)
-		drawY = 511; // some security
-
-	bDoVSyncUpdate=TRUE;
+	g_prim.drawX = gdata & 0x3ff; // for soft drawing
+	g_gpu.lGPUInfoVals[INFO_DRAWSTART] = gdata & 0xFFFFF;
+	g_prim.drawY = (gdata >> 10) & 0x3ff;
+	if (g_prim.drawY >= 512)
+		g_prim.drawY = 511; // some security
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -494,14 +471,12 @@ void cmdDrawAreaStart(unsigned char * baseAddr) {
 void cmdDrawAreaEnd(unsigned char * baseAddr) {
 	uint32_t gdata = GETLE32(&((uint32_t*)baseAddr)[0]);
 
-	drawW = gdata & 0x3ff; // for soft drawing
+	g_prim.drawW = gdata & 0x3ff; // for soft drawing
 
-	lGPUInfoVals[INFO_DRAWEND] = gdata & 0xFFFFF;
-	drawH = (gdata >> 10) & 0x3ff;
-	if (drawH >= 512)
-		drawH = 511; // some security
-
-	bDoVSyncUpdate=TRUE;
+	g_gpu.lGPUInfoVals[INFO_DRAWEND] = gdata & 0xFFFFF;
+	g_prim.drawH = (gdata >> 10) & 0x3ff;
+	if (g_prim.drawH >= 512)
+		g_prim.drawH = 511; // some security
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -511,17 +486,15 @@ void cmdDrawAreaEnd(unsigned char * baseAddr) {
 void cmdDrawOffset(unsigned char * baseAddr) {
 	uint32_t gdata = GETLE32(&((uint32_t*)baseAddr)[0]);
 
-	g_gpu.DrawOffset.x = (short) (gdata & 0x7ff);
+	g_gpu.dsp.DrawOffset.x = (short) (gdata & 0x7ff);
 
-	lGPUInfoVals[INFO_DRAWOFF] = gdata & 0x3FFFFF;
-	g_gpu.DrawOffset.y = (short) ((gdata >> 11) & 0x7ff);
+	g_gpu.lGPUInfoVals[INFO_DRAWOFF] = gdata & 0x3FFFFF;
+	g_gpu.dsp.DrawOffset.y = (short) ((gdata >> 11) & 0x7ff);
 
-	g_gpu.DrawOffset.y = (short) (((int) g_gpu.DrawOffset.y << 21)
+	g_gpu.dsp.DrawOffset.y = (short) (((int) g_gpu.dsp.DrawOffset.y << 21)
 			>> 21);
-	g_gpu.DrawOffset.x = (short) (((int) g_gpu.DrawOffset.x << 21)
+	g_gpu.dsp.DrawOffset.x = (short) (((int) g_gpu.dsp.DrawOffset.x << 21)
 			>> 21);
-
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -531,19 +504,17 @@ void cmdDrawOffset(unsigned char * baseAddr) {
 void primLoadImage(unsigned char * baseAddr) {
 	unsigned short *sgpuData = ((unsigned short *) baseAddr);
 
-	VRAMWrite.x = GETLEs16(&sgpuData[2]) & 0x3ff;
-	VRAMWrite.y = GETLEs16(&sgpuData[3]) & 0x1ff;
-	VRAMWrite.Width = GETLEs16(&sgpuData[4]);
-	VRAMWrite.Height = GETLEs16(&sgpuData[5]);
+	g_gpu.VRAMWrite.x = GETLEs16(&sgpuData[2]) & 0x3ff;
+	g_gpu.VRAMWrite.y = GETLEs16(&sgpuData[3]) & 0x1ff;
+	g_gpu.VRAMWrite.Width = GETLEs16(&sgpuData[4]);
+	g_gpu.VRAMWrite.Height = GETLEs16(&sgpuData[5]);
 
-	DataWriteMode = DR_VRAMTRANSFER;
+	g_gpu.DataWriteMode = DR_VRAMTRANSFER;
 
-	VRAMWrite.ImagePtr = psxVuw + (VRAMWrite.y << 10)
-			+ VRAMWrite.x;
-	VRAMWrite.RowsRemaining = VRAMWrite.Width;
-	VRAMWrite.ColsRemaining = VRAMWrite.Height;
-
-	bDoVSyncUpdate=TRUE;
+	g_gpu.VRAMWrite.ImagePtr = g_gpu.psx_vram.u16 + (g_gpu.VRAMWrite.y << 10)
+			+ g_gpu.VRAMWrite.x;
+	g_gpu.VRAMWrite.RowsRemaining = g_gpu.VRAMWrite.Width;
+	g_gpu.VRAMWrite.ColsRemaining = g_gpu.VRAMWrite.Height;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -553,21 +524,19 @@ void primLoadImage(unsigned char * baseAddr) {
 void primStoreImage(unsigned char * baseAddr) {
 	unsigned short *sgpuData = ((unsigned short *) baseAddr);
 
-	VRAMRead.x = GETLEs16(&sgpuData[2]) & 0x03ff;
-	VRAMRead.y = GETLEs16(&sgpuData[3]) & 0x01ff;
-	VRAMRead.Width = GETLEs16(&sgpuData[4]);
-	VRAMRead.Height = GETLEs16(&sgpuData[5]);
+	g_gpu.VRAMRead.x = GETLEs16(&sgpuData[2]) & 0x03ff;
+	g_gpu.VRAMRead.y = GETLEs16(&sgpuData[3]) & 0x01ff;
+	g_gpu.VRAMRead.Width = GETLEs16(&sgpuData[4]);
+	g_gpu.VRAMRead.Height = GETLEs16(&sgpuData[5]);
 
-	VRAMRead.ImagePtr = psxVuw + (VRAMRead.y << 10)
-			+ VRAMRead.x;
-	VRAMRead.RowsRemaining = VRAMRead.Width;
-	VRAMRead.ColsRemaining = VRAMRead.Height;
+	g_gpu.VRAMRead.ImagePtr = g_gpu.psx_vram.u16 + (g_gpu.VRAMRead.y << 10)
+			+ g_gpu.VRAMRead.x;
+	g_gpu.VRAMRead.RowsRemaining = g_gpu.VRAMRead.Width;
+	g_gpu.VRAMRead.ColsRemaining = g_gpu.VRAMRead.Height;
 
-	DataReadMode = DR_VRAMTRANSFER;
+	g_gpu.DataReadMode = DR_VRAMTRANSFER;
 
-	lGPUstatusRet |= GPUSTATUS_READYFORVRAM;
-
-	bDoVSyncUpdate=TRUE;
+	g_gpu.status_reg |= STATUS_READYFORVRAM;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -597,7 +566,6 @@ void primBlkFill(unsigned char * baseAddr) {
 
 	FillSoftwareArea(sX, sY, sW, sH, BGR24to16(GETLE32(&gpuData[0])));
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -628,8 +596,8 @@ void primMoveImage(unsigned char * baseAddr) {
 		int i, j;
 		for (j = 0; j < imageSY; j++)
 			for (i = 0; i < imageSX; i++)
-				psxVuw[(1024 * ((imageY1 + j) & 0x01ff))
-						+ ((imageX1 + i) & 0x3ff)] = psxVuw[(1024
+				g_gpu.psx_vram.u16[(1024 * ((imageY1 + j) & 0x01ff))
+						+ ((imageX1 + i) & 0x3ff)] = g_gpu.psx_vram.u16[(1024
 						* ((imageY0 + j) & 0x01ff)) + ((imageX0 + i) & 0x3ff)];
 
 		return;
@@ -640,8 +608,8 @@ void primMoveImage(unsigned char * baseAddr) {
 		unsigned short *SRCPtr, *DSTPtr;
 		unsigned short LineOffset;
 
-		SRCPtr = psxVuw + (1024 * imageY0) + imageX0;
-		DSTPtr = psxVuw + (1024 * imageY1) + imageX1;
+		SRCPtr = g_gpu.psx_vram.u16 + (1024 * imageY0) + imageX0;
+		DSTPtr = g_gpu.psx_vram.u16 + (1024 * imageY1) + imageX1;
 
 		LineOffset = 1024 - imageSX;
 
@@ -657,8 +625,8 @@ void primMoveImage(unsigned char * baseAddr) {
 		unsigned short LineOffset;
 		int dx = imageSX >> 1;
 
-		SRCPtr = (uint32_t *) (psxVuw + (1024 * imageY0) + imageX0);
-		DSTPtr = (uint32_t *) (psxVuw + (1024 * imageY1) + imageX1);
+		SRCPtr = (uint32_t *) (g_gpu.psx_vram.u16 + (1024 * imageY0) + imageX0);
+		DSTPtr = (uint32_t *) (g_gpu.psx_vram.u16 + (1024 * imageY1) + imageX1);
 
 		LineOffset = 512 - dx;
 
@@ -673,7 +641,6 @@ void primMoveImage(unsigned char * baseAddr) {
 	imageSX += imageX1;
 	imageSY += imageY1;
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -685,25 +652,24 @@ void primTileS(unsigned char * baseAddr) {
 	short sW = GETLEs16(&sgpuData[4]) & 0x3ff;
 	short sH = GETLEs16(&sgpuData[5]) & 0x01ff; // mmm... limit tiles to 0x1ff or height?
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
 
-	if (!(dwActFixes & 8))
+	if (!(g_prim.dwActFixes & 8))
 		AdjustCoord1();
 
 	// x and y of start
-	ly2 = ly3 = ly0 + sH + g_gpu.DrawOffset.y;
-	ly0 = ly1 = ly0 + g_gpu.DrawOffset.y;
-	lx1 = lx2 = lx0 + sW + g_gpu.DrawOffset.x;
-	lx0 = lx3 = lx0 + g_gpu.DrawOffset.x;
+	g_soft.ly2 = g_soft.ly3 = g_soft.ly0 + sH + g_gpu.dsp.DrawOffset.y;
+	g_soft.ly0 = g_soft.ly1 = g_soft.ly0 + g_gpu.dsp.DrawOffset.y;
+	g_soft.lx1 = g_soft.lx2 = g_soft.lx0 + sW + g_gpu.dsp.DrawOffset.x;
+	g_soft.lx0 = g_soft.lx3 = g_soft.lx0 + g_gpu.dsp.DrawOffset.x;
 
-	DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
+	g_soft.DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
 
 	if (!(0 && sH == 32 && GETLE32(&gpuData[0]) == 0x60ffffff)) // special cheat for certain ZiNc games
-		FillSoftwareAreaTrans(lx0, ly0, lx2, ly2,
+		FillSoftwareAreaTrans(g_soft.lx0, g_soft.ly0, g_soft.lx2, g_soft.ly2,
 				BGR24to16(GETLE32(&gpuData[0])));
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -716,24 +682,23 @@ void primTile1(unsigned char * baseAddr) {
 	short sH = 1;
 	short sW = 1;
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
 
-	if (!(dwActFixes & 8))
+	if (!(g_prim.dwActFixes & 8))
 		AdjustCoord1();
 
 	// x and y of start
-	ly2 = ly3 = ly0 + sH + g_gpu.DrawOffset.y;
-	ly0 = ly1 = ly0 + g_gpu.DrawOffset.y;
-	lx1 = lx2 = lx0 + sW + g_gpu.DrawOffset.x;
-	lx0 = lx3 = lx0 + g_gpu.DrawOffset.x;
+	g_soft.ly2 = g_soft.ly3 = g_soft.ly0 + sH + g_gpu.dsp.DrawOffset.y;
+	g_soft.ly0 = g_soft.ly1 = g_soft.ly0 + g_gpu.dsp.DrawOffset.y;
+	g_soft.lx1 = g_soft.lx2 = g_soft.lx0 + sW + g_gpu.dsp.DrawOffset.x;
+	g_soft.lx0 = g_soft.lx3 = g_soft.lx0 + g_gpu.dsp.DrawOffset.x;
 
-	DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
+	g_soft.DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
 
-	FillSoftwareAreaTrans(lx0, ly0, lx2, ly2,
+	FillSoftwareAreaTrans(g_soft.lx0, g_soft.ly0, g_soft.lx2, g_soft.ly2,
 			BGR24to16(GETLE32(&gpuData[0]))); // Takes Start and Offset
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -746,24 +711,23 @@ void primTile8(unsigned char * baseAddr) {
 	short sH = 8;
 	short sW = 8;
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
 
-	if (!(dwActFixes & 8))
+	if (!(g_prim.dwActFixes & 8))
 		AdjustCoord1();
 
 	// x and y of start
-	ly2 = ly3 = ly0 + sH + g_gpu.DrawOffset.y;
-	ly0 = ly1 = ly0 + g_gpu.DrawOffset.y;
-	lx1 = lx2 = lx0 + sW + g_gpu.DrawOffset.x;
-	lx0 = lx3 = lx0 + g_gpu.DrawOffset.x;
+	g_soft.ly2 = g_soft.ly3 = g_soft.ly0 + sH + g_gpu.dsp.DrawOffset.y;
+	g_soft.ly0 = g_soft.ly1 = g_soft.ly0 + g_gpu.dsp.DrawOffset.y;
+	g_soft.lx1 = g_soft.lx2 = g_soft.lx0 + sW + g_gpu.dsp.DrawOffset.x;
+	g_soft.lx0 = g_soft.lx3 = g_soft.lx0 + g_gpu.dsp.DrawOffset.x;
 
-	DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
+	g_soft.DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
 
-	FillSoftwareAreaTrans(lx0, ly0, lx2, ly2,
+	FillSoftwareAreaTrans(g_soft.lx0, g_soft.ly0, g_soft.lx2, g_soft.ly2,
 			BGR24to16(GETLE32(&gpuData[0]))); // Takes Start and Offset
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -776,24 +740,23 @@ void primTile16(unsigned char * baseAddr) {
 	short sH = 16;
 	short sW = 16;
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
 
-	if (!(dwActFixes & 8))
+	if (!(g_prim.dwActFixes & 8))
 		AdjustCoord1();
 
 	// x and y of start
-	ly2 = ly3 = ly0 + sH + g_gpu.DrawOffset.y;
-	ly0 = ly1 = ly0 + g_gpu.DrawOffset.y;
-	lx1 = lx2 = lx0 + sW + g_gpu.DrawOffset.x;
-	lx0 = lx3 = lx0 + g_gpu.DrawOffset.x;
+	g_soft.ly2 = g_soft.ly3 = g_soft.ly0 + sH + g_gpu.dsp.DrawOffset.y;
+	g_soft.ly0 = g_soft.ly1 = g_soft.ly0 + g_gpu.dsp.DrawOffset.y;
+	g_soft.lx1 = g_soft.lx2 = g_soft.lx0 + sW + g_gpu.dsp.DrawOffset.x;
+	g_soft.lx0 = g_soft.lx3 = g_soft.lx0 + g_gpu.dsp.DrawOffset.x;
 
-	DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
+	g_soft.DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
 
-	FillSoftwareAreaTrans(lx0, ly0, lx2, ly2,
+	FillSoftwareAreaTrans(g_soft.lx0, g_soft.ly0, g_soft.lx2, g_soft.ly2,
 			BGR24to16(GETLE32(&gpuData[0]))); // Takes Start and Offset
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -804,22 +767,21 @@ void primSprt8(unsigned char * baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 	short *sgpuData = ((short *) baseAddr);
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
 
-	if (!(dwActFixes & 8))
+	if (!(g_prim.dwActFixes & 8))
 		AdjustCoord1();
 
 	SetRenderMode(GETLE32(&gpuData[0]));
 
-	if (bUsingTWin)
+	if (g_prim.bUsingTWin)
 		DrawSoftwareSpriteTWin(baseAddr, 8, 8);
-	else if (usMirror)
+	else if (g_prim.usMirror)
 		DrawSoftwareSpriteMirror(baseAddr, 8, 8);
 	else
 		DrawSoftwareSprite(baseAddr, 8, 8, baseAddr[8], baseAddr[9]);
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -830,22 +792,21 @@ void primSprt16(unsigned char * baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 	short *sgpuData = ((short *) baseAddr);
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
 
-	if (!(dwActFixes & 8))
+	if (!(g_prim.dwActFixes & 8))
 		AdjustCoord1();
 
 	SetRenderMode(GETLE32(&gpuData[0]));
 
-	if (bUsingTWin)
+	if (g_prim.bUsingTWin)
 		DrawSoftwareSpriteTWin(baseAddr, 16, 16);
-	else if (usMirror)
+	else if (g_prim.usMirror)
 		DrawSoftwareSpriteMirror(baseAddr, 16, 16);
 	else
 		DrawSoftwareSprite(baseAddr, 16, 16, baseAddr[8], baseAddr[9]);
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -924,10 +885,10 @@ void primSprtSRest(unsigned char * baseAddr, unsigned short type) {
 		sTypeRest += 2;
 	}
 
-	lx0 = sX;
-	ly0 = sY;
+	g_soft.lx0 = sX;
+	g_soft.ly0 = sY;
 
-	if (!(dwActFixes & 8))
+	if (!(g_prim.dwActFixes & 8))
 		AdjustCoord1();
 
 	DrawSoftwareSprite(baseAddr, sW, sH, tX, tY);
@@ -941,7 +902,6 @@ void primSprtSRest(unsigned char * baseAddr, unsigned short type) {
 			primSprtSRest(baseAddr, 6);
 	}
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -951,10 +911,10 @@ void primSprtS(unsigned char * baseAddr) {
 	short *sgpuData = ((short *) baseAddr);
 	short sW, sH;
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
 
-	if (!(dwActFixes & 8))
+	if (!(g_prim.dwActFixes & 8))
 		AdjustCoord1();
 
 	sW = GETLEs16(&sgpuData[6]) & 0x3ff;
@@ -962,9 +922,9 @@ void primSprtS(unsigned char * baseAddr) {
 
 	SetRenderMode(GETLE32(&gpuData[0]));
 
-	if (bUsingTWin)
+	if (g_prim.bUsingTWin)
 		DrawSoftwareSpriteTWin(baseAddr, sW, sH);
-	else if (usMirror)
+	else if (g_prim.usMirror)
 		DrawSoftwareSpriteMirror(baseAddr, sW, sH);
 	else {
 		unsigned short sTypeRest = 0;
@@ -993,7 +953,6 @@ void primSprtS(unsigned char * baseAddr) {
 
 	}
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1004,27 +963,26 @@ void primPolyF4(unsigned char *baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 	short *sgpuData = ((short *) baseAddr);
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
-	lx1 = GETLEs16(&sgpuData[4]);
-	ly1 = GETLEs16(&sgpuData[5]);
-	lx2 = GETLEs16(&sgpuData[6]);
-	ly2 = GETLEs16(&sgpuData[7]);
-	lx3 = GETLEs16(&sgpuData[8]);
-	ly3 = GETLEs16(&sgpuData[9]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx1 = GETLEs16(&sgpuData[4]);
+	g_soft.ly1 = GETLEs16(&sgpuData[5]);
+	g_soft.lx2 = GETLEs16(&sgpuData[6]);
+	g_soft.ly2 = GETLEs16(&sgpuData[7]);
+	g_soft.lx3 = GETLEs16(&sgpuData[8]);
+	g_soft.ly3 = GETLEs16(&sgpuData[9]);
 
-	if (!(dwActFixes & 8)) {
+	if (!(g_prim.dwActFixes & 8)) {
 		AdjustCoord4();
 		if (CheckCoord4())
 			return;
 	}
 
 	offsetPSX4();
-	DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
+	g_soft.DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
 
 	drawPoly4F(GETLE32(&gpuData[0]));
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1035,28 +993,27 @@ void primPolyG4(unsigned char * baseAddr) {
 	uint32_t *gpuData = (uint32_t *) baseAddr;
 	short *sgpuData = ((short *) baseAddr);
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
-	lx1 = GETLEs16(&sgpuData[6]);
-	ly1 = GETLEs16(&sgpuData[7]);
-	lx2 = GETLEs16(&sgpuData[10]);
-	ly2 = GETLEs16(&sgpuData[11]);
-	lx3 = GETLEs16(&sgpuData[14]);
-	ly3 = GETLEs16(&sgpuData[15]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx1 = GETLEs16(&sgpuData[6]);
+	g_soft.ly1 = GETLEs16(&sgpuData[7]);
+	g_soft.lx2 = GETLEs16(&sgpuData[10]);
+	g_soft.ly2 = GETLEs16(&sgpuData[11]);
+	g_soft.lx3 = GETLEs16(&sgpuData[14]);
+	g_soft.ly3 = GETLEs16(&sgpuData[15]);
 
-	if (!(dwActFixes & 8)) {
+	if (!(g_prim.dwActFixes & 8)) {
 		AdjustCoord4();
 		if (CheckCoord4())
 			return;
 	}
 
 	offsetPSX4();
-	DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
+	g_soft.DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
 
 	drawPoly4G(GETLE32(&gpuData[0]), GETLE32(&gpuData[2]),
 			GETLE32(&gpuData[4]), GETLE32(&gpuData[6]));
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1067,17 +1024,17 @@ void primPolyFT3(unsigned char * baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 	short *sgpuData = ((short *) baseAddr);
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
-	lx1 = GETLEs16(&sgpuData[6]);
-	ly1 = GETLEs16(&sgpuData[7]);
-	lx2 = GETLEs16(&sgpuData[10]);
-	ly2 = GETLEs16(&sgpuData[11]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx1 = GETLEs16(&sgpuData[6]);
+	g_soft.ly1 = GETLEs16(&sgpuData[7]);
+	g_soft.lx2 = GETLEs16(&sgpuData[10]);
+	g_soft.ly2 = GETLEs16(&sgpuData[11]);
 
-	lLowerpart = GETLE32(&gpuData[4]) >> 16;
-	UpdateGlobalTP((unsigned short) lLowerpart);
+	g_draw.lLowerpart = GETLE32(&gpuData[4]) >> 16;
+	UpdateGlobalTP((unsigned short) g_draw.lLowerpart);
 
-	if (!(dwActFixes & 8)) {
+	if (!(g_prim.dwActFixes & 8)) {
 		AdjustCoord3();
 		if (CheckCoord3())
 			return;
@@ -1088,7 +1045,6 @@ void primPolyFT3(unsigned char * baseAddr) {
 
 	drawPoly3FT(baseAddr);
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1099,19 +1055,19 @@ void primPolyFT4(unsigned char * baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 	short *sgpuData = ((short *) baseAddr);
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
-	lx1 = GETLEs16(&sgpuData[6]);
-	ly1 = GETLEs16(&sgpuData[7]);
-	lx2 = GETLEs16(&sgpuData[10]);
-	ly2 = GETLEs16(&sgpuData[11]);
-	lx3 = GETLEs16(&sgpuData[14]);
-	ly3 = GETLEs16(&sgpuData[15]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx1 = GETLEs16(&sgpuData[6]);
+	g_soft.ly1 = GETLEs16(&sgpuData[7]);
+	g_soft.lx2 = GETLEs16(&sgpuData[10]);
+	g_soft.ly2 = GETLEs16(&sgpuData[11]);
+	g_soft.lx3 = GETLEs16(&sgpuData[14]);
+	g_soft.ly3 = GETLEs16(&sgpuData[15]);
 
-	lLowerpart = GETLE32(&gpuData[4]) >> 16;
-	UpdateGlobalTP((unsigned short) lLowerpart);
+	g_draw.lLowerpart = GETLE32(&gpuData[4]) >> 16;
+	UpdateGlobalTP((unsigned short) g_draw.lLowerpart);
 
-	if (!(dwActFixes & 8)) {
+	if (!(g_prim.dwActFixes & 8)) {
 		AdjustCoord4();
 		if (CheckCoord4())
 			return;
@@ -1123,7 +1079,6 @@ void primPolyFT4(unsigned char * baseAddr) {
 
 	drawPoly4FT(baseAddr);
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1134,24 +1089,24 @@ void primPolyGT3(unsigned char *baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 	short *sgpuData = ((short *) baseAddr);
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
-	lx1 = GETLEs16(&sgpuData[8]);
-	ly1 = GETLEs16(&sgpuData[9]);
-	lx2 = GETLEs16(&sgpuData[14]);
-	ly2 = GETLEs16(&sgpuData[15]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx1 = GETLEs16(&sgpuData[8]);
+	g_soft.ly1 = GETLEs16(&sgpuData[9]);
+	g_soft.lx2 = GETLEs16(&sgpuData[14]);
+	g_soft.ly2 = GETLEs16(&sgpuData[15]);
 
-	lLowerpart = GETLE32(&gpuData[5]) >> 16;
-	UpdateGlobalTP((unsigned short) lLowerpart);
+	g_draw.lLowerpart = GETLE32(&gpuData[5]) >> 16;
+	UpdateGlobalTP((unsigned short) g_draw.lLowerpart);
 
-	if (!(dwActFixes & 8)) {
+	if (!(g_prim.dwActFixes & 8)) {
 		AdjustCoord3();
 		if (CheckCoord3())
 			return;
 	}
 
 	offsetPSX3();
-	DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
+	g_soft.DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
 
 	if (SHADETEXBIT(GETLE32(&gpuData[0]))) {
 		gpuData[0] = (gpuData[0] & HOST2LE32(0xff000000))
@@ -1164,7 +1119,6 @@ void primPolyGT3(unsigned char *baseAddr) {
 
 	drawPoly3GT(baseAddr);
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1175,25 +1129,24 @@ void primPolyG3(unsigned char *baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 	short *sgpuData = ((short *) baseAddr);
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
-	lx1 = GETLEs16(&sgpuData[6]);
-	ly1 = GETLEs16(&sgpuData[7]);
-	lx2 = GETLEs16(&sgpuData[10]);
-	ly2 = GETLEs16(&sgpuData[11]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx1 = GETLEs16(&sgpuData[6]);
+	g_soft.ly1 = GETLEs16(&sgpuData[7]);
+	g_soft.lx2 = GETLEs16(&sgpuData[10]);
+	g_soft.ly2 = GETLEs16(&sgpuData[11]);
 
-	if (!(dwActFixes & 8)) {
+	if (!(g_prim.dwActFixes & 8)) {
 		AdjustCoord3();
 		if (CheckCoord3())
 			return;
 	}
 
 	offsetPSX3();
-	DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
+	g_soft.DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
 
 	drawPoly3G(GETLE32(&gpuData[0]), GETLE32(&gpuData[2]), GETLE32(&gpuData[4]));
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1204,26 +1157,26 @@ void primPolyGT4(unsigned char *baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 	short *sgpuData = ((short *) baseAddr);
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
-	lx1 = GETLEs16(&sgpuData[8]);
-	ly1 = GETLEs16(&sgpuData[9]);
-	lx2 = GETLEs16(&sgpuData[14]);
-	ly2 = GETLEs16(&sgpuData[15]);
-	lx3 = GETLEs16(&sgpuData[20]);
-	ly3 = GETLEs16(&sgpuData[21]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx1 = GETLEs16(&sgpuData[8]);
+	g_soft.ly1 = GETLEs16(&sgpuData[9]);
+	g_soft.lx2 = GETLEs16(&sgpuData[14]);
+	g_soft.ly2 = GETLEs16(&sgpuData[15]);
+	g_soft.lx3 = GETLEs16(&sgpuData[20]);
+	g_soft.ly3 = GETLEs16(&sgpuData[21]);
 
-	lLowerpart = GETLE32(&gpuData[5]) >> 16;
-	UpdateGlobalTP((unsigned short) lLowerpart);
+	g_draw.lLowerpart = GETLE32(&gpuData[5]) >> 16;
+	UpdateGlobalTP((unsigned short) g_draw.lLowerpart);
 
-	if (!(dwActFixes & 8)) {
+	if (!(g_prim.dwActFixes & 8)) {
 		AdjustCoord4();
 		if (CheckCoord4())
 			return;
 	}
 
 	offsetPSX4();
-	DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
+	g_soft.DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
 
 	if (SHADETEXBIT(GETLE32(&gpuData[0]))) {
 		gpuData[0] = (gpuData[0] & HOST2LE32(0xff000000))
@@ -1238,7 +1191,6 @@ void primPolyGT4(unsigned char *baseAddr) {
 
 	drawPoly4GT(baseAddr);
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1249,14 +1201,14 @@ void primPolyF3(unsigned char *baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 	short *sgpuData = ((short *) baseAddr);
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
-	lx1 = GETLEs16(&sgpuData[4]);
-	ly1 = GETLEs16(&sgpuData[5]);
-	lx2 = GETLEs16(&sgpuData[6]);
-	ly2 = GETLEs16(&sgpuData[7]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx1 = GETLEs16(&sgpuData[4]);
+	g_soft.ly1 = GETLEs16(&sgpuData[5]);
+	g_soft.lx2 = GETLEs16(&sgpuData[6]);
+	g_soft.ly2 = GETLEs16(&sgpuData[7]);
 
-	if (!(dwActFixes & 8)) {
+	if (!(g_prim.dwActFixes & 8)) {
 		AdjustCoord3();
 		if (CheckCoord3())
 			return;
@@ -1267,7 +1219,6 @@ void primPolyF3(unsigned char *baseAddr) {
 
 	drawPoly3F(GETLE32(&gpuData[0]));
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1279,20 +1230,17 @@ void primLineGSkip(unsigned char *baseAddr) {
 	int iMax = 255;
 	int i = 2;
 
-	ly1 = (short) ((GETLE32(&gpuData[1]) >> 16) & 0xffff);
-	lx1 = (short) (GETLE32(&gpuData[1]) & 0xffff);
+	g_soft.ly1 = (short) ((GETLE32(&gpuData[1]) >> 16) & 0xffff);
+	g_soft.lx1 = (short) (GETLE32(&gpuData[1]) & 0xffff);
 
 	while (!(((GETLE32(&gpuData[i]) & 0xF000F000) == 0x50005000) && i >= 4)) {
 		i++;
-		ly1 = (short) ((GETLE32(&gpuData[i]) >> 16) & 0xffff);
-		lx1 = (short) (GETLE32(&gpuData[i]) & 0xffff);
+		g_soft.ly1 = (short) ((GETLE32(&gpuData[i]) >> 16) & 0xffff);
+		g_soft.lx1 = (short) (GETLE32(&gpuData[i]) & 0xffff);
 		i++;
 		if (i > iMax)
 			break;
 	}
-
-	bDoVSyncUpdate=TRUE;
-
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1310,14 +1258,14 @@ void primLineGEx(unsigned char *baseAddr) {
 	sly1 = (short) ((GETLE32(&gpuData[1]) >> 16) & 0xffff);
 	slx1 = (short) (GETLE32(&gpuData[1]) & 0xffff);
 
-	if (!(dwActFixes & 8)) {
+	if (!(g_prim.dwActFixes & 8)) {
 		slx1 = (short) (((int) slx1 << SIGNSHIFT) >> SIGNSHIFT);
 		sly1 = (short) (((int) sly1 << SIGNSHIFT) >> SIGNSHIFT);
 	}
 
 	lc1 = gpuData[0] & 0xffffff;
 
-	DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
+	g_soft.DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
 
 	while (!(((GETLE32(&gpuData[i]) & 0xF000F000) == 0x50005000) && i >= 4)) {
 		sly0 = sly1;
@@ -1333,7 +1281,7 @@ void primLineGEx(unsigned char *baseAddr) {
 		sly1 = (short) ((GETLE32(&gpuData[i]) >> 16) & 0xffff);
 		slx1 = (short) (GETLE32(&gpuData[i]) & 0xffff);
 
-		if (!(dwActFixes & 8)) {
+		if (!(g_prim.dwActFixes & 8)) {
 			slx1 = (short) (((int) slx1 << SIGNSHIFT) >> SIGNSHIFT);
 			sly1 = (short) (((int) sly1 << SIGNSHIFT) >> SIGNSHIFT);
 			if (CheckCoordL(slx0, sly0, slx1, sly1))
@@ -1342,11 +1290,11 @@ void primLineGEx(unsigned char *baseAddr) {
 				bDraw = 1;
 		}
 
-		if ((lx0 != lx1) || (ly0 != ly1)) {
-			ly0 = sly0;
-			lx0 = slx0;
-			ly1 = sly1;
-			lx1 = slx1;
+		if ((g_soft.lx0 != g_soft.lx1) || (g_soft.ly0 != g_soft.ly1)) {
+			g_soft.ly0 = sly0;
+			g_soft.lx0 = slx0;
+			g_soft.ly1 = sly1;
+			g_soft.lx1 = slx1;
 
 			offsetPSX2();
 			if (bDraw)
@@ -1356,8 +1304,6 @@ void primLineGEx(unsigned char *baseAddr) {
 		if (i > iMax)
 			break;
 	}
-
-	bDoVSyncUpdate=TRUE;
 
 }
 
@@ -1369,27 +1315,26 @@ void primLineG2(unsigned char *baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 	short *sgpuData = ((short *) baseAddr);
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
-	lx1 = GETLEs16(&sgpuData[6]);
-	ly1 = GETLEs16(&sgpuData[7]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx1 = GETLEs16(&sgpuData[6]);
+	g_soft.ly1 = GETLEs16(&sgpuData[7]);
 
-	if (!(dwActFixes & 8)) {
+	if (!(g_prim.dwActFixes & 8)) {
 		AdjustCoord2();
 		if (CheckCoord2())
 			return;
 	}
 
-	if ((lx0 == lx1) && (ly0 == ly1)) {
-		lx1++;
-		ly1++;
+	if ((g_soft.lx0 == g_soft.lx1) && (g_soft.ly0 == g_soft.ly1)) {
+		g_soft.lx1++;
+		g_soft.ly1++;
 	}
 
-	DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
+	g_soft.DrawSemiTrans = (SEMITRANSBIT(GETLE32(&gpuData[0]))) ? 1 : 0;
 	offsetPSX2();
 	DrawSoftwareLineShade(GETLE32(&gpuData[0]), GETLE32(&gpuData[2]));
 
-	bDoVSyncUpdate=TRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1400,19 +1345,16 @@ void primLineFSkip(unsigned char *baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 	int i = 2, iMax = 255;
 
-	ly1 = (short) ((GETLE32(&gpuData[1]) >> 16) & 0xffff);
-	lx1 = (short) (GETLE32(&gpuData[1]) & 0xffff);
+	g_soft.ly1 = (short) ((GETLE32(&gpuData[1]) >> 16) & 0xffff);
+	g_soft.lx1 = (short) (GETLE32(&gpuData[1]) & 0xffff);
 
 	while (!(((GETLE32(&gpuData[i]) & 0xF000F000) == 0x50005000) && i >= 3)) {
-		ly1 = (short) ((GETLE32(&gpuData[i]) >> 16) & 0xffff);
-		lx1 = (short) (GETLE32(&gpuData[i]) & 0xffff);
+		g_soft.ly1 = (short) ((GETLE32(&gpuData[i]) >> 16) & 0xffff);
+		g_soft.lx1 = (short) (GETLE32(&gpuData[i]) & 0xffff);
 		i++;
 		if (i > iMax)
 			break;
 	}
-
-	bDoVSyncUpdate=TRUE;
-
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1430,7 +1372,7 @@ void primLineFEx(unsigned char *baseAddr) {
 
 	sly1 = (short) ((GETLE32(&gpuData[1]) >> 16) & 0xffff);
 	slx1 = (short) (GETLE32(&gpuData[1]) & 0xffff);
-	if (!(dwActFixes & 8)) {
+	if (!(g_prim.dwActFixes & 8)) {
 		slx1 = (short) (((int) slx1 << SIGNSHIFT) >> SIGNSHIFT);
 		sly1 = (short) (((int) sly1 << SIGNSHIFT) >> SIGNSHIFT);
 	}
@@ -1442,7 +1384,7 @@ void primLineFEx(unsigned char *baseAddr) {
 		slx0 = slx1;
 		sly1 = (short) ((GETLE32(&gpuData[i]) >> 16) & 0xffff);
 		slx1 = (short) (GETLE32(&gpuData[i]) & 0xffff);
-		if (!(dwActFixes & 8)) {
+		if (!(g_prim.dwActFixes & 8)) {
 			slx1 = (short) (((int) slx1 << SIGNSHIFT) >> SIGNSHIFT);
 			sly1 = (short) (((int) sly1 << SIGNSHIFT) >> SIGNSHIFT);
 
@@ -1452,10 +1394,10 @@ void primLineFEx(unsigned char *baseAddr) {
 				bDraw = 1;
 		}
 
-		ly0 = sly0;
-		lx0 = slx0;
-		ly1 = sly1;
-		lx1 = slx1;
+		g_soft.ly0 = sly0;
+		g_soft.lx0 = slx0;
+		g_soft.ly1 = sly1;
+		g_soft.lx1 = slx1;
 
 		offsetPSX2();
 		if (bDraw)
@@ -1465,8 +1407,6 @@ void primLineFEx(unsigned char *baseAddr) {
 		if (i > iMax)
 			break;
 	}
-
-	bDoVSyncUpdate=TRUE;
 
 }
 
@@ -1478,28 +1418,26 @@ void primLineF2(unsigned char *baseAddr) {
 	uint32_t *gpuData = ((uint32_t *) baseAddr);
 	short *sgpuData = ((short *) baseAddr);
 
-	lx0 = GETLEs16(&sgpuData[2]);
-	ly0 = GETLEs16(&sgpuData[3]);
-	lx1 = GETLEs16(&sgpuData[4]);
-	ly1 = GETLEs16(&sgpuData[5]);
+	g_soft.lx0 = GETLEs16(&sgpuData[2]);
+	g_soft.ly0 = GETLEs16(&sgpuData[3]);
+	g_soft.lx1 = GETLEs16(&sgpuData[4]);
+	g_soft.ly1 = GETLEs16(&sgpuData[5]);
 
-	if (!(dwActFixes & 8)) {
+	if (!(g_prim.dwActFixes & 8)) {
 		AdjustCoord2();
 		if (CheckCoord2())
 			return;
 	}
 
-	if ((lx0 == lx1) && (ly0 == ly1)) {
-		lx1++;
-		ly1++;
+	if ((g_soft.lx0 == g_soft.lx1) && (g_soft.ly0 == g_soft.ly1)) {
+		g_soft.lx1++;
+		g_soft.ly1++;
 	}
 
 	offsetPSX2();
 	SetRenderMode(GETLE32(&gpuData[0]));
 
 	DrawSoftwareLineFlat(GETLE32(&gpuData[0]));
-
-	bDoVSyncUpdate=TRUE;
 
 }
 
