@@ -10,6 +10,7 @@
 #include <unistd.h> 
 #include <pthread.h>
 #include <sysutil/sysutil_gamecontent.h>
+#include <stdlib.h> // For atoi, atof
 
 SYS_PROCESS_PARAM(1001, 0x10000);
 
@@ -49,10 +50,17 @@ extern "C"
 
 #include "psxcommon.h"
 #include "Sio.h"
-#include "PlugCD.h"
+#include "plugins/cdrplugin/cdr.h"
+#include "cheat.h"
 #include "plugins.h"
 #include "misc.h"
 #include "R3000a.h"
+
+// PCSX core global variables
+PcsxConfig Config;
+FILE *emuLog = NULL;
+
+int iDebugMode = 0;
 
 void SysPrintf(const char *fmt, ...);
 
@@ -98,6 +106,7 @@ long PAD__readPort1(PadDataS* pad)
 {
 		static unsigned short pad_status = 0xffff;
 
+		ApplyCheats();
 		PS3input->UpdateDevice(0);
   
 		if (PS3input->IsButtonPressed(0,CTRL_CIRCLE))
@@ -128,28 +137,28 @@ long PAD__readPort1(PadDataS* pad)
 			pad_status |=  (1<<3);
 		}
 
-		if (PS3input->IsButtonPressed(0,CTRL_DOWN))
+		if (PS3input->IsButtonPressed(0,CTRL_DOWN) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedDown(0, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<6);
 		}else{
 			pad_status |=  (1<<6);
 		}
 
-		if (PS3input->IsButtonPressed(0,CTRL_UP))
+		if (PS3input->IsButtonPressed(0,CTRL_UP) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedUp(0, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<4);
 		}else{
 			pad_status |=  (1<<4);
 		}
 
-		if (PS3input->IsButtonPressed(0,CTRL_RIGHT))
+		if (PS3input->IsButtonPressed(0,CTRL_RIGHT) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedRight(0, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<5);
 		}else{
 			pad_status |=  (1<<5);
 		}
 
-		if (PS3input->IsButtonPressed(0,CTRL_LEFT))
+		if (PS3input->IsButtonPressed(0,CTRL_LEFT) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedLeft(0, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<7);
 		}else{
@@ -202,7 +211,15 @@ long PAD__readPort1(PadDataS* pad)
 	pad->buttonStatus = pad_status;
 
 	if(Settings.PAD)
-		pad->controllerType = PSE_PAD_TYPE_ANALOGPAD; 
+	{
+		pad->controllerType = PSE_PAD_TYPE_ANALOGPAD;
+		CellPadUtilAxis lstick = PS3input->GetNewAxisValue(0, CTRL_LSTICK);
+		pad->leftJoyX = lstick.x;
+		pad->leftJoyY = lstick.y;
+		CellPadUtilAxis rstick = PS3input->GetNewAxisValue(0, CTRL_RSTICK);
+		pad->rightJoyX = rstick.x;
+		pad->rightJoyY = rstick.y;
+	}
 	else
 		pad->controllerType = PSE_PAD_TYPE_STANDARD;
 
@@ -243,28 +260,28 @@ long PAD__readPort2(PadDataS* pad)
 			pad_status |=  (1<<3);
 		}
 
-		if (PS3input->IsButtonPressed(1,CTRL_DOWN))
+		if (PS3input->IsButtonPressed(1,CTRL_DOWN) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedDown(1, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<6);
 		}else{
 			pad_status |=  (1<<6);
 		}
 
-		if (PS3input->IsButtonPressed(1,CTRL_UP))
+		if (PS3input->IsButtonPressed(1,CTRL_UP) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedUp(1, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<4);
 		}else{
 			pad_status |=  (1<<4);
 		}
 
-		if (PS3input->IsButtonPressed(1,CTRL_RIGHT))
+		if (PS3input->IsButtonPressed(1,CTRL_RIGHT) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedRight(1, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<5);
 		}else{
 			pad_status |=  (1<<5);
 		}
 
-		if (PS3input->IsButtonPressed(1,CTRL_LEFT))
+		if (PS3input->IsButtonPressed(1,CTRL_LEFT) || (Settings.AnalogToDPad && PS3input->IsAnalogPressedLeft(1, CTRL_LSTICK)))
 		{
 			pad_status &= ~(1<<7);
 		}else{
@@ -317,7 +334,15 @@ long PAD__readPort2(PadDataS* pad)
 	pad->buttonStatus = pad_status;
 
 	if(Settings.PAD)
-		pad->controllerType = PSE_PAD_TYPE_ANALOGPAD; 
+	{
+		pad->controllerType = PSE_PAD_TYPE_ANALOGPAD;
+		CellPadUtilAxis lstick = PS3input->GetNewAxisValue(1, CTRL_LSTICK);
+		pad->leftJoyX = lstick.x;
+		pad->leftJoyY = lstick.y;
+		CellPadUtilAxis rstick = PS3input->GetNewAxisValue(1, CTRL_RSTICK);
+		pad->rightJoyX = rstick.x;
+		pad->rightJoyY = rstick.y;
+	}
 	else
 		pad->controllerType = PSE_PAD_TYPE_STANDARD;
 
@@ -329,6 +354,10 @@ long PAD__readPort2(PadDataS* pad)
 void InitConfig()
 {
 	memset(&Config, 0, sizeof(PcsxConfig));
+
+	// Set default FPS limit settings
+	Config.GPUEnaFPSLimit = 1; // Default to enabled
+	Config.GPUUserFPS = 0.0f;  // Default to auto/emulator default
 
 	Config.PsxAuto = 1; //Autodetect
 	Config.HLE	   = Settings.HLE; //Use HLE
@@ -351,15 +380,19 @@ void InitConfig()
 	strcpy(Config.BiosDir, Iniconfig.biospath);
 	
 	//Set Bios
-	sprintf(Config.BiosDir, "%s/scph1001.bin",Iniconfig.biospath);
+	sprintf(Config.BiosDir, "%s/SCPH1001.BIN",Iniconfig.biospath);
 
 	sprintf(Config.Mcd1, "%s/Mcd001.mcr",Iniconfig.savpath);
 	sprintf(Config.Mcd2, "%s/Mcd002.mcr",Iniconfig.savpath);
+
+	// Transfer parsed FPS settings from Iniconfig to global Config
+	Config.GPUEnaFPSLimit = Iniconfig.GPUEnaFPSLimit;
+	Config.GPUUserFPS = Iniconfig.GPUUserFPS;
 }
 
 static int sysInited = 0;
 
-int SysInit(void)
+int SysInit()
 {
 	sysInited = 1;
 
@@ -376,7 +409,7 @@ int SysInit(void)
 	return 0;
 }
 
-void SysReset(void) {
+void SysReset() {
     SysPrintf("start SysReset()\n");
 	psxReset();
 	SysPrintf("end SysReset()\n");
@@ -391,12 +424,11 @@ void SysPrintf(const char *fmt, ...) {
     va_end(list);
 
 	dprintf_console(msg);
-	if(emuLog == NULL) emuLog = fopen("/dev_hdd0/emuLog.txt","wb");
 	if(emuLog) {
 		fputs(msg, emuLog);
 		fflush(emuLog);
 	}
-	printf("%s", msg);
+	printf(msg);
 }
 
 void SysMessage(const char *fmt, ...) {
@@ -408,43 +440,41 @@ void SysMessage(const char *fmt, ...) {
     va_end(list);
 
 	dprintf_console(msg);
-	if(emuLog == NULL) emuLog = fopen("/dev_hdd0/emuLog.txt","wb");
 	if(emuLog) {
 		fputs(msg, emuLog);
 		fflush(emuLog);
 		fclose(emuLog);
 	}
-	printf("%s", msg);
+	printf(msg);
 }
 
 void *SysLoadLibrary(const char *lib) {
-		return (void *)lib;
+		return const_cast<char*>(lib);
 }
 
 void *SysLoadSym(void *lib, const char *sym) {
 	return lib; //smhzc
 }
 
-const char *SysLibError(void) {
-	return NULL;
+const char *SysLibError() {
 }
 
 void SysCloseLibrary(void *lib) {
 }
 
 // Called periodically from the emu thread
-void SysUpdate(void) {
+void SysUpdate() {
 
 }
 
 // Returns to the Gui
-void SysRunGui(void)
+void SysRunGui()
 {
 
 }
 
 // Close mem and plugins
-void SysClose(void) {
+void SysClose() {
 	psxShutdown();
 	ReleasePlugins();
 }
@@ -521,6 +551,10 @@ static int handler(void* user, const char* section, const char* name,const char*
         pconfig->sram_path = strdup(value);
     }else if (MATCH("psxbios", "biospath")) {
         pconfig->biospath = strdup(value);
+    } else if (MATCH("GPU", "EnableFPSLimit")) {
+        pconfig->GPUEnaFPSLimit = atoi(value);
+    } else if (MATCH("GPU", "UserFPS")) {
+        pconfig->GPUUserFPS = atof(value);
     }
 }
 
@@ -554,7 +588,7 @@ void RomBrowser()
 	if (Config.HLE){
 		strcpy(Config.Bios, "HLE");
 	}else{
-		strcpy(Config.Bios, "scph1001.bin");  	
+		strcpy(Config.Bios, "SCPH1001.BIN");  	
 	}
 
 	SysInit();
@@ -573,7 +607,7 @@ int main()
     int i, ret;
 	
 	struct stat st;
-	sys_spu_initialize(6, 1); 
+ 
 	cellSysutilRegisterCallback(0, (CellSysutilCallback)sysutil_callback, NULL); 
 
 	ret = cellSysmoduleLoadModule(CELL_SYSMODULE_FS);
@@ -587,6 +621,11 @@ int main()
 	InitPS3();
 	PS3input->Init();
 	
+	// Set default value for frame limiter before parsing INI.
+	// If the INI file contains the key, this value will be overwritten.
+	// Otherwise, the limiter will be enabled by default.
+	Iniconfig.GPUEnaFPSLimit = 1;
+
 	printf("InitPS3 done\n");
 	unsigned int type = 0;
 	unsigned int attributes = 0;

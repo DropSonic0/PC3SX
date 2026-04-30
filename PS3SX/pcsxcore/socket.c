@@ -24,13 +24,14 @@
 
 #ifndef _WIN32
 #include <sys/socket.h>
+#ifndef PS3_SDK_3_41
+#include <sys/ioctl.h>
+#endif
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <sys/select.h>
-#include <errno.h>
-#ifndef SO_NBIO
-#define SO_NBIO 0x1100
+#ifndef PS3_SDK_3_41
+#include <fcntl.h>
 #endif
 #endif
 
@@ -115,13 +116,16 @@ void GetClient() {
     client_socket = new_socket;
 
 #ifndef _WIN32
+#ifndef PS3_SDK_3_41
     {
-        int on = 1;
-        setsockopt(client_socket, SOL_SOCKET, SO_NBIO, &on, sizeof(on));
+        int flags;
+        flags = fcntl(client_socket, F_GETFL, 0);
+        fcntl(client_socket, F_SETFL, flags | O_NONBLOCK);
     }
 #endif
+#endif
 
-    sprintf(hello, "000 PCSXR Version %s - Debug console\r\n", "1.9.92");
+    sprintf(hello, "000 PCSXR Version %s - Debug console\r\n", PACKAGE_VERSION);
     WriteSocket(hello, strlen(hello));
     ptr = 0;
 }
@@ -174,11 +178,9 @@ int ReadSocket(char * buffer, int len) {
 
     if (endl) {
         r = endl - tbuf;
-        if (r >= len) r = len - 1;
-        memcpy(buffer, tbuf, r);
-        buffer[r] = 0;
+        strncpy(buffer, tbuf, r);
 
-        r = endl - tbuf + 2;
+        r += 2;
         memmove(tbuf, tbuf + r, 512 - r);
         ptr -= r;
         memset(tbuf + r, 0, 512 - r);
@@ -242,8 +244,10 @@ void SetsBlock() {
     u_long b = 0;
     ioctlsocket(server_socket, FIONBIO, &b);
 #else
-    int off = 0;
-    setsockopt(server_socket, SOL_SOCKET, SO_NBIO, &off, sizeof(off));
+#ifndef PS3_SDK_3_41
+    int flags = fcntl(server_socket, F_GETFL, 0);
+    fcntl(server_socket, F_SETFL, flags & ~O_NONBLOCK);
+#endif
 #endif
 }
 
@@ -252,7 +256,9 @@ void SetsNonblock() {
     u_long b = 1;
     ioctlsocket(server_socket, FIONBIO, &b);
 #else
-    int on = 1;
-    setsockopt(server_socket, SOL_SOCKET, SO_NBIO, &on, sizeof(on));
+#ifndef PS3_SDK_3_41
+    int flags = fcntl(server_socket, F_GETFL, 0);
+    fcntl(server_socket, F_SETFL, flags | O_NONBLOCK);
+#endif
 #endif
 }

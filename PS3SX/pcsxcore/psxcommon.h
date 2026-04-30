@@ -14,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
  ***************************************************************************/
 
 /* 
@@ -25,11 +25,7 @@
 #ifndef __PSXCOMMON_H__
 #define __PSXCOMMON_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// System includes
+/* System includes */
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -40,23 +36,13 @@ extern "C" {
 #include <ctype.h>
 #include <sys/types.h>
 #include <assert.h>
-#include "zlib/zlib.h"
 
-#ifdef MDFNPS3 //Use a fake gzfile implement for savestate support, these are implemented in src/mednafen.cpp
-#define gzFile smFile
-#define gzopen smopen
-#define gzseek smseek
-#define gzclose smclose
-#define gzwrite smwrite
-#define gzread smread
-
-typedef void* smFile;
-gzFile smopen (const char *path , const char *mode );
-off_t smseek(smFile file, off_t offset, int whence);
-int smclose (smFile file );
-int smwrite (smFile file, const void* buf, unsigned int len);
-int smread (smFile file, void* buf, unsigned int len);
+#ifdef __cplusplus
+extern "C" {
 #endif
+//#include "config.h"
+
+#include "zlib/zlib.h"
 
 #define MAXPATHLEN 512
 
@@ -87,7 +73,7 @@ typedef uint8_t boolean;
 #include "system.h"
 #include "debug.h"
 
-#if defined (__LINUX__) || defined (__MACOSX__) || defined (__ppc__)
+#if defined (__LINUX__) || defined (__MACOSX__)|| defined (__ppc__)
 #define strnicmp strncasecmp
 #endif
 #define __inline inline
@@ -107,58 +93,58 @@ typedef uint8_t boolean;
 
 #else
 
-#ifndef _ //MDFNPS3: Mednafen already defines this
 #define _(msgid) msgid
 #define N_(msgid) msgid
-#endif
+
 #endif
 
-extern FILE *emuLog;
 extern int Log;
+void __Log(char *fmt, ...);
 
 void __Log(char *fmt, ...);
+
+typedef struct {
+	char Gpu[256];
+	char Spu[256];
+	char Cdr[256];
+	char Pad1[256];
+	char Pad2[256];
+	char Net[256];
+	char Sio1[256];
+	char Mcd1[256];
+	char Mcd2[256];
+	char Bios[256];
+	char BiosDir[MAXPATHLEN];
+	char PluginsDir[MAXPATHLEN];
+	char PatchesDir[MAXPATHLEN];
+	char IsoImgDir[MAXPATHLEN];
+	long Debug;
+	long Xa;
+	long Sio;
+	long Mdec;
+	long PsxAuto;
+	long PsxType;		/* NTSC or PAL */
+	long Cdda;
+	long HLE;
+	long Cpu;
+	long Dbg;
+	long PsxOut;
+	long SpuIrq;
+	long RCntFix;
+	long UseNet;
+	long VSyncWA;
+	long PsxStock;
+	long PsxClock;
+	long GPUEnaFPSLimit; // To store EnableFPSLimit
+	float GPUUserFPS;   // To store UserFPS
+} PcsxConfig;
+
+extern PcsxConfig Config;
 
 extern long LoadCdBios;
 extern int StatesC;
 extern int cdOpenCase;
-extern boolean hleSoftCall;
 
-typedef struct {
-	char Gpu[MAXPATHLEN];
-	char Spu[MAXPATHLEN];
-	char Cdr[MAXPATHLEN];
-	char Pad1[MAXPATHLEN];
-	char Pad2[MAXPATHLEN];
-	char Net[MAXPATHLEN];
-    char Sio1[MAXPATHLEN];
-	char Mcd1[MAXPATHLEN];
-	char Mcd2[MAXPATHLEN];
-	char Bios[MAXPATHLEN];
-	char BiosDir[MAXPATHLEN];
-	char PluginsDir[MAXPATHLEN];
-	char PatchesDir[MAXPATHLEN];
-	boolean Xa;
-	boolean Sio;
-	boolean Mdec;
-	boolean PsxAuto;
-	boolean Cdda;
-	boolean HLE;
-	boolean SlowBoot;
-	boolean Debug;
-	boolean PsxOut;
-	boolean SpuIrq;
-	boolean RCntFix;
-	boolean UseNet;
-	boolean VSyncWA;
-	u8 Cpu; // CPU_DYNAREC or CPU_INTERPRETER
-	u8 PsxType; // PSX_TYPE_NTSC or PSX_TYPE_PAL
-#ifdef _WIN32
-	char Lang[256];
-#endif
-} PcsxConfig;
-
-extern PcsxConfig Config;
-extern boolean NetOpened;
 
 #define gzfreeze(ptr, size) { \
 	if (Mode == 1) gzwrite(f, ptr, size); \
@@ -183,10 +169,16 @@ enum {
 	CPU_INTERPRETER
 }; // CPU Types
 
-int EmuInit(void);
-void EmuReset(void);
-void EmuShutdown(void);
-void EmuUpdate(void);
+enum {
+	CDDA_ENABLED_LE = 0,
+	CDDA_DISABLED,
+	CDDA_ENABLED_BE
+}; // CDDA Types
+
+int EmuInit();
+void EmuReset();
+void EmuShutdown();
+void EmuUpdate();
 
 #ifdef __cplusplus
 }

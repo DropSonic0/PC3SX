@@ -46,7 +46,8 @@ PSGLdeviceParameters PSGLGraphics::InitCommon(uint32_t resolutionId, uint16_t pa
 	psglInit(&options);
 
 	PSGLdeviceParameters params;
-	params.enable = PSGL_DEVICE_PARAMETERS_COLOR_FORMAT | PSGL_DEVICE_PARAMETERS_DEPTH_FORMAT | PSGL_DEVICE_PARAMETERS_MULTISAMPLING_MODE | PSGL_DEVICE_PARAMETERS_RESC_ADJUST_ASPECT_RATIO;
+	params.enable = PSGL_DEVICE_PARAMETERS_COLOR_FORMAT | PSGL_DEVICE_PARAMETERS_DEPTH_FORMAT | PSGL_DEVICE_PARAMETERS_MULTISAMPLING_MODE | PSGL_DEVICE_PARAMETERS_BUFFERING_MODE | PSGL_DEVICE_PARAMETERS_RESC_ADJUST_ASPECT_RATIO;
+	params.bufferingMode = PSGL_BUFFERING_MODE_TRIPLE;
 	params.colorFormat = GL_ARGB_SCE;
 	params.depthFormat = GL_NONE;
 	params.multisamplingMode = GL_MULTISAMPLING_NONE_SCE;
@@ -259,7 +260,7 @@ void PSGLGraphics::Deinit()
 
    psglDestroyContext(psgl_context);
    psglDestroyDevice(psgl_device);
-#ifdef PS3_SDK_3_41
+#ifdef PS3_SDK_4_75
    //FIXME: It will crash here for 1.92 - termination of the PSGL library - works fine for 3.41
    psglExit();
 #else

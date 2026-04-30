@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 // include basic types
-#include "../psxcommon.h"
+#include "../PsxCommon.h"
 #include "ppc_mnemonics.h"
 
 #define NUM_HW_REGISTERS 28
@@ -47,3 +47,25 @@ void dynMemWrite32(u32 mem, u32 val);
 }
 #endif
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

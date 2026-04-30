@@ -128,7 +128,7 @@ static long GetTickCount(void) {
 	static time_t		initial_time = 0;
 	struct timeval		now;
 
-	sys_time_get_system_time(&now, NULL);
+	gettimeofday(&now, NULL);
 
 	if (initial_time == 0) {
 		initial_time = now.tv_sec;
@@ -170,7 +170,7 @@ static void *playthread(void *param)
 #ifdef _WIN32
 		Sleep(d);
 #else
-		sys_timer_usleep(d * 1000);
+		usleep(d * 1000);
 #endif
 
 		t = GetTickCount() + CDDA_FRAMETIME;

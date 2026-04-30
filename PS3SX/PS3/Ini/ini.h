@@ -24,6 +24,8 @@ typedef struct
 	char *sram_path;
 	char *cartpath;
 	char *biospath;
+	long GPUEnaFPSLimit; // New field
+	float GPUUserFPS;    // New field
 } FileIniConfig;
 
 /* Parse given INI-style file. May have [section]s, name=value pairs

@@ -16,6 +16,7 @@ struct SSettings
 	int		CPU;
 	int		HLE;
 	int		Fps;
+	bool		AnalogToDPad;
 	std::string	PS3CurrentShader;
 	std::string	PS3PathROMDirectory;
 	int			PS3OverscanEnabled;
@@ -32,7 +33,7 @@ extern struct SSettings			Settings;
 //SNES9x - Total amount of SNES9x settings
 #define MAX_NO_OF_SNES9X_SETTINGS      12
 //GENERAL - Total amount of settings
-#define MAX_NO_OF_SETTINGS      11
+#define MAX_NO_OF_SETTINGS      12
 
 //GENERAL - setting constants
 #define SETTING_CHANGE_RESOLUTION 0
@@ -42,10 +43,11 @@ extern struct SSettings			Settings;
 #define SETTING_KEEP_ASPECT_RATIO 4
 #define SETTING_HW_TEXTURE_FILTER 5
 #define SETTING_PAD 6
-#define SETTING_FPS 7
-#define SETTING_CPU 8
-#define SETTING_HLE 9
-#define SETTING_DEFAULT_ALL 10
+#define SETTING_ANALOG_TO_DPAD 7
+#define SETTING_FPS 8
+#define SETTING_CPU 9
+#define SETTING_HLE 10
+#define SETTING_DEFAULT_ALL 11
 
 //PATH - setting constants
 #define SETTING_PATH_DEFAULT_ROM_DIRECTORY 0
