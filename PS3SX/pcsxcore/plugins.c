@@ -24,6 +24,9 @@
 #include "PsxCommon.h"
 #include "../plugins/plugins.h"
 
+static char IsoFile[MAXPATHLEN] = "";
+static s64 cdOpenCaseTime = 0;
+
 #ifdef __WIN32__
 #pragma warning(disable:4244)
 #endif
@@ -545,4 +548,25 @@ void ReleasePlugins() {
 	SysCloseLibrary(hSPUDriver); hSPUDriver = NULL;
 	SysCloseLibrary(hPAD1Driver); hPAD1Driver = NULL;
 	SysCloseLibrary(hPAD2Driver); hPAD2Driver = NULL;
+}
+
+void SetIsoFile(const char *filename) {
+	if (filename == NULL) {
+		IsoFile[0] = '\0';
+		return;
+	}
+	strncpy(IsoFile, filename, MAXPATHLEN - 1);
+	IsoFile[MAXPATHLEN - 1] = '\0';
+}
+
+const char *GetIsoFile(void) {
+	return IsoFile;
+}
+
+boolean UsingIso(void) {
+	return (IsoFile[0] != '\0');
+}
+
+void SetCdOpenCaseTime(s64 time) {
+	cdOpenCaseTime = time;
 }
