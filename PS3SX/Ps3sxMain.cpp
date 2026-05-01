@@ -50,6 +50,7 @@ extern "C"
 
 #include "psxcommon.h"
 #include "Sio.h"
+#include "plugins/cdrplugin/cdr.h"
 #include "cheat.h"
 #include "plugins.h"
 #include "misc.h"
@@ -485,7 +486,7 @@ void OnFile_Exit() {
 void RunCD(){ // run the cd, no bios
 	LoadCdBios = 0;
 	SysPrintf("RunCD\n");
-	SetIsoFile(rom_path); 
+	newCD(rom_path); 
 	SysReset();
 	CheckCdrom();
 	if (LoadCdrom() == -1) {
@@ -499,7 +500,7 @@ void RunCD(){ // run the cd, no bios
 void RunCDBIOS(){ // run the bios on the cd?
 	SysPrintf("RunCDBIOS\n");
 	LoadCdBios = 1;
-	SetIsoFile(rom_path); 
+	newCD(rom_path); 
 	CheckCdrom();
 	SysReset();
 	psxCpu->Execute();

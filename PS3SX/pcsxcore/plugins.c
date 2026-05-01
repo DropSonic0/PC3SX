@@ -24,9 +24,6 @@
 #include "PsxCommon.h"
 #include "../plugins/plugins.h"
 
-static char IsoFile[MAXPATHLEN] = "";
-static s64 cdOpenCaseTime = 0;
-
 #ifdef __WIN32__
 #pragma warning(disable:4244)
 #endif
@@ -169,51 +166,40 @@ static int LoadGPUplugin(const char *GPUdll) {
 	return 0;
 }
 
-void *hCDRDriver = NULL;
+void *hCDRDriver;
 
 long CALLBACK CDR__play(unsigned char *sector) { return 0; }
 long CALLBACK CDR__stop(void) { return 0; }
 
 long CALLBACK CDR__getStatus(struct CdrStat *stat) {
-	if (cdOpenCaseTime < 0 || cdOpenCaseTime > (s64)time(NULL))
-		stat->Status = 0x10;
-	else
-		stat->Status = 0;
-
-	return 0;
+    if (cdOpenCase) stat->Status = 0x10;
+    else stat->Status = 0;
+    return 0;
 }
 
 char* CALLBACK CDR__getDriveLetter(void) { return NULL; }
+unsigned char* CALLBACK CDR__getBufferSub(void) { return NULL; }
 long CALLBACK CDR__configure(void) { return 0; }
 long CALLBACK CDR__test(void) { return 0; }
 void CALLBACK CDR__about(void) {}
-long CALLBACK CDR__setfilename(char*filename) { return 0; }
 
+#if defined(__ppc__)
+#define LoadCdrSym0(dest, name) CDR_##dest = (CDR##dest) CDR__##dest;
+#define LoadCdrSym1(dest, name) CDR_##dest = (CDR##dest) CDR__##dest;
+#else
 #define LoadCdrSym1(dest, name) \
-	LoadSym(CDR_##dest, CDR##dest, name, TRUE);
+	LoadSym(CDR_##dest, CDR##dest, name, 1);
 
 #define LoadCdrSym0(dest, name) \
-	LoadSym(CDR_##dest, CDR##dest, name, FALSE); \
+	LoadSym(CDR_##dest, CDR##dest, name, 0); \
 	if (CDR_##dest == NULL) CDR_##dest = (CDR##dest) CDR__##dest;
-
-#define LoadCdrSymN(dest, name) \
-	LoadSym(CDR_##dest, CDR##dest, name, FALSE);
-
-static int LoadCDRplugin(const char *CDRdll) {
-	void *drv;
-
-#ifndef MDCFNPS3 //No cdriso
-	if (CDRdll == NULL) {
-		cdrIsoInit();
-		return 0;
-	}
 #endif
 
+int LoadCDRplugin(char *CDRdll) {
+	void *drv;
+
 	hCDRDriver = SysLoadLibrary(CDRdll);
-	if (hCDRDriver == NULL) {
-		CDR_configure = NULL;
-		SysMessage (_("Could not load CD-ROM plugin %s!"), CDRdll);  return -1;
-	}
+	if (hCDRDriver == NULL) { SysMessage ("Could Not load CDR plugin %s\n",CDRdll);  return -1; }
 	drv = hCDRDriver;
 	LoadCdrSym1(init, "CDRinit");
 	LoadCdrSym1(shutdown, "CDRshutdown");
@@ -223,17 +209,14 @@ static int LoadCDRplugin(const char *CDRdll) {
 	LoadCdrSym1(getTD, "CDRgetTD");
 	LoadCdrSym1(readTrack, "CDRreadTrack");
 	LoadCdrSym1(getBuffer, "CDRgetBuffer");
-	LoadCdrSym1(getBufferSub, "CDRgetBufferSub");
 	LoadCdrSym0(play, "CDRplay");
 	LoadCdrSym0(stop, "CDRstop");
 	LoadCdrSym0(getStatus, "CDRgetStatus");
 	LoadCdrSym0(getDriveLetter, "CDRgetDriveLetter");
+	LoadCdrSym0(getBufferSub, "CDRgetBufferSub");
 	LoadCdrSym0(configure, "CDRconfigure");
 	LoadCdrSym0(test, "CDRtest");
 	LoadCdrSym0(about, "CDRabout");
-	LoadCdrSym0(setfilename, "CDRsetfilename");
-	LoadCdrSymN(readCDDA, "CDRreadCDDA");
-	LoadCdrSymN(getTE, "CDRgetTE");
 
 	return 0;
 }
@@ -548,25 +531,4 @@ void ReleasePlugins() {
 	SysCloseLibrary(hSPUDriver); hSPUDriver = NULL;
 	SysCloseLibrary(hPAD1Driver); hPAD1Driver = NULL;
 	SysCloseLibrary(hPAD2Driver); hPAD2Driver = NULL;
-}
-
-void SetIsoFile(const char *filename) {
-	if (filename == NULL) {
-		IsoFile[0] = '\0';
-		return;
-	}
-	strncpy(IsoFile, filename, MAXPATHLEN - 1);
-	IsoFile[MAXPATHLEN - 1] = '\0';
-}
-
-const char *GetIsoFile(void) {
-	return IsoFile;
-}
-
-boolean UsingIso(void) {
-	return (IsoFile[0] != '\0');
-}
-
-void SetCdOpenCaseTime(s64 time) {
-	cdOpenCaseTime = time;
 }

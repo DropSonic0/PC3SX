@@ -4,23 +4,15 @@
 #include "../pcsxcore/Decode_XA.h"
 #include "../pcsxcore/PSEmu_Plugin_Defs.h"
 
-long            pkCDRinit               (void);
-long            pkCDRshutdown           (void);
-long            pkCDRopen               (void);
-long            pkCDRclose              (void);
-long            pkCDRgetTN              (unsigned char * aBuffer);
-long            pkCDRgetTD              (unsigned char aTrack, unsigned char* aBuffer);
-long            pkCDRreadTrack          (unsigned char* aPosition);
-unsigned char*  pkCDRgetBuffer          (void);
-unsigned char*  pkCDRgetBufferSub       (void);
-long            pkCDRconfigure          (void);
-long            pkCDRtest               (void);
-void            pkCDRabout              (void);
-long            pkCDRplay               (unsigned char* aTime);
-long            pkCDRstop               (void);
-long            pkCDRsetfilename        (char* aFileName);
-long            pkCDRgetStatus          (struct CdrStat* aStatus);
-long            pkCDRreadCDDA           (unsigned char aMinutes, unsigned char aSeconds, unsigned char aFrames, unsigned char* aBuffer);
+long CDR__open(void);
+long CDR__init(void);
+long CDR__shutdown(void);
+long CDR__open(void);
+long CDR__close(void);
+long CDR__getTN(unsigned char *);
+long CDR__getTD(unsigned char , unsigned char *);
+long CDR__readTrack(unsigned char *);
+unsigned char *CDR__getBuffer(void);
 
 long			pkSPUopen				(void);
 long			pkSPUinit				(void);
