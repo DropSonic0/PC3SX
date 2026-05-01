@@ -41,97 +41,22 @@ static int errval;
 
 extern int ReadPsxPad(int PadNbr);
 
-void *hGPUDriver;
+void *hGPUDriver = NULL;
 
 void ConfigurePlugins();
-
-void CALLBACK GPU__readDataMem(unsigned long *pMem, int iSize) {
-	while (iSize > 0) {
-		*pMem = GPU_readData();
-		iSize--;
-		pMem++;
-	}		
-}
-
-void CALLBACK GPU__writeDataMem(unsigned long *pMem, int iSize) {
-	while (iSize > 0) {
-		GPU_writeData(*pMem);
-		iSize--;
-		pMem++;
-	}
-}
 
 void CALLBACK GPU__displayText(char *pText) {
 	SysPrintf("%s\n", pText);
 }
 
-void CALLBACK clearDynarec(void) {
-	psxCpu->Reset();
-}
+void CALLBACK GPUbusy( int ticks )
+{
+    //printf( "GPUbusy( %i )\n", ticks );
+    //fflush( 0 );
 
-extern int StatesC;
-long CALLBACK GPU__freeze(unsigned long ulGetFreezeData, GPUFreeze_t *pF) {
-	pF->ulFreezeVersion = 1;
-	if (ulGetFreezeData == 0) {
-		int val;
-
-		val = GPU_readStatus();
-		val = 0x04000000 | ((val >> 29) & 0x3);
-		GPU_writeStatus(0x04000003);
-		GPU_writeStatus(0x01000000);
-		GPU_writeData(0xa0000000);
-		GPU_writeData(0x00000000);
-		GPU_writeData(0x02000400);
-		GPU_writeDataMem((unsigned long*)pF->psxVRam, 0x100000/4);
-		GPU_writeStatus(val);
-
-		val = pF->ulStatus;
-		GPU_writeStatus(0x00000000);
-		GPU_writeData(0x01000000);
-		GPU_writeStatus(0x01000000);
-		GPU_writeStatus(0x03000000 | ((val>>24)&0x1));
-		GPU_writeStatus(0x04000000 | ((val>>29)&0x3));
-		GPU_writeStatus(0x08000000 | ((val>>17)&0x3f) | ((val>>10)&0x40));
-		GPU_writeData(0xe1000000 | (val&0x7ff));
-		GPU_writeData(0xe6000000 | ((val>>11)&3));
-
-/*		GPU_writeData(0xe3000000 | pF->ulControl[0] & 0xffffff);
-		GPU_writeData(0xe4000000 | pF->ulControl[1] & 0xffffff);
-		GPU_writeData(0xe5000000 | pF->ulControl[2] & 0xffffff);*/
-		return 1;
-	}
-	if (ulGetFreezeData == 1) {
-		int val;
-
-		val = GPU_readStatus();
-		val = 0x04000000 | ((val >> 29) & 0x3);
-		GPU_writeStatus(0x04000003);
-		GPU_writeStatus(0x01000000);
-		GPU_writeData(0xc0000000);
-		GPU_writeData(0x00000000);
-		GPU_writeData(0x02000400);
-		GPU_readDataMem((unsigned long*)pF->psxVRam, 0x100000/4);
-		GPU_writeStatus(val);
-
-		pF->ulStatus = GPU_readStatus();
-
-/*		GPU_writeStatus(0x10000003);
-		pF->ulControl[0] = GPU_readData();
-		GPU_writeStatus(0x10000004);
-		pF->ulControl[1] = GPU_readData();
-		GPU_writeStatus(0x10000005);
-		pF->ulControl[2] = GPU_readData();*/
-		return 1;
-	}
-	if(ulGetFreezeData==2) {
-		long lSlotNum=*((long *)pF);
-		char Text[32];
-
-		sprintf (Text, "*PCSX*: Selected State %ld", lSlotNum+1);
-		GPU_displayText(Text);
-		return 1;
-	}
-	return 0;
+    psxRegs.interrupt |= (1 << PSXINT_GPUBUSY);
+    psxRegs.intCycle[PSXINT_GPUBUSY].cycle = ticks;
+    psxRegs.intCycle[PSXINT_GPUBUSY].sCycle = psxRegs.cycle;
 }
 
 long CALLBACK GPU__configure(void) { return 0; }
@@ -141,83 +66,62 @@ void CALLBACK GPU__makeSnapshot(void) {}
 void CALLBACK GPU__keypressed(int key) {}
 long CALLBACK GPU__getScreenPic(unsigned char *pMem) { return -1; }
 long CALLBACK GPU__showScreenPic(unsigned char *pMem) { return -1; }
-void CALLBACK GPU__clearDynarec(void (CALLBACK *callback)(void)) { }
+void CALLBACK GPU__clearDynarec(void (CALLBACK *callback)(void)) {}
+void CALLBACK GPU__vBlank(int val) {}
+void CALLBACK GPU__registerCallback(void (CALLBACK *callback)(int)) {}
+void CALLBACK GPU__idle(void) {}
+void CALLBACK GPU__visualVibration(unsigned long iSmall, unsigned long iBig) {}
+void CALLBACK GPU__cursor(int player, int x, int y) {}
 void CALLBACK GPU__addVertex(short sx,short sy,s64 fx,s64 fy,s64 fz) {}
 
-#if defined(__ppc__)
-#define PS3LoadGpuSym(dest) \
-	GPU_##dest = (CBGPU##dest) GPU##dest;
-
-#define PS3LoadGpuSym1(dest) \
-	GPU_##dest = (CBGPU##dest) GPU__##dest;
-#else
 #define LoadGpuSym1(dest, name) \
-	LoadSym(GPU_##dest, GPU##dest, name, 1);
+	LoadSym(GPU_##dest, GPU##dest, name, TRUE);
 
 #define LoadGpuSym0(dest, name) \
-	LoadSym(GPU_##dest, GPU##dest, name, 0); \
+	LoadSym(GPU_##dest, GPU##dest, name, FALSE); \
 	if (GPU_##dest == NULL) GPU_##dest = (GPU##dest) GPU__##dest;
-#endif
 
-extern long CALLBACK GPUinit(void);
-extern long CALLBACK GPUopen(void);
-extern long CALLBACK GPUshutdown(void);
-extern long CALLBACK GPUclose(void);
-extern void CALLBACK GPUwriteStatus(unsigned long);
-extern void CALLBACK GPUwriteData(unsigned long);
-extern void CALLBACK GPUwriteDataMem(unsigned long *, int);
-extern unsigned long CALLBACK GPUreadStatus(void);
-extern unsigned long CALLBACK GPUreadData(void);
-extern void CALLBACK GPUreadDataMem(unsigned long *, int);
-extern long CALLBACK GPUdmaChain(unsigned long *,unsigned long);
-extern void CALLBACK GPUupdateLace(void);
-extern long CALLBACK GPUconfigure(void);
-extern long CALLBACK GPUtest(void);
-extern void CALLBACK GPUabout(void);
-extern void CALLBACK GPUmakeSnapshot(void);
+#define LoadGpuSymN(dest, name) \
+	LoadSym(GPU_##dest, GPU##dest, name, FALSE);
 
-int LoadGPUplugin(char *GPUdll) {
+static int LoadGPUplugin(const char *GPUdll) {
 	void *drv;
 
 	hGPUDriver = SysLoadLibrary(GPUdll);
-	if (hGPUDriver == NULL) { 
+	if (hGPUDriver == NULL) {
 		GPU_configure = NULL;
-		SysMessage (_("Could Not Load GPU Plugin %s"), GPUdll); return -1; 
+		SysMessage (_("Could not load GPU plugin %s!"), GPUdll); return -1;
 	}
 	drv = hGPUDriver;
-	SysPrintf("address of init %X\n",GPU_init);
-	SysPrintf("address of init2 %X\n",GPUinit);
-	GPU_init = (CBGPUinit) GPUinit;
-	SysPrintf("address of init2 %X\n",GPU_init);
-	
-	SysPrintf("start of PS3LoadGpuSym\n");
-	PS3LoadGpuSym(open);
-	PS3LoadGpuSym(shutdown);
-	
-	PS3LoadGpuSym(close);
-	PS3LoadGpuSym(readData);
-	PS3LoadGpuSym(readDataMem);
-	PS3LoadGpuSym(readStatus);
-	PS3LoadGpuSym(writeData);
-	PS3LoadGpuSym(writeDataMem);
-	PS3LoadGpuSym(writeStatus);
-	PS3LoadGpuSym(dmaChain);
-	PS3LoadGpuSym(updateLace);	
+	LoadGpuSym1(init, "GPUinit");
+	LoadGpuSym1(shutdown, "GPUshutdown");
+	LoadGpuSym1(open, "GPUopen");
+	LoadGpuSym1(close, "GPUclose");
+	LoadGpuSym1(readData, "GPUreadData");
+	LoadGpuSym1(readDataMem, "GPUreadDataMem");
+	LoadGpuSym1(readStatus, "GPUreadStatus");
+	LoadGpuSym1(writeData, "GPUwriteData");
+	LoadGpuSym1(writeDataMem, "GPUwriteDataMem");
+	LoadGpuSym1(writeStatus, "GPUwriteStatus");
+	LoadGpuSym1(dmaChain, "GPUdmaChain");
+	LoadGpuSym1(updateLace, "GPUupdateLace");
+	LoadGpuSym0(keypressed, "GPUkeypressed");
+	LoadGpuSym0(displayText, "GPUdisplayText");
+	LoadGpuSym0(makeSnapshot, "GPUmakeSnapshot");
+	LoadGpuSym1(freeze, "GPUfreeze");
+	LoadGpuSym0(getScreenPic, "GPUgetScreenPic");
+	LoadGpuSym0(showScreenPic, "GPUshowScreenPic");
+	LoadGpuSym0(clearDynarec, "GPUclearDynarec");
+    LoadGpuSym0(vBlank, "GPUvBlank");
+    LoadGpuSym0(registerCallback, "GPUregisterCallback");
+    LoadGpuSym0(idle, "GPUidle");
+    LoadGpuSym0(visualVibration, "GPUvisualVibration");
+    LoadGpuSym0(cursor, "GPUcursor");
+	LoadGpuSym0(addVertex, "GPUaddVertex");
+	LoadGpuSym0(configure, "GPUconfigure");
+	LoadGpuSym0(test, "GPUtest");
+	LoadGpuSym0(about, "GPUabout");
 
-	PS3LoadGpuSym1(displayText);	
-	PS3LoadGpuSym1(freeze);
-	PS3LoadGpuSym1(getScreenPic);
-	PS3LoadGpuSym1(showScreenPic);
-	PS3LoadGpuSym1(clearDynarec);
-	PS3LoadGpuSym1(configure);
-	PS3LoadGpuSym1(test);
-	PS3LoadGpuSym1(about);
-	PS3LoadGpuSym1(makeSnapshot);
-	PS3LoadGpuSym1(keypressed);
-	PS3LoadGpuSym1(addVertex);
-	
-	SysPrintf("end of PS3LoadGpuSym\n");
-	
 	return 0;
 }
 

@@ -35,16 +35,25 @@ void			pkSPUasync				(uint32_t o);
 void			pkSPUplayCDDAchannel	(short * m, int i);
 
 
-long GPU__init(void);
-long GPU__shutdown(void);
-long GPU__open(unsigned long *, char *, char *);
-long GPU__close(void);
-void GPU__writeStatus(unsigned long);
-void GPU__writeData(unsigned long);
-unsigned long GPU__readStatus(void);
-unsigned long GPU__readData(void);
-long GPU__dmaChain(unsigned long *,unsigned long);
-void GPU__updateLace(void);
+void			pkGPUinit				();
+long			pkGPUopen				(unsigned long * disp, char * CapText, char * CfgFile);
+long			pkGPUclose				();
+long			pkGPUshutdown			();
+void			pkGPUupdateLace			(void); // VSYNC
+uint32_t		pkGPUreadStatus			(void); // READ STATUS
+void			pkGPUwriteStatus		(uint32_t gdata);
+void			pkGPUreadDataMem		(uint32_t * pMem, int iSize);
+uint32_t		pkGPUreadData			(void);
+void			pkGPUwriteDataMem		(uint32_t * pMem, int iSize);
+void			pkGPUwriteData			(uint32_t gdata);
+long			pkGPUconfigure			(void);
+long			pkGPUdmaChain			(uint32_t * baseAddrL, uint32_t addr);
+void			pkGPUabout				(void); // ABOUT
+long			pkGPUfreeze				(uint32_t ulGetFreezeData, struct GPUFreeze_t * pF);
+void			pkGPUshowScreenPic		(unsigned char * pMem);
+void			pkGPUvBlank				(int val);
+void			pkGPUkeypressed			(int keycode){}
+long			pkGPUtest				();
 
 long PAD__init(long);
 long PAD__shutdown(void);	

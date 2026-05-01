@@ -23,7 +23,7 @@
 #include "../pcsxcore/Spu.h"
 
 //extern GPUopen GPU_open;
-extern CBGPUopen GPU_open;
+extern GPUopen GPU_open;
 
 unsigned long gpuDisp;
 

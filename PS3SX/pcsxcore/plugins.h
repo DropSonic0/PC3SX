@@ -42,63 +42,71 @@ typedef unsigned long (CALLBACK* PSEgetLibType)(void);
 typedef unsigned long (CALLBACK* PSEgetLibVersion)(void);
 typedef char *(CALLBACK* PSEgetLibName)(void);
 
-///GPU PLUGIN STUFF 
-typedef long (CALLBACK* CBGPUopen)(unsigned long *, char *, char *);
-typedef long (CALLBACK* CBGPUinit)(void);
-typedef long (CALLBACK* CBGPUshutdown)(void);
-typedef long (CALLBACK* CBGPUclose)(void);
-typedef void (CALLBACK* CBGPUwriteStatus)(unsigned long);
-typedef void (CALLBACK* CBGPUwriteData)(unsigned long);
-typedef void (CALLBACK* CBGPUwriteDataMem)(unsigned long *, int);
-typedef unsigned long (CALLBACK* CBGPUreadStatus)(void);
-typedef unsigned long (CALLBACK* CBGPUreadData)(void);
-typedef void (CALLBACK* CBGPUreadDataMem)(unsigned long *, int);
-typedef long (CALLBACK* CBGPUdmaChain)(unsigned long *,unsigned long);
-typedef void (CALLBACK* CBGPUupdateLace)(void);
-typedef long (CALLBACK* CBGPUconfigure)(void);
-typedef long (CALLBACK* CBGPUtest)(void);
-typedef void (CALLBACK* CBGPUabout)(void);
-typedef void (CALLBACK* CBGPUmakeSnapshot)(void);
-typedef void (CALLBACK* CBGPUkeypressed)(int);
-typedef void (CALLBACK* CBGPUdisplayText)(char *);
-typedef struct {
-	unsigned long ulFreezeVersion;
-	unsigned long ulStatus;
-	unsigned long ulControl[256];
+// GPU Functions
+typedef long (CALLBACK* GPUopen)(unsigned long *, char *, char *);
+typedef long (CALLBACK* GPUinit)(void);
+typedef long (CALLBACK* GPUshutdown)(void);
+typedef long (CALLBACK* GPUclose)(void);
+typedef void (CALLBACK* GPUwriteStatus)(uint32_t);
+typedef void (CALLBACK* GPUwriteData)(uint32_t);
+typedef void (CALLBACK* GPUwriteDataMem)(uint32_t *, int);
+typedef uint32_t (CALLBACK* GPUreadStatus)(void);
+typedef uint32_t (CALLBACK* GPUreadData)(void);
+typedef void (CALLBACK* GPUreadDataMem)(uint32_t *, int);
+typedef long (CALLBACK* GPUdmaChain)(uint32_t *,uint32_t);
+typedef void (CALLBACK* GPUupdateLace)(void);
+typedef long (CALLBACK* GPUconfigure)(void);
+typedef long (CALLBACK* GPUtest)(void);
+typedef void (CALLBACK* GPUabout)(void);
+typedef void (CALLBACK* GPUmakeSnapshot)(void);
+typedef void (CALLBACK* GPUkeypressed)(int);
+typedef void (CALLBACK* GPUdisplayText)(char *);
+typedef struct GPUFreeze_t {
+	uint32_t ulFreezeVersion;
+	uint32_t ulStatus;
+	uint32_t ulControl[256];
 	unsigned char psxVRam[1024*512*2];
 } GPUFreeze_t;
-typedef long (CALLBACK* CBGPUfreeze)(unsigned long, GPUFreeze_t *);
-typedef long (CALLBACK* CBGPUgetScreenPic)(unsigned char *);
-typedef long (CALLBACK* CBGPUshowScreenPic)(unsigned char *);
-typedef void (CALLBACK* CBGPUclearDynarec)(void (CALLBACK *callback)(void));
-typedef void (CALLBACK* CBGPUaddVertex)(short,short,s64,s64,s64);
+typedef long (CALLBACK* GPUfreeze)(uint32_t, GPUFreeze_t *);
+typedef long (CALLBACK* GPUgetScreenPic)(unsigned char *);
+typedef long (CALLBACK* GPUshowScreenPic)(unsigned char *);
+typedef void (CALLBACK* GPUclearDynarec)(void (CALLBACK *callback)(void));
+typedef void (CALLBACK* GPUvBlank)(int);
+typedef void (CALLBACK* GPUregisterCallback)(void (CALLBACK *callback)(int));
+typedef void (CALLBACK* GPUidle)(void);
+typedef void (CALLBACK* GPUvisualVibration)(uint32_t, uint32_t);
+typedef void (CALLBACK* GPUcursor)(int, int, int);
+    typedef void (CALLBACK* GPUaddVertex)(short,short,s64,s64,s64);
 
-//plugin stuff From Shadow
-// *** walking in the valley of your darking soul i realize that i was alone
-//Gpu function pointers
-CBGPUupdateLace    GPU_updateLace;
-CBGPUinit          GPU_init;
-CBGPUshutdown      GPU_shutdown; 
-CBGPUconfigure     GPU_configure;
-CBGPUtest          GPU_test;
-CBGPUabout         GPU_about;
-CBGPUopen          GPU_open;
-CBGPUclose         GPU_close;
-CBGPUreadStatus    GPU_readStatus;
-CBGPUreadData      GPU_readData;
-CBGPUreadDataMem   GPU_readDataMem;
-CBGPUwriteStatus   GPU_writeStatus; 
-CBGPUwriteData     GPU_writeData;
-CBGPUwriteDataMem  GPU_writeDataMem;
-CBGPUdmaChain      GPU_dmaChain;
-CBGPUkeypressed    GPU_keypressed;
-CBGPUdisplayText   GPU_displayText;
-CBGPUmakeSnapshot  GPU_makeSnapshot;
-CBGPUfreeze        GPU_freeze;
-CBGPUgetScreenPic  GPU_getScreenPic;
-CBGPUshowScreenPic GPU_showScreenPic;
-CBGPUclearDynarec  GPU_clearDynarec;
-CBGPUaddVertex     GPU_addVertex;
+// GPU function pointers
+GPUupdateLace         GPU_updateLace;
+GPUinit               GPU_init;
+GPUshutdown           GPU_shutdown;
+GPUconfigure          GPU_configure;
+GPUtest               GPU_test;
+GPUabout              GPU_about;
+GPUopen               GPU_open;
+GPUclose              GPU_close;
+GPUreadStatus         GPU_readStatus;
+GPUreadData           GPU_readData;
+GPUreadDataMem        GPU_readDataMem;
+GPUwriteStatus        GPU_writeStatus;
+GPUwriteData          GPU_writeData;
+GPUwriteDataMem       GPU_writeDataMem;
+GPUdmaChain           GPU_dmaChain;
+GPUkeypressed         GPU_keypressed;
+GPUdisplayText        GPU_displayText;
+GPUmakeSnapshot       GPU_makeSnapshot;
+GPUfreeze             GPU_freeze;
+GPUgetScreenPic       GPU_getScreenPic;
+GPUshowScreenPic      GPU_showScreenPic;
+GPUclearDynarec       GPU_clearDynarec;
+GPUvBlank             GPU_vBlank;
+GPUregisterCallback   GPU_registerCallback;
+GPUidle               GPU_idle;
+GPUvisualVibration    GPU_visualVibration;
+GPUcursor             GPU_cursor;
+GPUaddVertex          GPU_addVertex;
 
 //cd rom plugin ;)
 typedef long (CALLBACK* CDRinit)(void);
@@ -268,8 +276,8 @@ typedef struct {
 	char CdromID[9];	// ie. 'SCPH12345', no \0 trailing character
 	char CdromLabel[11];
 	void *psxMem;
-	CBGPUshowScreenPic GPU_showScreenPic;
-	CBGPUdisplayText GPU_displayText;
+	GPUshowScreenPic GPU_showScreenPic;
+	GPUdisplayText GPU_displayText;
 	PADsetSensitive PAD_setSensitive;
 	char GPUpath[256];	// paths must be absolute
 	char SPUpath[256];
