@@ -119,3 +119,6 @@ void ResetPlugins() {
 	ret = PAD2_init(2);
 	if (ret != 0) { SysMessage ("PAD2init error : %d\n",ret); exit(1); }
 }
+
+void pkGPUkeypressed(int keycode) {
+}

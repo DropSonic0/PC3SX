@@ -52,7 +52,7 @@ void			pkGPUabout				(void); // ABOUT
 long			pkGPUfreeze				(uint32_t ulGetFreezeData, struct GPUFreeze_t * pF);
 void			pkGPUshowScreenPic		(unsigned char * pMem);
 void			pkGPUvBlank				(int val);
-void			pkGPUkeypressed			(int keycode){}
+void			pkGPUkeypressed			(int keycode);
 long			pkGPUtest				();
 
 long PAD__init(long);
