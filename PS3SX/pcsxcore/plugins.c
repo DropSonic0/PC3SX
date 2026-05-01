@@ -84,7 +84,47 @@ void CALLBACK GPU__addVertex(short sx,short sy,s64 fx,s64 fy,s64 fz) {}
 #define LoadGpuSymN(dest, name) \
 	LoadSym(GPU_##dest, GPU##dest, name, FALSE);
 
+#if defined(__ppc__)
+#define PS3LoadGpuSym(dest) \
+	GPU_##dest = (GPU##dest) pkGPU##dest;
+
+#define PS3LoadGpuSym0(dest) \
+	GPU_##dest = (GPU##dest) GPU__##dest;
+#endif
+
 static int LoadGPUplugin(const char *GPUdll) {
+#if defined(__ppc__)
+	PS3LoadGpuSym(init);
+	PS3LoadGpuSym(shutdown);
+	PS3LoadGpuSym(open);
+	PS3LoadGpuSym(close);
+	PS3LoadGpuSym(readData);
+	PS3LoadGpuSym(readDataMem);
+	PS3LoadGpuSym(readStatus);
+	PS3LoadGpuSym(writeData);
+	PS3LoadGpuSym(writeDataMem);
+	PS3LoadGpuSym(writeStatus);
+	PS3LoadGpuSym(dmaChain);
+	PS3LoadGpuSym(updateLace);
+	PS3LoadGpuSym(keypressed);
+	PS3LoadGpuSym0(displayText);
+	PS3LoadGpuSym(makeSnapshot);
+	PS3LoadGpuSym(freeze);
+	PS3LoadGpuSym(getScreenPic);
+	PS3LoadGpuSym(showScreenPic);
+	PS3LoadGpuSym0(clearDynarec);
+	PS3LoadGpuSym(vBlank);
+	PS3LoadGpuSym0(registerCallback);
+	PS3LoadGpuSym0(idle);
+	PS3LoadGpuSym0(visualVibration);
+	PS3LoadGpuSym(cursor);
+	PS3LoadGpuSym0(addVertex);
+	PS3LoadGpuSym(configure);
+	PS3LoadGpuSym(test);
+	PS3LoadGpuSym(about);
+
+	hGPUDriver = (void*)GPUdll;
+#else
 	void *drv;
 
 	hGPUDriver = SysLoadLibrary(GPUdll);
@@ -121,6 +161,7 @@ static int LoadGPUplugin(const char *GPUdll) {
 	LoadGpuSym0(configure, "GPUconfigure");
 	LoadGpuSym0(test, "GPUtest");
 	LoadGpuSym0(about, "GPUabout");
+#endif
 
 	return 0;
 }

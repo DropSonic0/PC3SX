@@ -26,6 +26,9 @@
 #include "gpu.h"
 #include "swap.h"
 
+extern void ps3sxSwapBuffer(unsigned char *pixels, int w, int h);
+static uint32_t * argb_buffer = NULL;
+
 #define INFO_TW        0
 #define INFO_DRAWSTART 1
 #define INFO_DRAWEND   2
@@ -54,6 +57,11 @@ long		pkGPUinit			()
 		return -1;
 	}
 
+	if (!argb_buffer)
+	{
+		argb_buffer = (uint32_t *) malloc(1024 * 512 * sizeof(uint32_t));
+	}
+
 	//!!! ATTENTION !!!
 	g_gpu.psx_vram.u8 = g_gpu.psxVSecure.u8 + 512 * 1024; // security offset into double sized psx vram!
 	g_gpu.psxVuw_eom.u16 = g_gpu.psx_vram.u16 + 1024 * 512; // pre-calc of end of vram
@@ -78,7 +86,16 @@ long		pkGPUinit			()
 
 long		pkGPUshutdown		()
 {
-	free(g_gpu.psxVSecure.s8);
+	if (g_gpu.psxVSecure.s8)
+	{
+		free(g_gpu.psxVSecure.s8);
+		g_gpu.psxVSecure.s8 = NULL;
+	}
+	if (argb_buffer)
+	{
+		free(argb_buffer);
+		argb_buffer = NULL;
+	}
 	return 0;
 }
 
@@ -92,6 +109,52 @@ void  pkGPUupdateLace(void) // VSYNC
 	{
 		return;
 	}
+
+	if (!argb_buffer) return;
+
+	int w = (g_gpu.dsp.range.x1 - g_gpu.dsp.range.x0);
+	if (g_gpu.dsp.mode.x > 0) w /= g_gpu.dsp.mode.x;
+	else w = 0;
+
+	int h = (g_gpu.dsp.range.y1 - g_gpu.dsp.range.y0);
+	if (g_gpu.dsp.mode.y > 0) h *= g_gpu.dsp.mode.y;
+
+	if (w <= 0 || h <= 0) return;
+	if (w > 1024) w = 1024;
+	if (h > 512) h = 512;
+
+	if (g_gpu.status_reg & STATUS_RGB24)
+	{
+		for (int i = 0; i < h; i++) {
+			int startxy = (1024 * (i + g_gpu.dsp.position.y)) + g_gpu.dsp.position.x;
+			if (startxy + (w * 3 / 2) >= 1024 * 512) break;
+			unsigned char* pD = (unsigned char *)&g_gpu.psx_vram.u16[startxy];
+			uint32_t* destpix = &argb_buffer[i * w];
+			for (int j = 0; j < w; j++) {
+				uint32_t lu = GETLE32(pD);
+				*destpix++ = 0xff000000 | ((lu & 0xff) << 16) | (lu & 0x0000ff00) | ((lu >> 16) & 0xff);
+				pD += 3;
+			}
+		}
+	}
+	else
+	{
+		for (int i = 0; i < h; i++) {
+			int start_idx = ((i + g_gpu.dsp.position.y) << 10) + g_gpu.dsp.position.x;
+			if (start_idx + w >= 1024 * 512) break;
+			uint16_t *src = &g_gpu.psx_vram.u16[start_idx];
+			uint32_t *dst = &argb_buffer[i * w];
+			for (int j = 0; j < w; j++) {
+				uint16_t val = GETLE16(src++);
+				uint32_t r = (val & 0x1f) << 3;
+				uint32_t g = ((val >> 5) & 0x1f) << 3;
+				uint32_t b = ((val >> 10) & 0x1f) << 3;
+				*dst++ = 0xff000000 | (r << 16) | (g << 8) | b;
+			}
+		}
+	}
+
+	ps3sxSwapBuffer((unsigned char *)argb_buffer, w, h);
 }
 
 uint32_t  pkGPUreadStatus(void) // READ STATUS

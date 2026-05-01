@@ -35,7 +35,7 @@ void			pkSPUasync				(uint32_t o);
 void			pkSPUplayCDDAchannel	(short * m, int i);
 
 
-void			pkGPUinit				();
+long			pkGPUinit				();
 long			pkGPUopen				(unsigned long * disp, char * CapText, char * CfgFile);
 long			pkGPUclose				();
 long			pkGPUshutdown			();
@@ -50,9 +50,12 @@ long			pkGPUconfigure			(void);
 long			pkGPUdmaChain			(uint32_t * baseAddrL, uint32_t addr);
 void			pkGPUabout				(void); // ABOUT
 long			pkGPUfreeze				(uint32_t ulGetFreezeData, struct GPUFreeze_t * pF);
+void			pkGPUgetScreenPic		(unsigned char * pMem);
 void			pkGPUshowScreenPic		(unsigned char * pMem);
+void			pkGPUmakeSnapshot		(void);
 void			pkGPUvBlank				(int val);
 void			pkGPUkeypressed			(int keycode);
+void			pkGPUcursor				(int iPlayer, int x, int y);
 long			pkGPUtest				();
 
 long PAD__init(long);
