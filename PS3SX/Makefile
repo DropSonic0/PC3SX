@@ -73,7 +73,7 @@ PPU_SRCS		:= Ps3sxMain.cpp ./ps3/ps3audio.cpp ./ps3/ps3video.cpp ./ps3/rom_list.
 
 PPU_TARGET		=	ps3sx.elf
 
-PPU_CPPFLAGS	+= -D__BIGENDIAN__ -D__ppc__ -D_BIG_ENDIAN -DBIG_ENDIAN -D'PACKAGE_VERSION="0.3"' -DPS3_SDK_3_41 -DPSGL
+PPU_CPPFLAGS	+= -D__BIGENDIAN__ -D__ppc__ -D_BIG_ENDIAN -DBIG_ENDIAN -D'PACKAGE_VERSION="0.3"' -DPS3_SDK_3_41 -DPSGL -DMDCFNPS3
 
 PPU_ASFLAGS		+=
 

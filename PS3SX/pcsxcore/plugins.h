@@ -108,44 +108,48 @@ GPUvisualVibration    GPU_visualVibration;
 GPUcursor             GPU_cursor;
 GPUaddVertex          GPU_addVertex;
 
-//cd rom plugin ;)
+// CD-ROM Functions
 typedef long (CALLBACK* CDRinit)(void);
 typedef long (CALLBACK* CDRshutdown)(void);
 typedef long (CALLBACK* CDRopen)(void);
 typedef long (CALLBACK* CDRclose)(void);
 typedef long (CALLBACK* CDRgetTN)(unsigned char *);
-typedef long (CALLBACK* CDRgetTD)(unsigned char , unsigned char *);
+typedef long (CALLBACK* CDRgetTD)(unsigned char, unsigned char *);
 typedef long (CALLBACK* CDRreadTrack)(unsigned char *);
-typedef unsigned char * (CALLBACK* CDRgetBuffer)(void);
+typedef unsigned char* (CALLBACK* CDRgetBuffer)(void);
+typedef unsigned char* (CALLBACK* CDRgetBufferSub)(void);
 typedef long (CALLBACK* CDRconfigure)(void);
 typedef long (CALLBACK* CDRtest)(void);
 typedef void (CALLBACK* CDRabout)(void);
 typedef long (CALLBACK* CDRplay)(unsigned char *);
 typedef long (CALLBACK* CDRstop)(void);
+typedef long (CALLBACK* CDRsetfilename)(char *);
 struct CdrStat {
-	unsigned long Type;
-	unsigned long Status;
+	uint32_t Type;
+	uint32_t Status;
 	unsigned char Time[3];
 };
 typedef long (CALLBACK* CDRgetStatus)(struct CdrStat *);
 typedef char* (CALLBACK* CDRgetDriveLetter)(void);
 struct SubQ {
-	char res0[11];
+	char res0[12];
 	unsigned char ControlAndADR;
 	unsigned char TrackNumber;
 	unsigned char IndexNumber;
 	unsigned char TrackRelativeAddress[3];
 	unsigned char Filler;
 	unsigned char AbsoluteAddress[3];
+	unsigned char CRC[2];
 	char res1[72];
 };
-typedef unsigned char* (CALLBACK* CDRgetBufferSub)(void);
+typedef long (CALLBACK* CDRreadCDDA)(unsigned char, unsigned char, unsigned char, unsigned char *);
+typedef long (CALLBACK* CDRgetTE)(unsigned char, unsigned char *, unsigned char *, unsigned char *);
 
 //cd rom function pointers 
 CDRinit               CDR_init;
 CDRshutdown           CDR_shutdown;
 CDRopen               CDR_open;
-CDRclose              CDR_close; 
+CDRclose              CDR_close;
 CDRtest               CDR_test;
 CDRgetTN              CDR_getTN;
 CDRgetTD              CDR_getTD;
@@ -158,6 +162,9 @@ CDRgetDriveLetter     CDR_getDriveLetter;
 CDRgetBufferSub       CDR_getBufferSub;
 CDRconfigure          CDR_configure;
 CDRabout              CDR_about;
+CDRsetfilename        CDR_setfilename;
+CDRreadCDDA           CDR_readCDDA;
+CDRgetTE              CDR_getTE;
 
 // SPU Functions
 typedef long (CALLBACK* SPUopen)(void);
