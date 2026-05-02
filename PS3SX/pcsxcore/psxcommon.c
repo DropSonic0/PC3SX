@@ -27,9 +27,6 @@
 PcsxConfig Config;
 boolean NetOpened = FALSE;
 
-int Log = 0;
-FILE *emuLog = NULL;
-
 int EmuInit() {
 	return psxInit();
 }
@@ -67,7 +64,7 @@ void __Log(char *fmt, ...) {
 
 	va_start(list, fmt);
 #ifndef LOG_STDOUT
-	vfprintf(emuLog, fmt, list);
+
 #else
 	vsprintf(tmp, fmt, list);
 	SysPrintf(tmp);

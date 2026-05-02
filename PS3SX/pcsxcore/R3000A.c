@@ -111,6 +111,14 @@ void psxException(u32 code, u32 bd) {
 }
 
 void psxBranchTest() {
+	if (SPU_async) {
+		int elapsed = psxRegs.cycle - psxRegs.intCycle[PSXINT_SPUASYNC].sCycle;
+		if (elapsed >= (int)psxRegs.intCycle[PSXINT_SPUASYNC].cycle) {
+			SPU_async(elapsed);
+			psxRegs.intCycle[PSXINT_SPUASYNC].sCycle = psxRegs.cycle;
+		}
+	}
+
 	if ((psxRegs.cycle - psxNextsCounter) >= psxNextCounter)
 		psxRcntUpdate();
 

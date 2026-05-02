@@ -14,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.           *
+ *   51 Franklin Street, Fifth Floor, Boston, MA 02111-1307 USA.           *
  ***************************************************************************/
 
 #ifndef __PSXCOUNTERS_H__
@@ -29,14 +29,7 @@ extern "C" {
 #include "psxmem.h"
 #include "plugins.h"
 
-typedef struct {
-	unsigned long count, mode, target;
-	unsigned long sCycle, Cycle, rate, interrupt;
-} psxCounter;
-
-extern psxCounter psxCounters[5];
-
-unsigned long psxNextCounter, psxNextsCounter;
+extern u32 psxNextCounter, psxNextsCounter;
 
 void psxRcntInit();
 void psxRcntUpdate();
@@ -45,13 +38,11 @@ void psxRcntWcount(u32 index, u32 value);
 void psxRcntWmode(u32 index, u32 value);
 void psxRcntWtarget(u32 index, u32 value);
 
-unsigned long psxRcntRcount(u32 index);
-unsigned long psxRcntRmode(u32 index);
-unsigned long psxRcntRtarget(u32 index);
+u32 psxRcntRcount(u32 index);
+u32 psxRcntRmode(u32 index);
+u32 psxRcntRtarget(u32 index);
 
-int psxRcntFreeze(gzFile f, int Mode);
-
-void psxUpdateVSyncRate();
+s32 psxRcntFreeze(gzFile f, s32 Mode);
 
 #ifdef __cplusplus
 }

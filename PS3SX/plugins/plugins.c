@@ -58,6 +58,7 @@ void SignalExit(int sig) {
 }
 
 extern void SPUirq(void);
+extern void CALLBACK GPUbusy(int ticks);
 
 void OpenPlugins() {
 	int ret;
@@ -75,6 +76,7 @@ void OpenPlugins() {
 	ret = GPU_open(&gpuDisp, "P©SX", NULL);
 	SysPrintf("after GPU_open()\n");
 	if (ret != 0) { SysMessage ("Error Opening GPU Plugin\n"); exit(1); }
+	GPU_registerCallback(GPUbusy);
 	SysPrintf("PAD1_open()\n");
 	ret = PAD1_open(&gpuDisp);
 	if (ret != 0) { SysMessage ("Error Opening PAD1 Plugin\n"); exit(1); }
