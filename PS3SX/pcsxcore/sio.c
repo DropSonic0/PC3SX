@@ -51,9 +51,9 @@ char Mcd1Data[MCD_SIZE], Mcd2Data[MCD_SIZE];
 // 4us * 8bits = ((PSXCLK / 1000000) * 32) / BIAS; (linuzappz)
 #define SIO_INT() { \
 	if (!Config.Sio) { \
-		psxRegs.interrupt|= 0x80; \
-		psxRegs.intCycle[7].cycle = 200; /*270;*/ \
-		psxRegs.intCycle[7].sCycle = psxRegs.cycle; \
+		psxRegs.interrupt |= (1 << PSXINT_SIO); \
+		psxRegs.intCycle[PSXINT_SIO].cycle = 200; /*270;*/ \
+		psxRegs.intCycle[PSXINT_SIO].sCycle = psxRegs.cycle; \
 	} \
 }
 
@@ -296,7 +296,7 @@ void sioWriteCtrl16(unsigned short value) {
 	if ((CtrlReg & SIO_RESET) || (!CtrlReg)) {
 		padst = 0; mcdst = 0; parp = 0;
 		StatReg = TX_RDY | TX_EMPTY;
-		psxRegs.interrupt&=~0x80;
+		psxRegs.interrupt &= ~(1 << PSXINT_SIO);
 	}
 }
 
@@ -305,9 +305,9 @@ void sioInterrupt() {
 	PAD_LOG("Sio Interrupt (CP0.Status = %x)\n", psxRegs.CP0.n.Status);
 #endif
 //	SysPrintf("Sio Interrupt\n");
-	StatReg|= IRQ;
-	psxHu32ref(0x1070)|= SWAPu32(0x80);
-	psxRegs.interrupt|= 0x80000000;
+	StatReg |= IRQ;
+	psxHu32ref(0x1070) |= SWAPu32(0x80);
+	psxRegs.interrupt |= 0x80000000;
 }
 
 void LoadMcd(int mcd, char *str) {

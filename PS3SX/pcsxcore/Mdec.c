@@ -259,6 +259,10 @@ void psxDma0(u32 adr, u32 bcr, u32 chcr) {
 	else {
 	}
 
+	mdec0Interrupt();
+}
+
+void mdec0Interrupt() {
 	HW_DMA0_CHCR &= SWAP32(~0x01000000);
 	DMA_INTERRUPT(0);
 }
