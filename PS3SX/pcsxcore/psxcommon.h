@@ -104,54 +104,46 @@ void __Log(char *fmt, ...);
 void __Log(char *fmt, ...);
 
 typedef struct {
-	char Gpu[256];
-	char Spu[256];
-	char Cdr[256];
-	char Pad1[256];
-	char Pad2[256];
-	char Net[256];
-	char Sio1[256];
-	char Mcd1[256];
-	char Mcd2[256];
-	char Bios[256];
+	char Gpu[MAXPATHLEN];
+	char Spu[MAXPATHLEN];
+	char Cdr[MAXPATHLEN];
+	char Pad1[MAXPATHLEN];
+	char Pad2[MAXPATHLEN];
+	char Net[MAXPATHLEN];
+    char Sio1[MAXPATHLEN];
+	char Mcd1[MAXPATHLEN];
+	char Mcd2[MAXPATHLEN];
+	char Bios[MAXPATHLEN];
 	char BiosDir[MAXPATHLEN];
 	char PluginsDir[MAXPATHLEN];
 	char PatchesDir[MAXPATHLEN];
-	char IsoImgDir[MAXPATHLEN];
-	long Debug;
-	long Xa;
-	long Sio;
-	long Mdec;
-	long PsxAuto;
-	long PsxType;		/* NTSC or PAL */
-	long Cdda;
-	long HLE;
-	long Cpu;
-	long Dbg;
-	long PsxOut;
-	long SpuIrq;
-	long RCntFix;
-	long UseNet;
-	long VSyncWA;
-	long PsxStock;
-	long PsxClock;
-	long GPUEnaFPSLimit; // To store EnableFPSLimit
-	float GPUUserFPS;   // To store UserFPS
+	boolean Xa;
+	boolean Sio;
+	boolean Mdec;
+	boolean PsxAuto;
+	boolean Cdda;
+	boolean HLE;
+	boolean SlowBoot;
+	boolean Debug;
+	boolean PsxOut;
+	boolean SpuIrq;
+	boolean RCntFix;
+	boolean UseNet;
+	boolean VSyncWA;
+	u8 Cpu; // CPU_DYNAREC or CPU_INTERPRETER
+	u8 PsxType; // PSX_TYPE_NTSC or PSX_TYPE_PAL
+#ifdef _WIN32
+	char Lang[256];
+#endif
 } PcsxConfig;
 
 extern PcsxConfig Config;
-
-extern long LoadCdBios;
-extern int StatesC;
-extern int cdOpenCase;
-
+extern boolean NetOpened;
 
 #define gzfreeze(ptr, size) { \
 	if (Mode == 1) gzwrite(f, ptr, size); \
 	if (Mode == 0) gzread(f, ptr, size); \
 }
-
-#define gzfreezel(ptr) gzfreeze(ptr, sizeof(ptr))
 
 // Make the timing events trigger faster as we are currently assuming everything
 // takes one cycle, which is not the case on real hardware.
@@ -168,12 +160,6 @@ enum {
 	CPU_DYNAREC = 0,
 	CPU_INTERPRETER
 }; // CPU Types
-
-enum {
-	CDDA_ENABLED_LE = 0,
-	CDDA_DISABLED,
-	CDDA_ENABLED_BE
-}; // CDDA Types
 
 int EmuInit();
 void EmuReset();

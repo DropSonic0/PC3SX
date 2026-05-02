@@ -355,10 +355,6 @@ void InitConfig()
 {
 	memset(&Config, 0, sizeof(PcsxConfig));
 
-	// Set default FPS limit settings
-	Config.GPUEnaFPSLimit = 1; // Default to enabled
-	Config.GPUUserFPS = 0.0f;  // Default to auto/emulator default
-
 	Config.PsxAuto = 1; //Autodetect
 	Config.HLE	   = Settings.HLE; //Use HLE
 	Config.Xa      = 0; //disable xa decoding (audio)
@@ -385,9 +381,6 @@ void InitConfig()
 	sprintf(Config.Mcd1, "%s/Mcd001.mcr",Iniconfig.savpath);
 	sprintf(Config.Mcd2, "%s/Mcd002.mcr",Iniconfig.savpath);
 
-	// Transfer parsed FPS settings from Iniconfig to global Config
-	Config.GPUEnaFPSLimit = Iniconfig.GPUEnaFPSLimit;
-	Config.GPUUserFPS = Iniconfig.GPUUserFPS;
 }
 
 static int sysInited = 0;

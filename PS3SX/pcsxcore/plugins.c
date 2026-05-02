@@ -24,6 +24,13 @@
 #include "PsxCommon.h"
 #include "../plugins/plugins.h"
 
+#ifndef MDZFNPS3 // Not using cdriso
+#include "cdriso.h"
+#endif
+
+static char IsoFile[MAXPATHLEN] = "";
+static s64 cdOpenCaseTime = 0;
+
 #ifdef __WIN32__
 #pragma warning(disable:4244)
 #endif
@@ -172,9 +179,12 @@ long CALLBACK CDR__play(unsigned char *sector) { return 0; }
 long CALLBACK CDR__stop(void) { return 0; }
 
 long CALLBACK CDR__getStatus(struct CdrStat *stat) {
-    if (cdOpenCase) stat->Status = 0x10;
-    else stat->Status = 0;
-    return 0;
+	if (cdOpenCaseTime < 0 || cdOpenCaseTime > (s64)time(NULL))
+		stat->Status = 0x10;
+	else
+		stat->Status = 0;
+
+	return 0;
 }
 
 char* CALLBACK CDR__getDriveLetter(void) { return NULL; }
@@ -531,4 +541,24 @@ void ReleasePlugins() {
 	SysCloseLibrary(hSPUDriver); hSPUDriver = NULL;
 	SysCloseLibrary(hPAD1Driver); hPAD1Driver = NULL;
 	SysCloseLibrary(hPAD2Driver); hPAD2Driver = NULL;
+}
+
+void SetIsoFile(const char *filename) {
+	if (filename == NULL) {
+		IsoFile[0] = '\0';
+		return;
+	}
+	strncpy(IsoFile, filename, MAXPATHLEN);
+}
+
+const char *GetIsoFile(void) {
+	return IsoFile;
+}
+
+boolean UsingIso(void) {
+	return (IsoFile[0] != '\0');
+}
+
+void SetCdOpenCaseTime(s64 time) {
+	cdOpenCaseTime = time;
 }
