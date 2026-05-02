@@ -4,10 +4,6 @@
 recRun:  
    .long .recRun, .TOC.@tocbase32
 
-returnPC:  
-   .long .returnPC, .TOC.@tocbase32
-
-
 ###FUNCTION CODE HERE###
 # void recRun(u32 *func,u32 hw1,u32 hw2)
 .text
@@ -30,6 +26,7 @@ returnPC:
 .text
 .align  4
 .globl  returnPC
+returnPC:
 .returnPC:
 	# end code
 	lwz		r0, 84(r1)    # re-load LR (84 == (32-14)*4+8+4)

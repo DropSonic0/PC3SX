@@ -27,18 +27,26 @@
 #include <time.h>
 #include <sys/types.h>
 
+
+
+#ifndef MDZFNPS3 //Memory allocation
+#include <sys/mman.h>
+
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+#else
+extern int is_running;
+#endif
+
 #include "../psxcommon.h"
 #include "ppc.h"
 #include "reguse.h"
-#include "pR3000A.h"
-#include "../R3000A.h"
+#include "../r3000a.h"
 #include "../psxhle.h"
-#include <ppc-asm.h>
-#include <ppu_intrinsics.h>
 
-extern int is_running;
+//#define NO_CONSTANT
 
-/* variable declarations */
 u32 psxRecLUT[0x010000] __attribute__((aligned(32)));
 
 #undef _Op_
@@ -109,7 +117,6 @@ static iRegisters iRegs[34];
 #define IsConst(reg)  (iRegs[reg].state & ST_CONST)
 #endif
 #define IsMapped(reg) (iRegs[reg].state & ST_MAPPED)
-
 
 static void (*recBSC[64])();
 static void (*recSPC[64])();
@@ -286,7 +293,7 @@ static void DisposeHWReg(int index)
 	
 	HWRegisters[index].usage &= ~(HWUSAGE_READ | HWUSAGE_WRITE);
 	if (HWRegisters[index].usage == HWUSAGE_NONE) {
-		printf("Error! not correctly disposing register (r%i)", HWRegisters[index].code);
+		SysPrintf("Error! not correctly disposing register (r%i)", HWRegisters[index].code);
 	}
 	
 	FlushHWReg(index);
@@ -373,7 +380,7 @@ static int GetHWRegFromCPUReg(int cpureg)
 		}
 	}
 	
-	printf("Error! Register location failure (r%i)", cpureg);
+	SysPrintf("Error! Register location failure (r%i)", cpureg);
 	return 0;
 }
 
@@ -416,7 +423,7 @@ static void MapPsxReg32(int reg)
     HWRegisters[hwreg].private = reg;
     
     if (iRegs[reg].reg != -1) {
-        printf("error: double mapped psx register");
+        SysPrintf("error: double mapped psx register");
     }
     
     iRegs[reg].reg = hwreg;
@@ -428,7 +435,7 @@ static void FlushPsxReg32(int hwreg)
 	int reg = HWRegisters[hwreg].private;
 	
 	if (iRegs[reg].reg == -1) {
-		printf("error: flushing unmapped psx register");
+		SysPrintf("error: flushing unmapped psx register");
 	}
 	
 	if (HWRegisters[hwreg].usage & HWUSAGE_WRITE) {
@@ -570,7 +577,7 @@ static int GetHWRegSpecial(int which)
 		switch (which) {
 			case PSXREGS:
 			case PSXMEM:
-				printf("error! shouldn't be here!\n");
+				SysPrintf("error! shouldn't be here!\n");
 				//HWRegisters[index].flush = NULL;
 				//LIW(HWRegisters[index].code, (u32)&psxRegs);
 				break;
@@ -602,7 +609,7 @@ static int GetHWRegSpecial(int which)
 				LWZ(HWRegisters[index].code, 0, GetHWRegSpecial(TARGETPTR));
 				break;
 			default:
-				printf("Error: Unknown special register in GetHWRegSpecial()\n");
+				SysPrintf("Error: Unknown special register in GetHWRegSpecial()\n");
 				break;
 		}
 		HWRegisters[index].usage &= ~HWUSAGE_RESERVED;
@@ -633,7 +640,7 @@ static int PutHWRegSpecial(int which)
 	switch (which) {
 		case PSXREGS:
 		case TARGETPTR:
-			printf("Error: Read-only special register in PutHWRegSpecial()\n");
+			SysPrintf("Error: Read-only special register in PutHWRegSpecial()\n");
 		case REG_WZERO:
 			if (index >= 0) {
 					if (HWRegisters[index].usage & HWUSAGE_WRITE)
@@ -665,7 +672,7 @@ static int PutHWRegSpecial(int which)
 						}
 						HWRegisters[reg].code = HWRegisters[index].code;
 						if (!(HWRegisters[index].code >= 3 && HWRegisters[index].code <=31))
-							printf("Error! Register allocation");
+							SysPrintf("Error! Register allocation");
 						HWRegisters[index].code = 3+(which-ARG1);*/
 						HWRegisters[index].flush = NULL;
 						
@@ -731,12 +738,15 @@ static void Return()
 {
 	iFlushRegs(0);
 	FlushAllHWReg();
-	LIW(12, ((u32*)returnPC)[1]);
-	LIW(0, ((u32*)returnPC)[0]);
-	MTLR(0);
-	BLR();
+	if (((u32)returnPC & 0x1fffffc) == (u32)returnPC) {
+		BA((u32)returnPC);
+	}
+	else {
+		LIW(0, (u32)returnPC);
+		MTLR(0);
+		BLR();
+	}
 }
-
 
 static void iRet() {
     /* store cycle */
@@ -988,13 +998,13 @@ static void iBranch(u32 branchPC, int savectx) {
 }
 
 
-void iDumpRegs() {
+static void iDumpRegs() {
 	int i, j;
 
-	printf("%08x %08x\n", psxRegs.pc, psxRegs.cycle);
+	printf("%lx %lx\n", psxRegs.pc, psxRegs.cycle);
 	for (i=0; i<4; i++) {
 		for (j=0; j<8; j++)
-			printf("%08x ", psxRegs.GPR.r[j*i]);
+			printf("%lx ", psxRegs.GPR.r[j*i]);
 		printf("\n");
 	}
 }
@@ -1003,10 +1013,10 @@ void iDumpBlock(char *ptr) {
 /*	FILE *f;
 	u32 i;
 
-	printf("dump1 %x:%x, %x\n", psxRegs.pc, pc, psxCurrentCycle);
+	SysPrintf("dump1 %x:%x, %x\n", psxRegs.pc, pc, psxCurrentCycle);
 
 	for (i = psxRegs.pc; i < pc; i+=4)
-		printf("%s\n", disR3000AF(PSXMu32(i), i));
+		SysPrintf("%s\n", disR3000AF(PSXMu32(i), i));
 
 	fflush(stdout);
 	f = fopen("dump1", "w");
@@ -1052,28 +1062,6 @@ static void rec##f() { \
 	CALLFunc((u32)psx##f); \
 	branch = 2; \
 	iRet(); \
-}
-
-#define CP2_FUNC(f) \
-void gte##f(); \
-static void rec##f() { \
-	if (pc < cop2readypc) idlecyclecount += ((cop2readypc - pc)>>2); \
-	iFlushRegs(0); \
-	LIW(0, (u32)psxRegs.code); \
-	STW(0, OFFSET(&psxRegs, &psxRegs.code), GetHWRegSpecial(PSXREGS)); \
-	FlushAllHWReg(); \
-	CALLFunc ((u32)gte##f); \
-	cop2readypc = pc + (psxCP2time[_fFunct_(psxRegs.code)]<<2); \
-}
-
-#define CP2_FUNCNC(f) \
-void gte##f(); \
-static void rec##f() { \
-	if (pc < cop2readypc) idlecyclecount += ((cop2readypc - pc)>>2); \
-	iFlushRegs(0); \
-	CALLFunc ((u32)gte##f); \
-/*	branch = 2; */\
-	cop2readypc = pc + psxCP2time[_fFunct_(psxRegs.code)]; \
 }
 
 static int allocMem() {
@@ -1130,9 +1118,17 @@ __inline static void execute() {
 	recRun(*recFunc, (u32)&psxRegs, (u32)&psxM);
 }
 
+#ifndef MDZFNPS3 //Leave on command
 static void recExecute() {
 	for (;;) execute();
 }
+#else
+extern int wanna_leave;
+static void recExecute() {
+	wanna_leave = 0;
+	while(!wanna_leave) execute();
+}
+#endif
 
 static void recExecuteBlock() {
 	execute();
@@ -1855,7 +1851,7 @@ static void recLB() {
             EXTSB(PutHWReg32(_Rt_), GetHWReg32(_Rt_));
             return;
         }
-    //	printf("unhandled r8 %x\n", addr);
+    //	SysPrintf("unhandled r8 %x\n", addr);
     }*/
 	
 	preMemRead();
@@ -1895,7 +1891,7 @@ static void recLBU() {
             LBZ(PutHWReg32(_Rt_), addr&0xffff, GetHWReg32(_Rt_));
             return;
         }
-    //	printf("unhandled r8 %x\n", addr);
+    //	SysPrintf("unhandled r8 %x\n", addr);
     }*/
         
 	preMemRead();
@@ -1936,7 +1932,7 @@ static void recLH() {
 			EXTSH(PutHWReg32(_Rt_), GetHWReg32(_Rt_));
 			return;
 		}
-	//	printf("unhandled r16 %x\n", addr);
+	//	SysPrintf("unhandled r16 %x\n", addr);
 	}
     
 	preMemRead();
@@ -2005,31 +2001,31 @@ static void recLHU() {
 					case 0x1f801104: case 0x1f801114: case 0x1f801124:
 						if (!_Rt_) return;
 						
-						ReserveArgs(1);
-						LIW(PutHWRegSpecial(ARG1), (addr >> 4) & 0x3);
-						DisposeHWReg(iRegs[_Rt_].reg);
-						InvalidateCPURegs();
-						CALLFunc((u32)psxRcntRmode);
-						
-						SetDstCPUReg(3);
-						PutHWReg32(_Rt_);
+                        ReserveArgs(1);
+                        LIW(PutHWRegSpecial(ARG1), (addr >> 4) & 0x3);
+                        DisposeHWReg(iRegs[_Rt_].reg);
+                        InvalidateCPURegs();
+                        CALLFunc((u32)psxRcntRmode);
+                        
+                        SetDstCPUReg(3);
+                        PutHWReg32(_Rt_);
 						return;
 	
 					case 0x1f801108: case 0x1f801118: case 0x1f801128:
 						if (!_Rt_) return;
 
-						ReserveArgs(1);
-						LIW(PutHWRegSpecial(ARG1), (addr >> 4) & 0x3);
-						DisposeHWReg(iRegs[_Rt_].reg);
-						InvalidateCPURegs();
-						CALLFunc((u32)psxRcntRtarget);
-						
-						SetDstCPUReg(3);
-						PutHWReg32(_Rt_);
+                        ReserveArgs(1);
+                        LIW(PutHWRegSpecial(ARG1), (addr >> 4) & 0x3);
+                        DisposeHWReg(iRegs[_Rt_].reg);
+                        InvalidateCPURegs();
+                        CALLFunc((u32)psxRcntRtarget);
+                        
+                        SetDstCPUReg(3);
+                        PutHWReg32(_Rt_);
 						return;
 					}
 		}
-	//	printf("unhandled r16u %x\n", addr);
+	//	SysPrintf("unhandled r16u %x\n", addr);
 	}
 	
 	preMemRead();
@@ -2107,7 +2103,7 @@ static void recLW() {
 					return;
 			}
 		}
-//		printf("unhandled r32 %x\n", addr);
+//		SysPrintf("unhandled r32 %x\n", addr);
 	}
 
 	preMemRead();
@@ -2374,7 +2370,7 @@ static void recSB() {
 			}
 			return;
 		}
-//		printf("unhandled w8 %x\n", addr);
+//		SysPrintf("unhandled w8 %x\n", addr);
 	}*/
 
 	preMemWrite(1);
@@ -2421,7 +2417,7 @@ static void recSH() {
 				return;
 			}
 		}
-//		printf("unhandled w16 %x\n", addr);
+//		SysPrintf("unhandled w16 %x\n", addr);
 	}*/
 
 	preMemWrite(2);
@@ -2485,7 +2481,7 @@ static void recSW() {
 #endif*/
 			}
 		}
-//		printf("unhandled w32 %x\n", addr);
+//		SysPrintf("unhandled w32 %x\n", addr);
 	}
 	
 /*	LIS(0, 0x0079 + ((_Imm_ <= 0) ? 1 : 0));
@@ -3383,16 +3379,6 @@ static void (*recCP2BSC[32])() = {
 	recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL, recNULL
 };
 
-static void MakeItExecutable(u8* ptr,int size) {
- 	while((u32)ptr < size) {
- 		__dcbst(ptr);
- 		__icbi(ptr);
- 		__sync();
- 		__isync();
- 		ptr += 4;
- 	}
- }
-
 static void recRecompile() {
 	//static int recCount = 0;
 	char *p;
@@ -3446,7 +3432,7 @@ static void recRecompile() {
 
 	pcold = pc = psxRegs.pc;
 	
-	//printf("RecCount: %i\n", recCount++);
+	//SysPrintf("RecCount: %i\n", recCount++);
 	
 	for (count=0; count<500;) {
 		p = (char *)PSXM(pc);
@@ -3543,4 +3529,3 @@ R3000Acpu psxRec = {
 };
 
 #endif
-

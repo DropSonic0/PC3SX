@@ -1,4 +1,6 @@
 #include "cell.h"
+#include <sys/timer.h>
+#include <sys/sys_time.h>
 #include <vector>
 #include "rom_list.h"
 #include <math.h>
@@ -355,6 +357,10 @@ void InitConfig()
 {
 	memset(&Config, 0, sizeof(PcsxConfig));
 
+	// Set default FPS limit settings
+	Config.GPUEnaFPSLimit = 1; // Default to enabled
+	Config.GPUUserFPS = 0.0f;  // Default to auto/emulator default
+
 	Config.PsxAuto = 1; //Autodetect
 	Config.HLE	   = Settings.HLE; //Use HLE
 	Config.Xa      = 0; //disable xa decoding (audio)
@@ -381,6 +387,9 @@ void InitConfig()
 	sprintf(Config.Mcd1, "%s/Mcd001.mcr",Iniconfig.savpath);
 	sprintf(Config.Mcd2, "%s/Mcd002.mcr",Iniconfig.savpath);
 
+	// Transfer parsed FPS settings from Iniconfig to global Config
+	Config.GPUEnaFPSLimit = Iniconfig.GPUEnaFPSLimit;
+	Config.GPUUserFPS = Iniconfig.GPUUserFPS;
 }
 
 static int sysInited = 0;
@@ -457,7 +466,34 @@ void SysCloseLibrary(void *lib) {
 
 // Called periodically from the emu thread
 void SysUpdate() {
+	static uint64_t next_frame_time = 0;
+	uint64_t current_time;
 
+	if (Config.GPUEnaFPSLimit) {
+		float target_fps = Config.GPUUserFPS;
+		if (target_fps <= 0.0f) {
+			target_fps = (Config.PsxType == 0) ? 60.0f : 50.0f;
+		}
+
+		uint64_t frame_duration = (uint64_t)(1000000.0f / target_fps);
+		current_time = sys_time_get_system_time();
+
+		if (next_frame_time == 0) {
+			next_frame_time = current_time + frame_duration;
+		} else {
+			if (current_time < next_frame_time) {
+				uint64_t sleep_time = next_frame_time - current_time;
+				sys_timer_usleep(sleep_time);
+			}
+			next_frame_time += frame_duration;
+
+			// If we are too far behind, reset next_frame_time
+			current_time = sys_time_get_system_time();
+			if (current_time > next_frame_time + frame_duration * 2) {
+				next_frame_time = current_time + frame_duration;
+			}
+		}
+	}
 }
 
 // Returns to the Gui
