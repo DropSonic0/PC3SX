@@ -2,6 +2,8 @@
 #define _PLUGCD_H_
 
 #include <stdio.h>
+#include <stdint.h>
+#include "../../pcsxcore/plugins.h"
 
 #define CHAR_LEN 256
 
@@ -20,18 +22,18 @@ typedef struct {
 	char	fn[128];
 } cd_conf;
 
-cd_conf CDConfiguration;
+extern cd_conf CDConfiguration;
 
-int rc;
+extern int rc;
 
 enum TrackType
 {
-   unknown, Mode1, Mode2, Audio, Pregap = 0x80
+   unknown_track, Mode1_track, Mode2_track, Audio_track, Pregap_track = 0x80
 };
 
 enum CDType
 {
-   unk, Bin, Cue, Rar, IndexBZ, IndexZ, SBI, M3S
+   unk_cd, Bin_cd, Cue_cd, Rar_cd, IndexBZ_cd, IndexZ_cd, SBI_cd, M3S_cd
 };
 
 typedef struct
@@ -98,11 +100,36 @@ void readit(const unsigned char m, const unsigned char s, const unsigned char f)
       c[0] += 1;\
    }
 
-// converts uchar in c to BCD character
-#define intToBCD(c) (unsigned char)((c%10) | ((c/10)<<4))
-
-// converts BCD number in c to uchar
-#define BCDToInt(c) (unsigned char)((c & 0x0F) + 10 * ((c & 0xF0) >> 4))
-
+// use btoi / itob from pcsxcore/CdRom.h via plugins.h -> psxcommon.h -> cdrom.h?
+// Actually they are in CdRom.h which is included in psxcommon.h? No.
+// Let's re-define them if needed or use the ones from psxcommon.h
+#ifndef btoi
+#define btoi(b)     ((b) / 16 * 10 + (b) % 16)
+#endif
+#ifndef itob
+#define itob(i)     ((i) / 10 * 16 + (i) % 10)
+#endif
+#ifndef MSF2SECT
+#define MSF2SECT(m, s, f)               (((m) * 60 + (s) - 2) * 75 + (f))
 #endif
 
+// Prototypes for cdr.c
+long CDR__open(void);
+long CDR__init(void);
+long CDR__shutdown(void);
+long CDR__close(void);
+long CDR__getTN(unsigned char *buffer);
+long CDR__getTD(unsigned char track, unsigned char *buffer);
+long CDR__readTrack(unsigned char *time);
+unsigned char *CDR__getBuffer(void);
+unsigned char *CDR__getBufferSub(void);
+long CDR__configure(void);
+long CDR__test(void);
+void CDR__about(void);
+long CDR__play(unsigned char *time);
+long CDR__stop(void);
+long CDR__setfilename(char *filename);
+long CDR__getStatus(struct CdrStat *stat);
+long CDR__readCDDA(unsigned char m, unsigned char s, unsigned char f, unsigned char *buffer);
+
+#endif
